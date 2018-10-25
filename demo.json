@@ -1,0 +1,136 @@
+{
+	"title": "pyGroove Demo Beat",
+	"author": "Daniel Swinney",
+	"year": 2018,
+	"bpm": 126,
+	"swing": ".75",
+	"bars": 2,
+	"beatDiv": 4,
+	"tickDiv": 32,
+	"repeat": 4,
+	"tracks": {
+		"Kick":
+		{
+			"wav": "808-Kick2.wav",
+			"pan": 0,
+			"amp": {
+				"volume": "1.2",
+				"attack": 333,
+				"decay": 60000,
+				"peak": 0,
+				"sustain": 0,
+				"release": 212
+			},
+			"filter": {
+				"filterType": "lpf",
+				"cutoff": 492
+			},
+			"notes": [
+				{"loc": "1.1.1"},
+				{"loc": "1.2.17"},
+				{"loc": "1.3.1"},
+				{"loc": "1.4.17"},
+				{"loc": "2.1.1","transpose": -3},
+				{"loc": "2.2.17","transpose": -3},
+				{"loc": "2.3.1","transpose": -4},
+				{"loc": "2.4.17","transpose": -4}
+			]
+		},
+		"Snare":
+		{
+			"wav": "808-Snare1.wav",
+			"pan": 0,
+			"transpose": -2,
+			"amp": {
+				"volume": -6
+			},
+			"filter": {
+				"filterType": "bpf",
+				"cutoff": 488,
+				"cutoff2": 7422
+			},
+			"notes": [
+				{"loc": "1.3.1"},
+				{"loc": "1.3.9", "volume": -3, "transpose": 1, "pan": 24},
+				{"loc": "1.3.17", "volume": -6, "transpose": 2, "pan": 48},
+				{"loc": "1.3.25", "volume": -9, "transpose": 3, "pan": 72},
+				{"loc": "2.3.1"},
+				{"loc": "2.3.9", "volume": -3, "transpose": -1, "pan": -24},
+				{"loc": "2.3.17", "volume": -6, "transpose": -2, "pan": -48},
+				{"loc": "2.3.25", "volume": -9, "transpose": -3, "pan": -72}
+			]
+		},
+		"Clap":
+		{
+			"wav": "808-Clap1.wav",
+			"pan": 36,
+			"transpose": -2,
+			"amp": {
+				"volume": -4
+			},
+			"filter": {
+				"filterType": "bpf",
+				"cutoff": 788,
+				"cutoff2": 11622
+			},
+			"notes": [
+				{"loc": "2.3.1"}
+			]
+		},
+		"Rim":
+		{
+			"wav": "808-Rim1.wav",
+			"pan": -36,
+			"transpose": -2,
+			"amp": {
+				"volume": "-9.8"
+			},
+			"filter": {
+				"filterType": "bpf",
+				"cutoff": 788,
+				"cutoff2": 11622
+			},
+			"notes": [
+				{"loc": "1.2.1"},
+				{"loc": "2.2.1", "transpose": -2}
+			]
+		},
+		"Closed Hat":
+		{
+			"wav": "808-CH1.wav",
+			"pan": -12,
+			"transpose": -3,
+			"amp": {
+				"volume": -8
+			},
+			"filter": {
+				"filterType": "hpf",
+				"cutoff": 7126
+			},
+			"notes": [
+				{"loc": "1.1.1"},
+				{"loc": "1.1.17", "volume": -1.5},
+				{"loc": "1.2.1"},
+				{"loc": "1.2.17", "volume": -1.5},
+				{"loc": "1.3.1"},
+				{"loc": "1.3.17", "volume": -1.5},
+				{"loc": "1.4.1"},
+				{"loc": "1.4.9"},
+				{"loc": "1.4.17"},
+				{"loc": "1.4.25"},
+				{"loc": "2.1.1"},
+				{"loc": "2.1.17", "volume": -1.5},
+				{"loc": "2.2.1"},
+				{"loc": "2.2.17", "volume": -1.5},
+				{"loc": "2.3.1"},
+				{"loc": "2.3.17", "volume": -1.5},
+				{"loc": "2.4.1"},
+				{"loc": "2.4.9"},
+				{"loc": "2.4.17", "volume": -9},
+				{"loc": "2.4.19", "volume": -6},
+				{"loc": "2.4.21", "volume": -3},
+				{"loc": "2.4.25", "volume": -1.5}
+			]
+		}
+	}
+}
