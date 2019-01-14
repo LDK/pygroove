@@ -1,0 +1,145 @@
+body {
+  font: 14px "Century Gothic", Futura, sans-serif;
+  margin: 20px;
+}
+body {
+	--blue-button: #3777c7;
+	--blue-shadow: #275797;
+	--blue-highlight: #6797c7;
+	--blue-light: #d7e7f7;
+	--blue-grey: #373757;
+	--blue-dark: #171747;
+	--white: #f7f7f7;
+	--red-button: #c73737;
+	--red-shadow: #672727;
+	--red-highlight: #e78787;
+	--grey: #373737;
+	--blue-grey-light: #c7cee7;
+}
+input[type="range"][orient="horizontal"] {
+  width: 3.5rem;
+  display: inline-block;
+}
+input[type="range"][orient="vertical"] {
+  width: .5rem;
+  height: 32px;
+  writing-mode: bt-lr; /* IE */
+  -webkit-appearance: slider-vertical; /* WebKit */
+  display: inline-block;
+}
+ol, ul {
+  padding-left: 30px;
+}
+
+.pattern-row:after {
+  clear: both;
+  content: "";
+  display: table;
+}
+
+.status {
+  margin-bottom: 10px;
+}
+
+.status.row label {
+	min-width: 3rem;
+}
+.cell {
+  background-color: var(--blue-light);
+  border: 1px solid #999;
+  float: left;
+  font-size: 24px;
+  font-weight: bold;
+  line-height: 34px;
+  height: 32px;
+  margin-right: -1px;
+  margin-top: -1px;
+  padding: 0;
+  text-align: center;
+  width: 3.125%;
+}
+
+.cell:focus {
+  outline: none;
+}
+
+.cell:nth-child(1),
+.cell:nth-child(5),
+.cell:nth-child(9),
+.cell:nth-child(13),
+.cell:nth-child(17),
+.cell:nth-child(21),
+.cell:nth-child(25),
+.cell:nth-child(29)
+{
+  background-color: var(--blue-highlight);
+}
+
+.kbd-navigation .cell:focus {
+  background: #ddd;
+}
+
+.song {
+  display: flex;
+  flex-direction: row;
+}
+
+.song-info {
+  margin-left: 20px;
+}
+
+.song-pattern {
+  width: 100%;
+}
+.song-pattern input[type="button"] {
+    float: left;
+    width: 6rem;
+    margin-right: 1rem;
+}
+
+.hidden {
+  
+ display: none;  
+}
+
+.pattern-bg {
+    background-color: var(--blue-grey-light);
+}
+
+span.meter-display {
+	bottom: .5rem;
+}
+
+span.meter-display.volume:after {
+	content: 'db';
+}
+
+span.pan-display:before {
+	content: 'Pan: ';
+}
+
+@media (max-width: 991px) {
+	.cell {
+		width: 6.25%;
+	}	
+}
+@media (min-width: 992px) {
+	span.meter-display {
+		bottom: .5rem;
+	}
+}
+@media (max-width: 320px) {
+	.cell {
+		width: 12.85%;
+	}	
+}
+@media (max-width: 480px) {
+	.cell {
+		width: 6.48%;
+	}	
+}
+@media (max-width: 575px) {
+	.cell {
+		width: 6.44%;
+	}	
+}
