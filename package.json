@@ -1,0 +1,38 @@
+{
+  "name": "pygroove",
+  "version": "0.0.1",
+  "scripts": {
+    "start": "webpack-dev-server --mode development --open --hot",
+    "build": "webpack --mode production"
+  },
+  "description": "A simple groovebox rendered by Python with an interface powered by React.JS",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LDK/pygroove"
+  },
+  "license": "ISC",
+  "keywords": [
+    "python",
+    "react"
+  ],
+  "author": "Daniel Swinney",
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-core": "^6.26.3",
+    "babel-loader": "^7.1.5",
+    "babel-preset-env": "^1.7.0",
+    "babel-preset-react": "^6.24.1",
+    "html-webpack-plugin": "^3.2.0",
+    "lodash": "^4.17.11",
+    "webpack": "^4.25.1",
+    "webpack-cli": "^3.1.2",
+    "webpack-dev-server": "^3.1.10"
+  },
+  "dependencies": {
+    "flask": "^0.2.10",
+    "react": "^16.6.1",
+    "react-dom": "^16.6.1",
+    "reset-css": "^4.0.1",
+    "whatwg-fetch": "^3.0.0"
+  }
+}

@@ -4,8 +4,37 @@ import pyaudio
 import wave
 import sys
 import json
+import simplejson
 from pydub import AudioSegment
 import pydub.scipy_effects
+import cgitb
+cgitb.enable()
+
+channels = {}
+
+# Beats per minute
+bpm = 102
+
+# Beats per bar
+beatDiv = 4
+# Ticks per beat
+tickDiv = 32
+# Pattern length in bars
+patternLength = 1
+
+# Amount of swing to apply to patterns
+# Starts getting crazy above 1, reasonably groovy at like .25.  Default to none.
+swingAmount = 0;
+# swingUp is an iterator that gets toggled with each note, to alternate the swing direction
+# i.e., it swings up and then down, or back and then forth.  You get it.
+swingUp = False
+
+# Default channel volume and pan
+channelDefaults = {'volume': -12.0, 'pan': 0}
+
+# Start with an empty dictionary of tracks
+tracks = {}
+
 
 def newTrack(name = ''):
     trackLength = 0
@@ -146,41 +175,24 @@ def transpose(sound,st):
     new_sample_rate = int(sound.frame_rate * (2.0 ** octaves))
     return sound._spawn(sound.raw_data, overrides={'frame_rate': new_sample_rate})
 
-channels = {}
-    
-# Beats per minute
-bpm = 102
+def renderJSON(json):
+    global channels, bpm, beatDiv, tickDiv, patternLength, swingAmount, swingUp, channelDefaults, tracks
+    data = simplejson.loads(json)
 
-# Beats per bar
-beatDiv = 4
-# Ticks per beat
-tickDiv = 32
-# Pattern length in bars
-patternLength = 1
+    bpm = int(data['bpm'])
+    beatDiv = int(data['beatDiv'])
+    tickDiv = int(data['tickDiv'])
+    patternLength = int(data['bars'])
+    swingAmount = float(data['swing'])
+    swingUp = False
 
-# Amount of swing to apply to patterns
-# Starts getting crazy above 1, reasonably groovy at like .25.  Default to none.
-swingAmount = 0;
-# swingUp is an iterator that gets toggled with each note, to alternate the swing direction
-# i.e., it swings up and then down, or back and then forth.  You get it.
-swingUp = False
+    tracks = {}
 
-# Default channel volume and pan
-channelDefaults = {'volume': -12.0, 'pan': 0}
+    title = data['title']
+    channels = data['tracks']
+    if ('repeat' in data):
+        repeat = data['repeat']
 
-# Start with an empty dictionary of tracks
-tracks = {}
-
-# Open the demo file and parse through its settings and data
-with open("demo.json") as patternFile:
-    repeat = 1
-    response = json.load(patternFile)
-    title = response['title']
-    bpm = int(response['bpm'])
-    patternLength = int(response['bars'])
-    channels = response['tracks']
-    if ('repeat' in response):
-        repeat = response['repeat']
     # Create the master track
     master = newTrack()
     print("Rendering")
@@ -198,7 +210,7 @@ with open("demo.json") as patternFile:
         # Add the notes
         trackNotes = channel['notes']
         trackWav = channel['wav']
-        trackSound = AudioSegment.from_wav('./'+trackWav)
+        trackSound = AudioSegment.from_wav('./audio/'+trackWav)
         trackTranspose = 0
         # Handle transposition.  trackTranspose is the transposition value in semitones
         if 'transpose' in channel:
@@ -269,3 +281,4 @@ with open("demo.json") as patternFile:
     out_f = open(renderFilename, 'wb')
     master *= repeat
     master.normalize().export(out_f, format='mp3')
+    return renderFilename
