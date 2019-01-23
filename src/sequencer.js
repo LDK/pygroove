@@ -22,9 +22,9 @@ function stepFormat(step) {
 function panFormat(value) {
 	var num = Math.abs(value);
 	var dir = 'C';
-  if (value == 0) {
-    return dir;
-  }
+	if (value == 0) {
+		return dir;
+	}
 	else if (value > 0) {
 		dir = 'R';
 	}
@@ -61,35 +61,12 @@ class Range extends React.Component {
 					step={this.props.step || 1}
 					onChange={this.callback}
 				>
-</input>
+				</input>
 				<span className={'meter-display ' + (this.props.inputClass || '') + ' ' + (this.props.meterClass || '')}>{this.state.value}</span>
 			</div>
 		)
 	}
 }
-// class App extends React.Component {
-// 	constructor(props) {
-// 		super(props);
-// 		this.state = {
-// 			rangeVal: 0
-// 		}
-// 		this.updateRange = this.updateRange.bind(this);
-// 	}
-//
-// 	updateRange(val) {
-// 		this.setState({
-// 			rangeVal: val
-// 		})
-// 	}
-//
-// 	render() {
-// 		const { rangeVal } = this.state;
-// 		return (
-// 			<Range range={rangeVal} updateRange={this.updateRange}/>
-// 		)
-// 	}
-// }
-//
 
 class Channel extends React.Component {
 		constructor(props) {
@@ -99,9 +76,9 @@ class Channel extends React.Component {
 		this.state = {
 			trackName: props.trackName || 'New Channel',
 			steps: steps,
-      pitch: {
-        
-      },
+			pitch: {
+				
+			},
 			transpose: 0,
 			panDisplay: 'C',
 			pan: 0,
@@ -127,7 +104,7 @@ class Channel extends React.Component {
 		}
 		updatePan(value) {
 			this.setState({ pan: value, panDisplay: panFormat(value) });
-						<span className="pan-display">{this.state.panDisplay}</span>
+			<span className="pan-display">{this.state.panDisplay}</span>
 		}
 		updateVolume(value) {
 			var amp = this.state.amp;
@@ -249,9 +226,9 @@ class Pattern extends React.Component {
 			data.text().then(function(text) {
 				console.log('The filename is',text);
 			});
-		  }).catch(function(error) {
-		    console.log('Request failed', error);
-		  });
+		}).catch(function(error) {
+			console.log('Request failed', error);
+		});
 	}
 	render() {
 		return (
