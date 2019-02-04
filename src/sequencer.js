@@ -149,7 +149,7 @@ class Channel extends React.Component {
 				</div>
 				<Range label="Pitch" inputClass="pitch" className="d-none" callback={this.updatePitch} min="-48" max="48" value={this.state.transpose} />
 				<div className="pattern-row col-12 col-sm-9 col-md-8">
-					{this.cellRow(1,32)}
+					{this.cellRow(1,this.state.pattern.state.bars * 16)}
 				</div>
 			</div>
 			);
@@ -157,14 +157,39 @@ class Channel extends React.Component {
 
 }
 
+class AudioOut extends React.Component {
+	constructor(props) {
+		super(props);
+		this.state = {
+			source: props.source || null
+		};
+		this.updateSource = this.updateSource.bind(this);
+	}
+	updateSource(value) {
+		this.setState({source: value});
+	}
+	render() {
+		const { range } = this.props;
+		return (
+			<div>
+				<audio ref="audio" controls>
+					<source src={this.state.source} />
+				</audio>
+			</div>
+		)
+	}
+}
+
 class Pattern extends React.Component {
 	constructor(props) {
 		super(props);
+		this.patternOut = React.createRef();
 		this.state = {
 			bpm: 126,
 			swing: .75,
 			bars: 2,
 			title: 'pyGroove Demo Beat',
+			audioSource: 'fix that.mp3',
 			tracks: {}
 		};
 		this.updateBPM = this.updateBPM.bind(this);
@@ -218,13 +243,18 @@ class Pattern extends React.Component {
 		submitted.beatDiv = 4;
 		submitted.tickDiv = 32;
 		submitted.repeat = 4;
+		var pattern = this;
 		window.fetch('http://localhost:8081/', {
 			method: 'POST', 
 			body: JSON.stringify(submitted)
 		})
 		.then(function(data) {
 			data.text().then(function(text) {
-				console.log('The filename is',text);
+				pattern.setState({ renderedFile: text });
+				pattern.setState({ audioSource: text })
+				pattern.patternOut.current.refs.audio.src = '';
+				pattern.patternOut.current.refs.audio.load();
+				pattern.patternOut.current.refs.audio.src = pattern.state.audioSource;
 			});
 		}).catch(function(error) {
 			console.log('Request failed', error);
@@ -249,6 +279,7 @@ class Pattern extends React.Component {
 					{this.renderChannel('Snare','808-Snare1')}
 					<input type="submit" value="Save Pattern" />
 				</form>
+				<AudioOut source={this.state.audioSource} ref={this.patternOut} />
 			</div>
 		);
 	}
@@ -272,14 +303,8 @@ class Note extends React.Component {
 class Song extends React.Component {
 	render() {
 		return (
-			<div className="song">
-				<div className="song-pattern">
-					<Pattern />
-				</div>
-				<div className="song-info">
-					<div>{/* status */}</div>
-					<ol>{/* TODO */}</ol>
-				</div>
+			<div>
+				<Pattern />
 			</div>
 		);
 	}
@@ -288,6 +313,6 @@ class Song extends React.Component {
 // ========================================
 
 ReactDOM.render(
-	<Pattern />,
+	<Song />,
 	document.getElementById('root')
 );
