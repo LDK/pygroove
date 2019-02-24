@@ -143,3 +143,24 @@ span.pan-display:before {
 		width: 6.44%;
 	}	
 }
+div.powerButton{
+	height: 32px;
+	width: 32px;
+}
+div.powerButton > button {
+	background-image: url(img/power-button.svg);
+	background-repeat: no-repeat;
+	background-size: 75%;
+	-webkit-appearance: none;
+	height: 100%;
+	width: 100%;
+	border-radius: 3rem;
+	background-position: center 35%;
+	background-color: #9a9a9a;
+	cursor: pointer;
+	outline: none !important;
+}
+div.powerButton > button.switchedOn {
+	background-image: url(img/power-button-white.svg);
+	background-color: #fa1a1a;
+}

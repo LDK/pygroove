@@ -68,12 +68,45 @@ class Range extends React.Component {
 	}
 }
 
+class PowerButton extends React.Component {
+	constructor(props) {
+		super(props);
+		this.callback = this.callback.bind(this);
+		this.state = {
+			switchedOn: props.switchedOn || false,
+			label: props.label || '',
+		};
+		this.state.inputClass = this.state.switchedOn ? 'switchedOn' : '';
+	}
+	callback(event) {
+		var switchedOn = !this.state.switchedOn;
+		this.setState({ switchedOn: switchedOn });
+		if (this.props.callback) {
+			this.props.callback(switchedOn);
+		}
+	}
+	render() {
+		const { range } = this.props;
+		return (
+			<div className={"powerButton " + (this.props.className || '')}>
+			<button className={this.state.switchedOn ? 'switchedOn' : ''}
+					value={this.state.switchedOn ? 1 : 0}
+					onClick={this.callback}
+				></button>
+				<span className={'powerButton-display ' + (this.props.inputClass || '') + ' ' + (this.props.displayClass || '')}>{this.state.label}</span>
+			</div>
+		)
+	}
+}
+
 class Channel extends React.Component {
 		constructor(props) {
 		super(props);
 		var steps = Array(33).fill(null);
 		delete steps[0];
 		this.state = {
+			disabled: props.disabled || false,
+			disabledClass: props.disabled ? 'disabled' : '',
 			trackName: props.trackName || 'New Channel',
 			steps: steps,
 			pitch: {
@@ -101,10 +134,13 @@ class Channel extends React.Component {
 		this.updatePan = this.updatePan.bind(this);
 		this.updateVolume = this.updateVolume.bind(this);
 		this.updatePitch = this.updatePitch.bind(this);
+		this.updateActive = this.updateActive.bind(this);
 		}
 		updatePan(value) {
 			this.setState({ pan: value, panDisplay: panFormat(value) });
-			<span className="pan-display">{this.state.panDisplay}</span>
+		}
+		updateActive(value) {
+			this.setState({ disabled: !value, disabledClass: !value ? 'disabled' : '' });
 		}
 		updateVolume(value) {
 			var amp = this.state.amp;
@@ -138,8 +174,11 @@ class Channel extends React.Component {
 		}
 		render() {
 			return (
-			<div className="row no-gutters mb-3">
-				<input className="col-12 col-sm-2" type="button" value={this.state.trackName} />
+			<div className={this.state.disabledClass + " row no-gutters mb-3"}>
+				<div className="col-1 d-none d-md-block text-left">
+					<PowerButton switchedOn="true" callback={this.updateActive} />
+				</div>
+				<input className="col-12 col-sm-1" type="button" value={this.state.trackName} />
 				<div className="col-1 d-none d-md-block text-center">
 					<Range label="Pan" inputClass="pan col-8 px-0 mx-auto" meterClass="hidden" callback={this.updatePan} min="-100" value={this.state.pan} />
 					<span className="pan-display">{this.state.panDisplay}</span>
