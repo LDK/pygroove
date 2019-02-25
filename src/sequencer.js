@@ -87,7 +87,6 @@ class PowerButton extends React.Component {
 		}
 	}
 	render() {
-		const { range } = this.props;
 		return (
 			<div className={"powerButton " + (this.props.className || '')}>
 			<button className={this.state.switchedOn ? 'switchedOn' : ''}
@@ -95,6 +94,39 @@ class PowerButton extends React.Component {
 					onClick={this.callback}
 				></button>
 				<span className={'powerButton-display ' + (this.props.inputClass || '') + ' ' + (this.props.displayClass || '')}>{this.state.label}</span>
+			</div>
+		)
+	}
+}
+
+class OptionIndicator extends React.Component {
+	constructor(props) {
+		super(props);
+		this.callback = this.callback.bind(this);
+		this.state = {
+			value: props.value || null,
+			label: props.label || '',
+		};
+	}
+	callback(event) {
+		if (this.props.callback) {
+			this.props.callback(this.state.value);
+		}
+	}
+	render() {
+		var props = this.props;
+		const radios = this.props.options.map((opt) => 
+			<li className="px-1">
+				<input type="radio" name={props.name} value={opt.value} disabled={props.disabled} />
+				<span data-name={props.name} className="option-label pl-2">{opt.key}</span>
+			</li>
+		);
+		return (
+			<div className={"optionIndicator " + (this.props.className || '')}>
+				<label>{this.state.label}</label>
+				<ul className="text-center px-0">
+					{radios}
+				</ul>
 			</div>
 		)
 	}
@@ -118,6 +150,8 @@ class Channel extends React.Component {
 			transpose: 0,
 			panDisplay: 'C',
 			pan: 0,
+			filterOn: false,
+			filterType: 'lp',
 			amp: {
 				volume: 0,
 				attack: 0,
@@ -135,13 +169,19 @@ class Channel extends React.Component {
 		pattern.setState({tracks: tracks});
 		this.handleClick = this.handleClick.bind(this);
 		this.updatePan = this.updatePan.bind(this);
+		this.updateFilterType = this.updateFilterType.bind(this);
 		this.updateVolume = this.updateVolume.bind(this);
 		this.updatePitch = this.updatePitch.bind(this);
 		this.updateActive = this.updateActive.bind(this);
 		this.toggleSettings = this.toggleSettings.bind(this);
+		this.toggleFilter = this.toggleFilter.bind(this);
 		}
 		updatePan(value) {
 			this.setState({ pan: value, panDisplay: panFormat(value) });
+		}
+		updateFilterType(value) {
+			this.setState({ filterType: value });
+			console.log('filter type',this.state.filterType);
 		}
 		updateActive(value) {
 			this.setState({ disabled: !value, disabledClass: !value ? 'disabled' : '' });
@@ -158,6 +198,11 @@ class Channel extends React.Component {
 			var opn = this.state.settingsOpen;
 			opn = !opn;
 			this.setState({ settingsOpen: opn, settingsClass: opn ? '' : ' d-none' });
+		}
+		toggleFilter(value) {
+			var fil = this.state.filterOn;
+			fil = !fil;
+			this.setState({ filterOn: fil });
 		}
 		renderCell(i) {
 			var indicator = '';
@@ -206,10 +251,14 @@ class Channel extends React.Component {
 					<div className={"container-fluid px-0 channel-options" + this.state.settingsClass}>
 						<div className="row mx-auto">
 							<div className="col-2">
-								<PowerButton switchedOn="true" label="Dummy" className="d-inline-block"  />
+								<PowerButton switchedOn={this.state.filterOn} label="Filter" className="d-inline-block" callback={this.toggleFilter} />
 							</div>
 							<div className="col-2">
-
+								<OptionIndicator disabled={!this.state.filterOn} options={[
+									{key: 'LP', value: 'lp'},
+									{key: 'BP', value: 'bp'},
+									{key: 'HP', value: 'hp'}
+								]} name={"filterType-"+this.state.trackName} label="Filter Type" callback={this.updateFilterType} />
 							</div>
 							<div className="col-2">
 
@@ -244,7 +293,6 @@ class AudioOut extends React.Component {
 		this.setState({source: value});
 	}
 	render() {
-		const { range } = this.props;
 		return (
 			<div>
 				<audio ref="audio" controls>
