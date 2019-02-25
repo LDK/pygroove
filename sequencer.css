@@ -15,6 +15,8 @@ body {
 	--red-highlight: #e78787;
 	--grey: #373737;
 	--blue-grey-light: #c7cee7;
+	--disabled-highlight: #676767;
+	--disabled-light: #c7c7c7;
 }
 input[type="range"][orient="horizontal"] {
   width: 3.5rem;
@@ -58,7 +60,9 @@ ol, ul {
   text-align: center;
   width: 3.125%;
 }
-
+.disabled .cell {
+  background-color: var(--disabled-light);
+}
 .cell:focus {
   outline: none;
 }
@@ -73,6 +77,18 @@ ol, ul {
 .cell:nth-child(29)
 {
   background-color: var(--blue-highlight);
+}
+
+.disabled .cell:nth-child(1),
+.disabled .cell:nth-child(5),
+.disabled .cell:nth-child(9),
+.disabled .cell:nth-child(13),
+.disabled .cell:nth-child(17),
+.disabled .cell:nth-child(21),
+.disabled .cell:nth-child(25),
+.disabled .cell:nth-child(29)
+{
+  background-color: var(--disabled-highlight);
 }
 
 .kbd-navigation .cell:focus {
@@ -108,8 +124,12 @@ ol, ul {
 
 span.meter-display {
 	bottom: .5rem;
+	color: black;
 }
 
+.disabled span {
+	color: #676767;
+}
 span.meter-display.volume:after {
 	content: 'db';
 }
@@ -143,9 +163,20 @@ span.pan-display:before {
 		width: 6.44%;
 	}	
 }
+.row.disabled {
+	
+}
+div.channel-options:not(.d-none) {
+	background-color: tan;
+}
+div.channel-options .row > div {
+	height: 64px;
+	border-right: 1px solid white;
+	background-color: #9a9a9a;
+}
 div.powerButton{
-	height: 32px;
-	width: 32px;
+	height: 24px;
+	width: 24px;
 }
 div.powerButton > button {
 	background-image: url(img/power-button.svg);
@@ -163,4 +194,12 @@ div.powerButton > button {
 div.powerButton > button.switchedOn {
 	background-image: url(img/power-button-white.svg);
 	background-color: #fa1a1a;
+}
+div.powerButton.gearIcon > button {
+	background-image: url(img/gear-grey.svg);
+	background-color: transparent;
+}
+div.powerButton.gearIcon > button.switchedOn {
+	background-image: url(img/gear-white.svg);
+	background-color: #9a9a9a;
 }

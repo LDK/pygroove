@@ -79,6 +79,7 @@ class PowerButton extends React.Component {
 		this.state.inputClass = this.state.switchedOn ? 'switchedOn' : '';
 	}
 	callback(event) {
+		event.preventDefault();
 		var switchedOn = !this.state.switchedOn;
 		this.setState({ switchedOn: switchedOn });
 		if (this.props.callback) {
@@ -107,6 +108,8 @@ class Channel extends React.Component {
 		this.state = {
 			disabled: props.disabled || false,
 			disabledClass: props.disabled ? 'disabled' : '',
+			settingsOpen: props.settingsOpen || false,
+			settingsClass: props.settingsOpen ? '' : ' d-none',
 			trackName: props.trackName || 'New Channel',
 			steps: steps,
 			pitch: {
@@ -135,6 +138,7 @@ class Channel extends React.Component {
 		this.updateVolume = this.updateVolume.bind(this);
 		this.updatePitch = this.updatePitch.bind(this);
 		this.updateActive = this.updateActive.bind(this);
+		this.toggleSettings = this.toggleSettings.bind(this);
 		}
 		updatePan(value) {
 			this.setState({ pan: value, panDisplay: panFormat(value) });
@@ -149,6 +153,11 @@ class Channel extends React.Component {
 		}
 		updatePitch(value) {
 			this.setState({ transpose: value });
+		}
+		toggleSettings(value) {
+			var opn = this.state.settingsOpen;
+			opn = !opn;
+			this.setState({ settingsOpen: opn, settingsClass: opn ? '' : ' d-none' });
 		}
 		renderCell(i) {
 			var indicator = '';
@@ -187,8 +196,29 @@ class Channel extends React.Component {
 					<Range label="Vol" min="-36" max="12" step=".1" value={this.state.amp.volume} orient="vertical" inputClass="volume px-0 mx-auto col-12 col-md-3 d-md-inline-block" meterClass="px-0 mx-auto col-12 col-md-9 d-block mt-2 mt-md-0 d-md-inline-block" callback={this.updateVolume} />
 				</div>
 				<Range label="Pitch" inputClass="pitch" className="d-none" callback={this.updatePitch} min="-48" max="48" value={this.state.transpose} />
-				<div className="pattern-row col-12 col-sm-9 col-md-8">
+				<div className="pattern-row col-12 col-sm-9 col-md-7">
 					{this.cellRow(1,this.state.pattern.state.bars * 16)}
+				</div>
+				<div className="col-1 d-none d-md-block text-center">
+					<PowerButton switchedOn={false} className="gearIcon" callback={this.toggleSettings} />
+				</div>
+				<div className="col-12 d-none d-md-block text-left">
+					<div className={"container-fluid px-0 channel-options" + this.state.settingsClass}>
+						<div className="row mx-auto">
+							<div className="col-2">
+								<PowerButton switchedOn="true" label="Sucka" className="d-inline-block"  />
+							</div>
+							<div className="col-2">
+								<PowerButton switchedOn="true" label="Sucka" className="d-inline-block"  />
+							</div>
+							<div className="col-2">
+								<PowerButton switchedOn="true" label="Sucka" className="d-inline-block"  />
+							</div>
+							<div className="col-2">
+								<PowerButton switchedOn="true" label="Sucka" className="d-inline-block"  />
+							</div>
+						</div>
+					</div>
 				</div>
 			</div>
 			);
