@@ -132,10 +132,25 @@ span.meter-display {
 }
 span.meter-display.volume:after {
 	content: 'db';
+    font-size: 12px;
 }
 
 span.pan-display:before {
 	content: 'Pan: ';
+}
+
+input.freq:before {
+	content: 'Freq: ';
+	display: block;
+	    position: absolute;
+	    top: -1rem;
+	    color: black;
+	    font-size: 12px;
+
+}
+span.meter-display.freq:after {
+	content: 'Hz';
+    font-size: 12px;
 }
 
 @media (max-width: 991px) {
@@ -170,7 +185,7 @@ div.channel-options:not(.d-none) {
 	background-color: tan;
 }
 div.channel-options .row > div {
-	height: 64px;
+	height: 128px;
 	border-right: 1px solid white;
 	background-color: #9a9a9a;
 }
@@ -222,8 +237,67 @@ div.powerButton.gearIcon > button.switchedOn {
             user-select: none; /* Non-prefixed version, currently
                                   supported by Chrome and Opera */
 }
-div.optionIndicator ul li {
+/* The optionIndicator */
+.optionIndicator ul li {
     list-style-type: none;
-    display: inline-block;
     break-inside: avoid;
+  display: inline-block;
+  position: relative;
+  cursor: pointer;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.optionIndicator label {
+	font-size: 12px;
+}
+
+/* Hide the browser's default radio button */
+.optionIndicator ul li label input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/* Create a custom radio button */
+.optionIndicator ul li label .checkmark {
+  position: absolute;
+  top: 0;
+  left: 3px;
+  height: 8px;
+  width: 8px;
+  background-color: #6a6a6a;
+  border-radius: 50%;
+}
+
+/* On mouse-over, add a grey background color */
+.optionIndicator ul li label:hover input ~ .checkmark {
+  background-color: #ccc;
+}
+
+/* When the radio button is checked, add a blue background */
+.optionIndicator ul li label input:checked ~ .checkmark {
+  background-color: #2196F3;
+}
+
+/* Create the indicator (the dot/circle - hidden when not checked) */
+.optionIndicator ul li label .checkmark:after {
+  content: "";
+  position: absolute;
+  display: none;
+}
+
+/* Show the indicator (dot/circle) when checked */
+.optionIndicator ul li label input:checked ~ .checkmark:after {
+  display: block;
+}
+
+/* Style the indicator (dot/circle) */
+.optionIndicator ul li label .checkmark:after {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: lime;
 }

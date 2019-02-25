@@ -110,15 +110,19 @@ class OptionIndicator extends React.Component {
 	}
 	callback(event) {
 		if (this.props.callback) {
-			this.props.callback(this.state.value);
+			this.props.callback(event.currentTarget.value);
 		}
 	}
 	render() {
 		var props = this.props;
+		var state = this.state;
+		var cb = this.callback;
 		const radios = this.props.options.map((opt) => 
-			<li className="px-1">
-				<input type="radio" name={props.name} value={opt.value} disabled={props.disabled} />
-				<span data-name={props.name} className="option-label pl-2">{opt.key}</span>
+			<li className="px-0 mx-2 pt-3">
+				<label>{opt.key}
+					<input type="radio" value={opt.value} name={props.name} disabled={props.disabled} onClick={cb} />
+					<span className="checkmark"></span>
+				</label>
 			</li>
 		);
 		return (
@@ -150,6 +154,10 @@ class Channel extends React.Component {
 			transpose: 0,
 			panDisplay: 'C',
 			pan: 0,
+			filter: {
+				type: 'lp',
+				frequency: 22000
+			},
 			filterOn: false,
 			filterType: 'lp',
 			amp: {
@@ -170,6 +178,7 @@ class Channel extends React.Component {
 		this.handleClick = this.handleClick.bind(this);
 		this.updatePan = this.updatePan.bind(this);
 		this.updateFilterType = this.updateFilterType.bind(this);
+		this.updateFilterFrequency = this.updateFilterFrequency.bind(this);
 		this.updateVolume = this.updateVolume.bind(this);
 		this.updatePitch = this.updatePitch.bind(this);
 		this.updateActive = this.updateActive.bind(this);
@@ -180,8 +189,14 @@ class Channel extends React.Component {
 			this.setState({ pan: value, panDisplay: panFormat(value) });
 		}
 		updateFilterType(value) {
-			this.setState({ filterType: value });
-			console.log('filter type',this.state.filterType);
+			var fil = this.state.filter;
+			fil.type = value;
+			this.setState({ filter: fil });
+		}
+		updateFilterFrequency(value) {
+			var fil = this.state.filter;
+			fil.frequency = value;
+			this.setState({ filter: fil });
 		}
 		updateActive(value) {
 			this.setState({ disabled: !value, disabledClass: !value ? 'disabled' : '' });
@@ -230,7 +245,7 @@ class Channel extends React.Component {
 			return (
 			<div className={this.state.disabledClass + " row no-gutters mb-3"}>
 				<div className="col-1 d-none d-md-block text-left">
-					<PowerButton switchedOn="true" className="d-inline-block" callback={this.updateActive} />
+					<PowerButton switchedOn={true} className="d-inline-block" callback={this.updateActive} />
 					<PowerButton switchedOn={false} className="d-inline-block gearIcon" callback={this.toggleSettings} />
 				</div>
 				<input className="col-12 col-sm-1" type="button" value={this.state.trackName} />
@@ -250,15 +265,17 @@ class Channel extends React.Component {
 				<div className="col-12 d-none d-md-block text-left">
 					<div className={"container-fluid px-0 channel-options" + this.state.settingsClass}>
 						<div className="row mx-auto">
-							<div className="col-2">
+							<div className="col-1">
 								<PowerButton switchedOn={this.state.filterOn} label="Filter" className="d-inline-block" callback={this.toggleFilter} />
 							</div>
-							<div className="col-2">
-								<OptionIndicator disabled={!this.state.filterOn} options={[
+							<div className="col-3">
+								<OptionIndicator value={this.state.filter.type} disabled={!this.state.filterOn} options={[
 									{key: 'LP', value: 'lp'},
 									{key: 'BP', value: 'bp'},
 									{key: 'HP', value: 'hp'}
 								]} name={"filterType-"+this.state.trackName} label="Filter Type" callback={this.updateFilterType} />
+								<hr className="mb-2" />
+								<Range label="Freq" callback={this.updateFilterFrequency} disabled={!this.state.filterOn} inputClass="freq col-8 px-0 mx-auto" min="30" max="22000" value={this.state.filter.frequency} />
 							</div>
 							<div className="col-2">
 
