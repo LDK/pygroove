@@ -185,7 +185,8 @@ class Channel extends React.Component {
 			return (
 			<div className={this.state.disabledClass + " row no-gutters mb-3"}>
 				<div className="col-1 d-none d-md-block text-left">
-					<PowerButton switchedOn="true" callback={this.updateActive} />
+					<PowerButton switchedOn="true" className="d-inline-block" callback={this.updateActive} />
+					<PowerButton switchedOn={false} className="d-inline-block gearIcon" callback={this.toggleSettings} />
 				</div>
 				<input className="col-12 col-sm-1" type="button" value={this.state.trackName} />
 				<div className="col-1 d-none d-md-block text-center">
@@ -200,22 +201,27 @@ class Channel extends React.Component {
 					{this.cellRow(1,this.state.pattern.state.bars * 16)}
 				</div>
 				<div className="col-1 d-none d-md-block text-center">
-					<PowerButton switchedOn={false} className="gearIcon" callback={this.toggleSettings} />
 				</div>
 				<div className="col-12 d-none d-md-block text-left">
 					<div className={"container-fluid px-0 channel-options" + this.state.settingsClass}>
 						<div className="row mx-auto">
 							<div className="col-2">
-								<PowerButton switchedOn="true" label="Sucka" className="d-inline-block"  />
+								<PowerButton switchedOn="true" label="Dummy" className="d-inline-block"  />
 							</div>
 							<div className="col-2">
-								<PowerButton switchedOn="true" label="Sucka" className="d-inline-block"  />
+
 							</div>
 							<div className="col-2">
-								<PowerButton switchedOn="true" label="Sucka" className="d-inline-block"  />
+
 							</div>
 							<div className="col-2">
-								<PowerButton switchedOn="true" label="Sucka" className="d-inline-block"  />
+
+							</div>
+							<div className="col-2">
+
+							</div>
+							<div className="col-2">
+
 							</div>
 						</div>
 					</div>
