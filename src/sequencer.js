@@ -109,24 +109,27 @@ class OptionIndicator extends React.Component {
 		};
 	}
 	callback(event) {
+		var val = event.currentTarget.value;
+		this.setState({value: val});
 		if (this.props.callback) {
 			this.props.callback(event.currentTarget.value);
 		}
+		this.render();
 	}
 	render() {
 		var props = this.props;
 		var state = this.state;
 		var cb = this.callback;
 		const radios = this.props.options.map((opt) => 
-			<li className="px-0 mx-2 pt-3">
+			<li className={"px-0 mx-2 pt-3"}>
 				<label>{opt.key}
-					<input type="radio" value={opt.value} name={props.name} disabled={props.disabled} onClick={cb} />
+					<input type="radio" checked={opt.value === state.value} value={opt.value} name={props.name} disabled={props.disabled} onClick={cb} />
 					<span className="checkmark"></span>
 				</label>
 			</li>
 		);
 		return (
-			<div className={"optionIndicator " + (this.props.className || '')}>
+			<div className={"optionIndicator" +  (props.disabled ? ' disabled ' : ' ') + (this.props.className || '') }>
 				<label>{this.state.label}</label>
 				<ul className="text-center px-0">
 					{radios}
@@ -243,7 +246,7 @@ class Channel extends React.Component {
 		}
 		render() {
 			return (
-			<div className={this.state.disabledClass + " row no-gutters mb-3"}>
+			<div className={this.state.disabledClass + " channel row no-gutters mb-3"}>
 				<div className="col-1 d-none d-md-block text-left">
 					<PowerButton switchedOn={true} className="d-inline-block" callback={this.updateActive} />
 					<PowerButton switchedOn={false} className="d-inline-block gearIcon" callback={this.toggleSettings} />
@@ -263,7 +266,7 @@ class Channel extends React.Component {
 				<div className="col-1 d-none d-md-block text-center">
 				</div>
 				<div className="col-12 d-none d-md-block text-left">
-					<div className={"container-fluid px-0 channel-options" + this.state.settingsClass}>
+					<div className={"container-fluid px-0 channel-options " + this.state.settingsClass + (this.state.filterOn ? ' filterOn' : '')}>
 						<div className="row mx-auto">
 							<div className="col-1">
 								<PowerButton switchedOn={this.state.filterOn} label="Filter" className="d-inline-block" callback={this.toggleFilter} />

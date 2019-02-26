@@ -243,7 +243,6 @@ div.powerButton.gearIcon > button.switchedOn {
     break-inside: avoid;
   display: inline-block;
   position: relative;
-  cursor: pointer;
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
@@ -258,6 +257,10 @@ div.powerButton.gearIcon > button.switchedOn {
 .optionIndicator ul li label input {
   position: absolute;
   opacity: 0;
+}
+
+.row.channel:not(.disabled) .optionIndicator:not(.disabled) ul li,
+.row.channel:not(.disabled) .optionIndicator:not(.disabled) ul li label {
   cursor: pointer;
 }
 
@@ -273,12 +276,15 @@ div.powerButton.gearIcon > button.switchedOn {
 }
 
 /* On mouse-over, add a grey background color */
-.optionIndicator ul li label:hover input ~ .checkmark {
-  background-color: #ccc;
+.row.channel:not(.disabled) .optionIndicator:not(.disabled) ul li label:hover input ~ .checkmark {
+  background-color: #fff;
 }
 
 /* When the radio button is checked, add a blue background */
 .optionIndicator ul li label input:checked ~ .checkmark {
+    background-color: var(--disabled-light);
+}
+.row.channel:not(.disabled) .optionIndicator:not(.disabled)  ul li label input:checked ~ .checkmark {
   background-color: #2196F3;
 }
 
@@ -296,6 +302,14 @@ div.powerButton.gearIcon > button.switchedOn {
 
 /* Style the indicator (dot/circle) */
 .optionIndicator ul li label .checkmark:after {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: var(--disabled-light);
+}
+
+/* Style the indicator (dot/circle) */
+.row.channel:not(.disabled) .optionIndicator:not(.disabled)  ul li label .checkmark:after {
 	width: 8px;
 	height: 8px;
 	border-radius: 50%;
