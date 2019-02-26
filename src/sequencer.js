@@ -140,7 +140,7 @@ class OptionIndicator extends React.Component {
 }
 
 class Channel extends React.Component {
-		constructor(props) {
+	constructor(props) {
 		super(props);
 		var steps = Array(33).fill(null);
 		delete steps[0];
