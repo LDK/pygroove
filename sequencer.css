@@ -9,6 +9,9 @@ body {
 	--blue-light: #d7e7f7;
 	--blue-grey: #373757;
 	--blue-dark: #171747;
+	--green-light: #d7f7e7;
+	--green-grey: #97B797;
+	--green-dark: #174717;
 	--white: #f7f7f7;
 	--red-button: #c73737;
 	--red-shadow: #672727;
@@ -249,8 +252,12 @@ div.powerButton.gearIcon > button.switchedOn {
   user-select: none;
 }
 
-.optionIndicator label {
+.channel-options label {
 	font-size: 12px;
+}
+
+.incrementer input[type="text"][disabled] {
+    background: var(--green-grey);
 }
 
 /* Hide the browser's default radio button */

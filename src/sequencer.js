@@ -60,7 +60,7 @@ class Range extends React.Component {
 					max={this.props.max || 100}
 					step={this.props.step || 1}
 					onChange={this.callback}
-				>
+					tabIndex="-1" >
 				</input>
 				<span className={'meter-display ' + (this.props.inputClass || '') + ' ' + (this.props.meterClass || '')}>{this.state.value}</span>
 			</div>
@@ -92,6 +92,7 @@ class PowerButton extends React.Component {
 			<button className={this.state.switchedOn ? 'switchedOn' : ''}
 					value={this.state.switchedOn ? 1 : 0}
 					onClick={this.callback}
+					tabIndex="-1" 
 				></button>
 				<span className={'powerButton-display ' + (this.props.inputClass || '') + ' ' + (this.props.displayClass || '')}>{this.state.label}</span>
 			</div>
@@ -120,20 +121,134 @@ class OptionIndicator extends React.Component {
 		var props = this.props;
 		var state = this.state;
 		var cb = this.callback;
-		const radios = this.props.options.map((opt) => 
-			<li className={"px-0 mx-2 pt-3"}>
+		const radios = this.props.options.map((opt,i) => 
+			<li className={"px-0 mx-2 pt-3"} key={i}>
 				<label>{opt.key}
-					<input type="radio" checked={opt.value === state.value} value={opt.value} name={props.name} disabled={props.disabled} onClick={cb} />
+					<input type="radio" checked={opt.value === state.value}
+					tabIndex="-1" value={opt.value} name={props.name} disabled={props.disabled} onClick={cb} />
 					<span className="checkmark"></span>
 				</label>
 			</li>
 		);
 		return (
-			<div className={"optionIndicator" +  (props.disabled ? ' disabled ' : ' ') + (this.props.className || '') }>
+			<div className={"optionIndicator text-center" +  (props.disabled ? ' disabled ' : ' ') + (this.props.className || '') }>
 				<label>{this.state.label}</label>
 				<ul className="text-center px-0">
 					{radios}
 				</ul>
+			</div>
+		)
+	}
+}
+
+class Incrementer extends React.Component {
+	constructor(props) {
+		super(props);
+		this.callback = this.callback.bind(this);
+		this.state = {
+			value: props.value || '',
+			label: props.label || '',
+			min: props.min || false,
+			max: props.max || false,
+			typeMode: props.typeMode || false
+		};
+		this.increment = this.increment.bind(this);
+		this.handleChange = this.handleChange.bind(this);
+		this.handleBlur = this.handleBlur.bind(this);
+		this.typeModeOn = this.typeModeOn.bind(this);
+		this.typeModeOff = this.typeModeOff.bind(this);
+		this.keyPress = this.keyPress.bind(this);
+	}
+	callback(event) {
+		var val = event.currentTarget.value;
+		this.setState({value: val});
+		if (this.props.callback) {
+			this.props.callback(event.currentTarget.value);
+		}
+		this.render();
+	}
+	increment(val) {
+		var newVal = parseInt(this.state.value) || 0;
+		newVal += val;
+		newVal = this.sanitizeValue(newVal);
+		this.setState({value: newVal, typeMode: false});
+		if (this.props.callback) {
+			this.props.callback(newVal);
+		}
+		this.render();
+	}
+	focusOn() {
+		this.textInput.focus();
+	}
+	typeModeOn(event) {
+		this.setState({ typeMode: true });
+		this.render();
+		this.focusOn();
+	}
+	typeModeOff(event) {
+		var val = parseInt(event.target.value);
+		if (val) {
+			this.setState({value:val});
+		}
+		this.setState({ typeMode: false });
+		if (this.props.callback) {
+			this.props.callback(val);
+		}
+		this.render();
+	}
+	handleChange(event) {
+		var val = this.sanitizeValue(event.target.value);
+		this.setState({ value: val });
+		if (this.props.callback) {
+			this.props.callback(val);
+		}
+	}
+	sanitizeValue(value) {
+		var finalValue = value || 0;
+		if (this.state.min !== false) {
+			finalValue = Math.max(finalValue, this.state.min);
+		}
+		if (this.state.max !== false) {
+			finalValue = Math.min(finalValue, this.state.max);
+		}
+		if (isNaN(finalValue)) {
+			finalValue = 0;
+		}
+		return finalValue;
+	}
+	handleBlur(event) {
+		var finalValue = this.sanitizeValue(event.target.value);
+		this.setState({ value: finalValue, typeMode: false });
+		if (this.props.callback) {
+			this.props.callback(finalValue);
+		}
+	}
+	keyPress(e){
+		if(e.keyCode == 13 || e.keyCode == 10){
+			e.preventDefault();
+			var value = this.sanitizeValue(e.target.value);
+			this.setState({ value: value, typeMode: false });
+			if (this.props.callback) {
+				this.props.callback(value);
+			}
+		}
+	}
+	render() {
+		return (
+			<div className={"incrementer text-center" + ' ' + (this.props.className || '') }>
+				<label className="d-block">{this.state.label}</label>
+			<span onClick={() => this.increment(1)} >^</span>
+			<span onClick={() => this.increment(12)} >^^</span>
+				<div onClick={this.typeModeOn}>
+					<input type="text" onKeyDown={this.keyPress} tabIndex="-1" value={this.state.value} name={this.props.name} 
+						ref={elem => (this.textInput = elem)} 
+						className={"mx-auto text-center w-50 d-block " + (this.props.disabled || !this.state.typeMode ? ' disabled' : '')}
+						disabled={this.props.disabled || !this.state.typeMode}
+						onBlur={this.handleBlur}
+						onChange={this.handleChange} />
+				</div>
+						<span onClick={() => this.increment(-1)}>v</span>
+						<span onClick={() => this.increment(-12)} >vv</span>
 			</div>
 		)
 	}
@@ -251,7 +366,7 @@ class Channel extends React.Component {
 					<PowerButton switchedOn={true} className="d-inline-block" callback={this.updateActive} />
 					<PowerButton switchedOn={false} className="d-inline-block gearIcon" callback={this.toggleSettings} />
 				</div>
-				<input className="col-12 col-sm-1" type="button" value={this.state.trackName} />
+				<input className="col-12 col-sm-1" type="button" tabIndex="-1"  value={this.state.trackName} />
 				<div className="col-1 d-none d-md-block text-center">
 					<Range label="Pan" inputClass="pan col-8 px-0 mx-auto" meterClass="hidden" callback={this.updatePan} min="-100" value={this.state.pan} />
 					<span className="pan-display">{this.state.panDisplay}</span>
@@ -259,7 +374,6 @@ class Channel extends React.Component {
 				<div className="col-1 d-none d-sm-block text-center">
 					<Range label="Vol" min="-36" max="12" step=".1" value={this.state.amp.volume} orient="vertical" inputClass="volume px-0 mx-auto col-12 col-md-3 d-md-inline-block" meterClass="px-0 mx-auto col-12 col-md-9 d-block mt-2 mt-md-0 d-md-inline-block" callback={this.updateVolume} />
 				</div>
-				<Range label="Pitch" inputClass="pitch" className="d-none" callback={this.updatePitch} min="-48" max="48" value={this.state.transpose} />
 				<div className="pattern-row col-12 col-sm-9 col-md-7">
 					{this.cellRow(1,this.state.pattern.state.bars * 16)}
 				</div>
@@ -281,7 +395,7 @@ class Channel extends React.Component {
 								<Range label="Freq" callback={this.updateFilterFrequency} disabled={!this.state.filterOn} inputClass="freq col-8 px-0 mx-auto" min="30" max="22000" value={this.state.filter.frequency} />
 							</div>
 							<div className="col-2">
-
+								<Incrementer label="Transpose" callback={this.updatePitch} inputClass="transpose col-8 px-0 mx-auto" min="-48" max="48" value={this.state.transpose || "0"} />
 							</div>
 							<div className="col-2">
 
@@ -315,7 +429,7 @@ class AudioOut extends React.Component {
 	render() {
 		return (
 			<div>
-				<audio ref="audio" controls>
+				<audio ref="audio" controls tabIndex="-1">
 					<source src={this.state.source} />
 				</audio>
 			</div>
@@ -409,8 +523,8 @@ class Pattern extends React.Component {
 				<form onSubmit={this.handleSubmit} action="http://localhost:8081/">
 					<div className="status row">
 						<div className="col-10">
-							<label>Title:</label><input type="text" value={this.state.title} onChange={this.updateTitle} /><br />
-							<label>BPM:</label><input type="text" value={this.state.bpm} onChange={this.updateBPM} /><br />
+							<label>Title:</label><input type="text" value={this.state.title} onChange={this.updateTitle} tabIndex="-1" /><br />
+							<label>BPM:</label><input type="text" value={this.state.bpm} onChange={this.updateBPM} tabIndex="-1" /><br />
 						</div>
 						<div className="col-2">
 							Swing: <Range label="Swing" inputClass="pan col-8 px-0 mx-auto" meterClass="pl-2" callback={this.updateSwing} min="0" max="1.25" step=".01" value={this.state.swing} />
@@ -420,7 +534,7 @@ class Pattern extends React.Component {
 					{this.renderChannel('Closed Hat','808-CH1')}
 					{this.renderChannel('Open Hat','808-OH1')}
 					{this.renderChannel('Snare','808-Snare1')}
-					<input type="submit" value="Save Pattern" />
+					<input type="submit" value="Save Pattern" tabIndex="-1" />
 				</form>
 				<AudioOut source={this.state.audioSource} ref={this.patternOut} />
 			</div>
