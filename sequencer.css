@@ -195,11 +195,11 @@ div.channel-options .row > div {
 .disabled.row div.channel-options .row > div {
 	background-color: var(--disabled-light);
 }
-div.powerButton{
+div.powerButton:not(.labelButton) {
 	height: 24px;
 	width: 24px;
 }
-div.powerButton > button {
+div.powerButton:not(.labelButton) > button {
 	background-image: url(img/power-button.svg);
 	background-repeat: no-repeat;
 	background-size: 75%;
@@ -212,23 +212,31 @@ div.powerButton > button {
 	cursor: pointer;
 	outline: none !important;
 }
-div.powerButton > button.switchedOn {
+div.powerButton:not(.labelButton) > button.switchedOn {
 	background-image: url(img/power-button-white.svg);
 	background-color: #fa1a1a;
 }
-div.powerButton.gearIcon {
+div.powerButton.labelButton > button {
+	color: var(--disabled-highlight);
+	background: var(--disabled-light);
+}
+div.powerButton.labelButton > button.switchedOn {
+	color: white;
+	background: red;
+}
+div.powerButton.gearIcon:not(.labelButton) {
 	height: 32px;
 	width: 32px;
 }
-div.powerButton.gearIcon > button {
+div.powerButton.gearIcon:not(.labelButton) > button {
 	background-image: url(img/gear-grey.svg);
 	background-color: transparent;
 	background-position: bottom center;
 }
-div.powerButton.gearIcon > button.switchedOn {
+div.powerButton.gearIcon:not(.labelButton) > button.switchedOn {
 	background-image: url(img/gear-white.svg);
 }
-.disabled.row div.powerButton.gearIcon > button.switchedOn {
+.disabled.row div.powerButton.gearIcon:not(.labelButton) > button.switchedOn {
 	background-image: url(img/gear-black.svg);
 }
 .noselect {
@@ -281,7 +289,17 @@ div.powerButton.gearIcon > button.switchedOn {
   background-color: #6a6a6a;
   border-radius: 50%;
 }
-
+.optionIndicator ul.vertical li label .checkmark {
+	left: auto;
+	right: auto;
+	text-align: center;
+	margin-left: -1rem;
+}
+.optionIndicator ul.vertical li {
+	margin-left: 0rem !important;
+	margin-right: 0rem !important;
+	width: 100%;
+}
 /* On mouse-over, add a grey background color */
 .row.channel:not(.disabled) .optionIndicator:not(.disabled) ul li label:hover input ~ .checkmark {
   background-color: #fff;
