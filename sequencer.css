@@ -61,7 +61,7 @@ ol, ul {
   margin-top: -1px;
   padding: 0;
   text-align: center;
-  width: 3.125%;
+  width: 3.275%;
 }
 .disabled .cell {
   background-color: var(--disabled-light);

@@ -90,18 +90,22 @@ class PowerButton extends React.Component {
 	render() {
 		var buttonClass = this.state.switchedOn ? 'switchedOn' : '';
 		var divClass = "powerButton " + (this.props.className || '');
+		var wrapperClass = "powerButton-wrapper d-inline-block " + (this.props.wrapperClass || '');
+		wrapperClass = wrapperClass.trim();
 		divClass = divClass.trim();
 		if (this.state.labelButton) {
 			divClass += " labelButton";
 		}
 		return (
-			<div className={divClass}>
-			<button className={buttonClass}
-					value={this.state.switchedOn ? 1 : 0}
-					onClick={this.callback}
-					tabIndex="-1" 
-				>{this.state.labelButton ? this.state.label : ''}</button>
-				<span className={'powerButton-display ' + (this.props.inputClass || '') + ' ' + (this.props.displayClass || '')}>{!this.state.labelButton ? this.state.label : ''}</span>
+			<div className={wrapperClass}>
+				<label className={'powerButton-display ' + (this.props.inputClass || '') + ' ' + (this.props.displayClass || '')}>{!this.state.labelButton ? this.state.label : ''}</label>
+				<div className={divClass}>
+					<button className={buttonClass}
+						value={this.state.switchedOn ? 1 : 0}
+						onClick={this.callback}
+						tabIndex="-1" 
+					>{this.state.labelButton ? this.state.label : ''}</button>
+				</div>
 			</div>
 		)
 	}
@@ -147,6 +151,36 @@ class OptionIndicator extends React.Component {
 				<ul className={listClass}>
 					{radios}
 				</ul>
+			</div>
+		)
+	}
+}
+
+class FileSelector extends React.Component {
+	constructor(props) {
+		super(props);
+		this.callback = this.callback.bind(this);
+		this.state = {
+			value: props.value || null,
+			label: props.label || ''
+		};
+	}
+	callback(event) {
+		var val = event.currentTarget.value;
+		this.setState({value: val});
+		if (this.props.callback) {
+			this.props.callback(event.currentTarget.value);
+		}
+		this.render();
+	}
+	render() {
+		var props = this.props;
+		var state = this.state;
+		var wrapperClass = "fileSelector" +  (props.disabled ? ' disabled ' : ' ') + (this.props.className || '');
+		return (
+			<div className={wrapperClass}>
+				<label>{this.state.label}</label>
+				<input type="file" tabIndex="-1" name={props.name} disabled={props.disabled} />
 			</div>
 		)
 	}
@@ -289,8 +323,14 @@ class Channel extends React.Component {
 				type: 'lp',
 				frequency: 22000
 			},
+			filter2: {
+				type: 'lp',
+				frequency: 22000
+			},
 			filterOn: false,
+			filter2On: false,
 			filterType: 'lp',
+			filter2Type: 'lp',
 			amp: {
 				volume: 0,
 				attack: 0,
@@ -317,6 +357,9 @@ class Channel extends React.Component {
 		this.toggleSettings = this.toggleSettings.bind(this);
 		this.toggleFilter = this.toggleFilter.bind(this);
 		this.toggleReverse = this.toggleReverse.bind(this);
+		this.toggleFilter2 = this.toggleFilter2.bind(this);
+		this.updateFilter2Type = this.updateFilter2Type.bind(this);
+		this.updateFilter2Frequency = this.updateFilter2Frequency.bind(this);
 		}
 		updatePan(value) {
 			this.setState({ pan: value, panDisplay: panFormat(value) }, function () {
@@ -334,6 +377,20 @@ class Channel extends React.Component {
 			var fil = this.state.filter;
 			fil.frequency = value;
 			this.setState({ filter: fil }, function () {
+				this.props.updateTrack(this.state.trackName,this.state);
+			});
+		}
+		updateFilter2Type(value) {
+			var fil = this.state.filter2;
+			fil.type = value;
+			this.setState({ filter2: fil }, function () {
+				this.props.updateTrack(this.state.trackName,this.state);
+			});
+		}
+		updateFilter2Frequency(value) {
+			var fil = this.state.filter2;
+			fil.frequency = value;
+			this.setState({ filter2: fil }, function () {
 				this.props.updateTrack(this.state.trackName,this.state);
 			});
 		}
@@ -366,6 +423,11 @@ class Channel extends React.Component {
 		}
 		toggleFilter(value) {
 			this.setState({ filterOn: !this.state.filterOn }, function () {
+				this.props.updateTrack(this.state.trackName,this.state);
+			});
+		}
+		toggleFilter2(value) {
+			this.setState({ filter2On: !this.state.filter2On }, function () {
 				this.props.updateTrack(this.state.trackName,this.state);
 			});
 		}
@@ -411,37 +473,52 @@ class Channel extends React.Component {
 				<div className="col-1 d-none d-sm-block text-center">
 					<Range label="Vol" min="-36" max="12" step=".1" value={this.state.amp.volume} orient="vertical" inputClass="volume px-0 mx-auto col-12 col-md-3 d-md-inline-block" meterClass="px-0 mx-auto col-12 col-md-9 d-block mt-2 mt-md-0 d-md-inline-block" callback={this.updateVolume} />
 				</div>
-				<div className="pattern-row col-12 col-sm-9 col-md-7">
+				<div className="pattern-row col-12 col-sm-9 col-md-8">
 					{this.cellRow(1,this.state.pattern.state.bars * 16)}
 				</div>
 				<div className="col-1 d-none d-md-block text-center">
 				</div>
-				<div className="col-12 d-none d-md-block text-left">
+				<div className="col-12 d-none d-md-block">
 					<div className={"container-fluid px-0 channel-options " + this.state.settingsClass + (this.state.filterOn ? ' filterOn' : '')}>
 						<div className="row mx-auto">
-							<div className="col-1">
-								<PowerButton switchedOn={this.state.filterOn} label="Filter" className="d-inline-block" callback={this.toggleFilter} />
-							</div>
 							<div className="col-3">
-								<OptionIndicator value={this.state.filter.type} disabled={!this.state.filterOn} options={[
-									{key: 'LP', value: 'lp'},
-									{key: 'BP', value: 'bp'},
-									{key: 'HP', value: 'hp'}
-								]} name={"filterType-"+this.state.trackName} label="Filter Type" callback={this.updateFilterType} />
-								<hr className="mb-4 mt-1" />
-								<Range label="Freq" className="mt-4" callback={this.updateFilterFrequency} disabled={!this.state.filterOn} inputClass="freq col-8 px-0 mx-auto" min="30" max="22000" value={this.state.filter.frequency} />
+								<label>Current Sample: {this.state.wav}</label>
+								<FileSelector name="test-file" />
 							</div>
+							<div className="col-1 text-center">
+								<PowerButton switchedOn={this.state.filterOn} label="Filter 1"  callback={this.toggleFilter} className="mx-auto" />
+								<PowerButton switchedOn={this.state.filter2On} label="Filter 2"  callback={this.toggleFilter2} wrapperClass="mt-3" className="mx-auto" />
+							</div>
+				<div className="col-2">
+					<OptionIndicator value={this.state.filter.type} disabled={!this.state.filterOn} options={[
+						{key: 'LP', value: 'lp'},
+						{key: 'BP', value: 'bp'},
+						{key: 'HP', value: 'hp'}
+					]} name={"filterType-"+this.state.trackName} label="Filter 1 Type" callback={this.updateFilterType} />
+					<hr className="mb-4 mt-1" />
+					<Range label="Cutoff Freq" className="mt-4 text-center" callback={this.updateFilterFrequency} disabled={!this.state.filterOn} inputClass="freq col-8 px-0 mx-auto" min="30" max="22000" value={this.state.filter.frequency} />
+				</div>
+				<div className="col-2">
+					<OptionIndicator value={this.state.filter2.type} disabled={!this.state.filter2On} options={[
+						{key: 'LP', value: 'lp'},
+						{key: 'BP', value: 'bp'},
+						{key: 'HP', value: 'hp'}
+					]} name={"filter2Type-"+this.state.trackName} label="Filter 2 Type" callback={this.updateFilter2Type} />
+					<hr className="mb-4 mt-1" />
+					<Range label="Cutoff Freq" className="mt-4 text-center" callback={this.updateFilter2Frequency} disabled={!this.state.filter2On} inputClass="freq col-8 px-0 mx-auto" min="30" max="22000" value={this.state.filter2.frequency} />
+				</div>
 							<div className="col-2 text-center">
 								<Incrementer label="Transpose" callback={this.updatePitch} inputClass="transpose col-8 px-0 mx-auto" min="-48" max="48" value={this.state.transpose || "0"} />
 								<PowerButton className="mt-2" switchedOn={this.state.reverse} label="Reverse" labelButton={true} callback={this.toggleReverse} />
 							</div>
-							<div className="col-4">
-							</div>
-							<div className="col-2">
+							<div className="col-1">
 								<OptionIndicator layout="vertical" value={this.state.settingsMode} options={[
 									{key: 'Chan', value: 'chan'},
 									{key: 'Step', value: 'step'}
 								]} name={"settingsMode-"+this.state.trackName} label="Settings Mode" callback={this.updateSettingsMode} />
+							</div>
+							<div className="col-1">
+
 							</div>
 						</div>
 					</div>
@@ -511,6 +588,7 @@ class Pattern extends React.Component {
 		this.setState({title: event.target.value});
 	}
 	handleSubmit(event) {
+		// console.log('submitted state',this.state);
 		event.preventDefault();
 		for (var trackName in this.state.tracks) {
 			this.updateTrack(trackName,this.state.tracks[trackName]);
