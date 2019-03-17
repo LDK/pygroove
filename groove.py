@@ -35,6 +35,21 @@ channelDefaults = {'volume': -12.0, 'pan': 0}
 # Start with an empty dictionary of tracks
 tracks = {}
 
+def detect_leading_silence(sound, silence_threshold=-50.0, chunk_size=10):
+    trim_ms = 0 # ms
+
+    assert chunk_size > 0 # to avoid infinite loop
+    while sound[trim_ms:trim_ms+chunk_size].dBFS < silence_threshold and trim_ms < len(sound):
+        trim_ms += chunk_size
+
+    return trim_ms
+
+def trim(sound, silence_threshold=-50.0, chunk_size=10):
+    start_trim = detect_leading_silence(sound, silence_threshold, chunk_size)
+    end_trim = detect_leading_silence(sound.reverse(), silence_threshold, chunk_size)
+    duration = len(sound)    
+    trimmed_sound = sound[start_trim:duration-end_trim]
+    return trimmed_sound
 
 def newTrack(name = ''):
     trackLength = 0
@@ -155,7 +170,7 @@ def addNote(trackName,sound,bar,beat,tick,options = {}):
     else:
         return
     # If swing is active and we are not on the very first tick of the pattern, apply swing
-    if (swingAmount and tick > 1 and beat > 1 and bar > 1):
+    if (swingAmount and (tick > 1 or beat > 1 or bar > 1)):
         if (swingUp):
             tick += swingAmount
         else:
@@ -204,6 +219,7 @@ def renderJSON(json):
     print("Tracks")
     print(dashLine(6))
     # For each listed channel, add a track, add the notes, apply any filters, set the volume, set the pan and overlay onto master
+    # TODO: Split all these steps into functions for neatness' sake
     for trackName, channel in channels.items():
         # Add a track
         newTrack(trackName)
@@ -212,6 +228,12 @@ def renderJSON(json):
         trackWav = channel['wav']
         trackSound = AudioSegment.from_wav('./audio/'+trackWav)
         trackTranspose = 0
+        if 'trim' in channel:
+            if (channel['trim'] == True):
+                trackSound = trim(trackSound)
+        if 'reverse' in channel:
+            if (channel['reverse'] == True):
+                trackSound = trackSound.reverse()
         # Handle transposition.  trackTranspose is the transposition value in semitones
         if 'transpose' in channel:
             trackTranspose = channel['transpose']
@@ -219,18 +241,11 @@ def renderJSON(json):
         amp = False
         if 'amp' in channel:
             amp = channel['amp']
-            print("amp")
-            print(amp)
             if 'attack' in amp:
                 peak = 0.0
                 if 'peak' in amp:
                     peak += float(amp['peak'])
-                    print("Fading to {peak}db in {attack}ms".format(peak=peak,attack=amp['attack']))
                 trackSound = trackSound.fade(from_gain=-120.0, to_gain = peak, start=0, duration=200)
-                # out_f = open("enveloped.mp3", 'wb')
-                # trackSound.export(out_f, format='mp3')
-#                trackSound = trackSound.fade(to_gain=peak, start=0, duration=int(amp['attack']))
-#                trackSound = trackSound.fade(from_gain=-120.0, to_gain=peak, start=0, duration=3000)
 
         for note in trackNotes:
             # Parse note location, volume and any other settings
@@ -254,14 +269,14 @@ def renderJSON(json):
             addNote(trackName,addSound,noteBar,noteBeat,noteTick)
             out_f = open("layer-{}.wav".format(trackName), 'wb')
             tracks[trackName].export(out_f, format='wav')
-        # Apply filters
-        if 'filterType' in channel:
-            if (channel['filterType'] == 'hpf' and channel['cutoff']):
-                tracks[trackName] = tracks[trackName].high_pass_filter(cutoff_freq=int(channel['cutoff']), order=3)
-            if (channel['filterType'] == 'lpf' and channel['cutoff']):
-                tracks[trackName] = tracks[trackName].low_pass_filter(cutoff_freq=int(channel['cutoff']), order=3)
-            if (channel['filterType'] == 'bpf' and channel['cutoff']):
-                tracks[trackName] = tracks[trackName].band_pass_filter(low_cutoff_freq=int(channel['cutoff']), high_cutoff_freq=int(channel['cutoff2']), order=3)
+        # Apply filter1
+        if ('filterOn' in channel and channel['filterOn'] == True):
+            if (channel['filter']['type'] == 'hp' and channel['filter']['frequency']):
+                tracks[trackName] = tracks[trackName].high_pass_filter(cutoff_freq=int(channel['filter']['frequency']), order=3)
+            if (channel['filter']['type'] == 'lp' and channel['filter']['frequency']):
+                tracks[trackName] = tracks[trackName].low_pass_filter(cutoff_freq=int(channel['filter']['frequency']), order=3)
+            if (channel['filter']['type'] == 'bp' and channel['filter']['frequency'] and channel['filter']['frequency2']):
+                tracks[trackName] = tracks[trackName].band_pass_filter(low_cutoff_freq=int(channel['filter']['frequency']), high_cutoff_freq=int(['filter']['frequency2']), order=3)
         # Apply the volume
         if amp:
             trackVol = float(amp['volume'])
