@@ -313,6 +313,7 @@ class Channel extends React.Component {
 			trackName: props.trackName || 'New Channel',
 			steps: steps,
 			reverse: props.reverse || false,
+			trim: props.trim || false,
 			pitch: {
 				
 			},
@@ -357,6 +358,7 @@ class Channel extends React.Component {
 		this.toggleSettings = this.toggleSettings.bind(this);
 		this.toggleFilter = this.toggleFilter.bind(this);
 		this.toggleReverse = this.toggleReverse.bind(this);
+		this.toggleTrim = this.toggleTrim.bind(this);
 		this.toggleFilter2 = this.toggleFilter2.bind(this);
 		this.updateFilter2Type = this.updateFilter2Type.bind(this);
 		this.updateFilter2Frequency = this.updateFilter2Frequency.bind(this);
@@ -436,6 +438,11 @@ class Channel extends React.Component {
 				this.props.updateTrack(this.state.trackName,this.state);
 			});
 		}
+		toggleTrim(value) {
+			this.setState({ trim: !this.state.trim }, function () {
+				this.props.updateTrack(this.state.trackName,this.state);
+			});
+		}
 		renderCell(i) {
 			var indicator = '';
 			var loc = stepFormat(i);
@@ -510,15 +517,13 @@ class Channel extends React.Component {
 							<div className="col-2 text-center">
 								<Incrementer label="Transpose" callback={this.updatePitch} inputClass="transpose col-8 px-0 mx-auto" min="-48" max="48" value={this.state.transpose || "0"} />
 								<PowerButton className="mt-2" switchedOn={this.state.reverse} label="Reverse" labelButton={true} callback={this.toggleReverse} />
+								<PowerButton className="mt-2" switchedOn={this.state.trim} label="Trim" labelButton={true} callback={this.toggleTrim} />
 							</div>
-							<div className="col-1">
+							<div className="col-2">
 								<OptionIndicator layout="vertical" value={this.state.settingsMode} options={[
 									{key: 'Chan', value: 'chan'},
 									{key: 'Step', value: 'step'}
 								]} name={"settingsMode-"+this.state.trackName} label="Settings Mode" callback={this.updateSettingsMode} />
-							</div>
-							<div className="col-1">
-
 							</div>
 						</div>
 					</div>

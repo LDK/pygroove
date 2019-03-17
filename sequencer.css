@@ -166,6 +166,11 @@ span.meter-display.freq:after {
 		bottom: .5rem;
 	}
 }
+@media (min-width: 1200px) {
+	.cell {
+		width: 3.25%;
+	}
+}
 @media (max-width: 320px) {
 	.cell {
 		width: 12.85%;
@@ -188,7 +193,7 @@ div.channel-options:not(.d-none) {
 	background-color: tan;
 }
 div.channel-options .row > div {
-	height: 128px;
+	height: 180px;
 	border-right: 1px solid white;
 	background-color: #9a9a9a;
 }
