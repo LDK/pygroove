@@ -244,6 +244,35 @@ div.powerButton.gearIcon:not(.labelButton) > button.switchedOn {
 .disabled.row div.powerButton.gearIcon:not(.labelButton) > button.switchedOn {
 	background-image: url(img/gear-black.svg);
 }
+div.contextMenu-wrapper a {
+	position: relative;
+	background-image: url(img/see-more-vertical.svg);
+	background-repeat: no-repeat;
+	background-size: 75%;
+	-webkit-appearance: none;
+	border-radius: 3rem;
+	background-position: center 75%;
+	background-color: transparent;
+	cursor: pointer;
+	outline: none !important;
+	height: 24px;
+	width: 18px;
+	display: inline-block;
+}
+div.contextMenu-wrapper select {
+	position: absolute;
+	z-index: 5;
+	overflow: auto;
+	cursor: pointer;
+}
+div.contextMenu-wrapper select option:hover {
+	color: white;
+	background-color: blue;
+}
+div.contextMenu-wrapper:not(.open) select {
+	display: none;
+	position: absolute;
+}
 .noselect {
   -webkit-touch-callout: none; /* iOS Safari */
     -webkit-user-select: none; /* Safari */

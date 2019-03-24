@@ -111,6 +111,45 @@ class PowerButton extends React.Component {
 	}
 }
 
+class ContextMenu extends React.Component {
+	constructor(props) {
+		super(props);
+		this.callback = this.callback.bind(this);
+		this.state = {
+			isOpen: props.open || false,
+			icon: props.icon || 'see-more-vertical',
+			items: props.items || []
+		};
+	}
+	callback(event) {
+		event.preventDefault();
+		var opn = !this.state.isOpen;
+		this.setState({ isOpen: opn });
+		if (this.props.callback) {
+			this.props.callback(event);
+		}
+		this.render();
+	}
+	render() {
+		var wrapperClass = "contextMenu-wrapper d-inline-block " + (this.props.wrapperClass || '');
+		wrapperClass = wrapperClass.trim();
+		if (this.state.isOpen) {
+			wrapperClass += ' open';
+		}
+		const options = this.props.items.map((item,i) => 
+			<option key={i} value={item.value}>{item.label}</option>
+			);
+		return (
+			<div className={wrapperClass}>
+				<a onClick={this.callback} href="javascript:;" className={this.state.icon}></a>
+				<select size={this.state.items.length} onClick={this.callback} tabIndex="-1">
+					{options}
+				</select>
+			</div>
+		)
+	}
+}
+
 class OptionIndicator extends React.Component {
 	constructor(props) {
 		super(props);
@@ -343,6 +382,29 @@ class Channel extends React.Component {
 			pattern: props.pattern,
 			wav: props.wav
 		};
+		this.state.actions = {
+			fill: function() {
+
+			},
+			fill2: function() {
+
+			},
+			fill4: function() {
+
+			},
+			fill8: function() {
+
+			},
+			clear: function() {
+
+			},
+			copy: function() {
+
+			},
+			paste: function() {
+
+			}
+		}
 		var pattern = props.pattern;
 		var tracks = pattern.state.tracks;
 		tracks[this.state.trackName] = this.state;
@@ -362,6 +424,7 @@ class Channel extends React.Component {
 		this.toggleFilter2 = this.toggleFilter2.bind(this);
 		this.updateFilter2Type = this.updateFilter2Type.bind(this);
 		this.updateFilter2Frequency = this.updateFilter2Frequency.bind(this);
+		this.runChannelAction = this.runChannelAction.bind(this);
 		}
 		updatePan(value) {
 			this.setState({ pan: value, panDisplay: panFormat(value) }, function () {
@@ -465,12 +528,29 @@ class Channel extends React.Component {
 			this.props.updateTrack(track.trackName,track);
 			// this.setState({pattern: pattern});
 		}
+		runChannelAction(event) {
+			if (event.currentTarget.value) {
+				console.log('RUN',event.currentTarget.value);
+				this.state.actions[event.currentTarget.value]();
+			}
+		}
 		render() {
 			return (
 			<div className={this.state.disabledClass + " channel row no-gutters mb-3"}>
 				<div className="col-1 d-none d-md-block text-left">
 					<PowerButton switchedOn={true} className="d-inline-block" callback={this.updateActive} />
 					<PowerButton switchedOn={false} className="d-inline-block gearIcon" callback={this.toggleSettings} />
+					<ContextMenu open={false} className="d-inline-block channelActions"
+						callback={this.runChannelAction}
+					 	items={[
+							{value: 'fill', label: 'Fill All Notes'},
+							{value: 'fill2', label: 'Fill Every 2 Notes'},
+							{value: 'fill4', label: 'Fill Every 4 Notes'},
+							{value: 'fill8', label: 'Fill Every 8 Notes'},
+							{value: 'clear', label: 'Clear All Notes', prompt: 'Are you Sure?'},
+							{value: 'copy', label: 'Copy Pattern'},
+							{value: 'paste', label: 'Paste Pattern'},
+						]} />
 				</div>
 				<input className="col-12 col-sm-1" type="button" tabIndex="-1"  value={this.state.trackName} />
 				<div className="col-1 d-none d-md-block text-center">
