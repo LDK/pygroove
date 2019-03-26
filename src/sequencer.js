@@ -115,11 +115,26 @@ class ContextMenu extends React.Component {
 	constructor(props) {
 		super(props);
 		this.callback = this.callback.bind(this);
+		this.handleClick = this.handleClick.bind(this);
 		this.state = {
 			isOpen: props.open || false,
 			icon: props.icon || 'see-more-vertical',
 			items: props.items || []
 		};
+	}
+	componentWillMount() {
+		document.addEventListener('mousedown', this.handleClick, false);
+	}
+	componentWillUnmount() {
+		document.removeEventListener('mousedown', this.handleClick, false);
+	}
+	handleClick(event) {
+		if (event.target.classList.contains('contextMenu-option')) {
+			// Do nothing
+		}
+		else {
+			this.setState({ isOpen: false })
+		}
 	}
 	callback(event) {
 		event.preventDefault();
@@ -137,7 +152,7 @@ class ContextMenu extends React.Component {
 			wrapperClass += ' open';
 		}
 		const options = this.props.items.map((item,i) => 
-			<option key={i} value={item.value}>{item.label}</option>
+			<option className="contextMenu-option" key={i} value={item.value}>{item.label}</option>
 			);
 		return (
 			<div className={wrapperClass}>
@@ -383,20 +398,30 @@ class Channel extends React.Component {
 			wav: props.wav
 		};
 		this.state.actions = {
-			fill: function() {
-
+			fill: function(chan) {
+				for (var i=1;i<chan.state.steps.length;i++) {
+					chan.fillCell(i);
+				}
 			},
-			fill2: function() {
-
+			fill2: function(chan) {
+				for (var i=1;i<chan.state.steps.length;i=i+2) {
+					chan.fillCell(i);
+				}
 			},
-			fill4: function() {
-
+			fill4: function(chan) {
+				for (var i=1;i<chan.state.steps.length;i=i+4) {
+					chan.fillCell(i);
+				}
 			},
-			fill8: function() {
-
+			fill8: function(chan) {
+				for (var i=1;i<chan.state.steps.length;i=i+8) {
+					chan.fillCell(i);
+				}
 			},
-			clear: function() {
-
+			clear: function(chan) {
+				for (var i=1;i<chan.state.steps.length;i++) {
+					chan.emptyCell(i);
+				}
 			},
 			copy: function() {
 
@@ -409,7 +434,9 @@ class Channel extends React.Component {
 		var tracks = pattern.state.tracks;
 		tracks[this.state.trackName] = this.state;
 		pattern.setState({tracks: tracks});
-		this.handleClick = this.handleClick.bind(this);
+		this.toggleCell = this.toggleCell.bind(this);
+		this.fillCell = this.fillCell.bind(this);
+		this.emptyCell = this.emptyCell.bind(this);
 		this.updatePan = this.updatePan.bind(this);
 		this.updateSettingsMode = this.updateSettingsMode.bind(this);
 		this.updateFilterType = this.updateFilterType.bind(this);
@@ -510,7 +537,7 @@ class Channel extends React.Component {
 			var indicator = '';
 			var loc = stepFormat(i);
 			if (this.state.steps[i]) { indicator = 'X'; }
-			return <Cell bar={loc.bar} beat={loc.beat} tick={loc.tick} value={this.state.steps[i]} indicator={indicator} onClick={() => this.handleClick(i)} key={i}/>;
+			return <Cell bar={loc.bar} beat={loc.beat} tick={loc.tick} value={this.state.steps[i]} indicator={indicator} onClick={() => this.toggleCell(i)} key={i}/>;
 		}
 		cellRow(start,end) {
 			var cells = [];
@@ -519,7 +546,7 @@ class Channel extends React.Component {
 			}
 			return cells;
 		}
-		handleClick(i) {
+		toggleCell(i) {
 			const steps = this.state.steps.slice();
 			steps[i] = !steps[i];
 			this.setState({steps: steps});
@@ -528,10 +555,25 @@ class Channel extends React.Component {
 			this.props.updateTrack(track.trackName,track);
 			// this.setState({pattern: pattern});
 		}
+		fillCell(i) {
+			const steps = this.state.steps.slice();
+			steps[i] = true;
+			this.setState({steps: steps});
+			var track = this.state;
+			track.steps = steps;
+			this.props.updateTrack(track.trackName,track);
+		}
+		emptyCell(i) {
+			const steps = this.state.steps.slice();
+			steps[i] = false;
+			this.setState({steps: steps});
+			var track = this.state;
+			track.steps = steps;
+			this.props.updateTrack(track.trackName,track);
+		}
 		runChannelAction(event) {
 			if (event.currentTarget.value) {
-				console.log('RUN',event.currentTarget.value);
-				this.state.actions[event.currentTarget.value]();
+				this.state.actions[event.currentTarget.value](this);
 			}
 		}
 		render() {
@@ -673,7 +715,6 @@ class Pattern extends React.Component {
 		this.setState({title: event.target.value});
 	}
 	handleSubmit(event) {
-		// console.log('submitted state',this.state);
 		event.preventDefault();
 		for (var trackName in this.state.tracks) {
 			this.updateTrack(trackName,this.state.tracks[trackName]);
