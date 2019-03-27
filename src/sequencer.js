@@ -423,11 +423,17 @@ class Channel extends React.Component {
 					chan.emptyCell(i);
 				}
 			},
-			copy: function() {
-
+			copy: function(chan) {
+				chan.state.pattern.addToClipboard('steps',chan.state.steps);
 			},
-			paste: function() {
-
+			cut: function(chan) {
+				chan.state.pattern.addToClipboard('steps',chan.state.steps);
+				this.clear(chan);
+			},
+			paste: function(chan) {
+				if (chan.state.pattern.state.clipboard.steps) {
+					chan.setState({ steps: chan.state.pattern.state.clipboard.steps });
+				}
 			}
 		}
 		var pattern = props.pattern;
@@ -591,6 +597,7 @@ class Channel extends React.Component {
 							{value: 'fill8', label: 'Fill Every 8 Notes'},
 							{value: 'clear', label: 'Clear All Notes', prompt: 'Are you Sure?'},
 							{value: 'copy', label: 'Copy Pattern'},
+							{value: 'cut', label: 'Cut Pattern'},
 							{value: 'paste', label: 'Paste Pattern'},
 						]} />
 				</div>
@@ -688,19 +695,26 @@ class Pattern extends React.Component {
 			bars: 2,
 			title: 'pyGroove Demo Beat',
 			audioSource: 'fix that.mp3',
-			tracks: {}
+			tracks: {},
+			clipboard: {}
 		};
 		this.updateBPM = this.updateBPM.bind(this);
 		this.updateSwing = this.updateSwing.bind(this);
 		this.updateTitle = this.updateTitle.bind(this);
 		this.updateTrack = this.updateTrack.bind(this);
 		this.handleSubmit = this.handleSubmit.bind(this);
+		this.addToClipboard = this.addToClipboard.bind(this);
 		this.renderChannel = this.renderChannel.bind(this);
 	}
 	updateTrack(trackName,track){
 		var tracks = this.state.tracks;
 		tracks[trackName] = track;
 		this.setState({tracks: tracks});
+	}
+	addToClipboard(k,v) {
+		var clip = this.state.clipboard;
+		clip[k] = v;
+		this.setState({ clipboard: clip });
 	}
 	renderChannel(trackName,wav) {
 		return <Channel trackName={trackName} wav={wav+'.wav'} pattern={this} updateTrack={this.updateTrack} />;
