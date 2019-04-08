@@ -1,14 +1,7 @@
-import React from 'react';
+import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import cloneDeep from 'lodash/cloneDeep';
 import 'whatwg-fetch';
-import AudioOut from './components/AudioOut.js';
-import Range from './components/Range.js';
-import OptionIndicator from './components/OptionIndicator.js';
-import ContextMenu from './components/ContextMenu.js';
-import PowerButton from './components/PowerButton.js';
-import FileSelector from './components/FileSelector.js';
-import Incrementer from './components/Incrementer.js';
 
 function Cell(props) {
 	return (
@@ -39,6 +32,325 @@ function panFormat(value) {
 		dir = 'L';
 	}
 	return num + dir;
+}
+
+class Range extends React.Component {
+	constructor(props) {
+		super(props);
+		this.callback = this.callback.bind(this);
+		this.state = {
+			value: props.value || 0,
+			displayValue: props.displayValue || null
+		};
+	}
+	
+	callback(event) {
+		this.setState({ value: event.target.value });
+		this.props.callback(event.target.value);
+	}
+	
+	render() {
+		const { range } = this.props;
+		return (
+			<div className={"meter " + (this.props.className || '')}>
+				<input className={this.props.inputClass || ''} type="range"
+					value={this.props.value || 0}
+					orient={this.props.orient || 'horizontal'}
+					min={this.props.min || 0}
+					max={this.props.max || 100}
+					step={this.props.step || 1}
+					onChange={this.callback}
+					tabIndex="-1" >
+				</input>
+				<span className={'meter-display ' + (this.props.inputClass || '') + ' ' + (this.props.meterClass || '')}>{this.state.value}</span>
+			</div>
+		)
+	}
+}
+
+class PowerButton extends React.Component {
+	constructor(props) {
+		super(props);
+		this.callback = this.callback.bind(this);
+		this.state = {
+			switchedOn: props.switchedOn || false,
+			label: props.label || '',
+			labelButton: props.labelButton || false
+		};
+		this.state.inputClass = this.state.switchedOn ? 'switchedOn' : '';
+	}
+	callback(event) {
+		event.preventDefault();
+		var switchedOn = !this.state.switchedOn;
+		this.setState({ switchedOn: switchedOn });
+		if (this.props.callback) {
+			this.props.callback(switchedOn);
+		}
+	}
+	render() {
+		var buttonClass = this.state.switchedOn ? 'switchedOn' : '';
+		var divClass = "powerButton " + (this.props.className || '');
+		var wrapperClass = "powerButton-wrapper d-inline-block " + (this.props.wrapperClass || '');
+		wrapperClass = wrapperClass.trim();
+		divClass = divClass.trim();
+		if (this.state.labelButton) {
+			divClass += " labelButton";
+		}
+		return (
+			<div className={wrapperClass}>
+				<label className={'powerButton-display ' + (this.props.inputClass || '') + ' ' + (this.props.displayClass || '')}>{!this.state.labelButton ? this.state.label : ''}</label>
+				<div className={divClass}>
+					<button className={buttonClass}
+						value={this.state.switchedOn ? 1 : 0}
+						onClick={this.callback}
+						tabIndex="-1" 
+					>{this.state.labelButton ? this.state.label : ''}</button>
+				</div>
+			</div>
+		)
+	}
+}
+
+class ContextMenu extends React.Component {
+	constructor(props) {
+		super(props);
+		this.callback = this.callback.bind(this);
+		this.handleClick = this.handleClick.bind(this);
+		this.state = {
+			isOpen: props.open || false,
+			icon: props.icon || 'see-more-vertical',
+			items: props.items || []
+		};
+	}
+	componentWillMount() {
+		document.addEventListener('mousedown', this.handleClick, false);
+	}
+	componentWillUnmount() {
+		document.removeEventListener('mousedown', this.handleClick, false);
+	}
+	handleClick(event) {
+		if (event.target.classList.contains('contextMenu-option')) {
+			// Do nothing
+		}
+		else {
+			this.setState({ isOpen: false })
+		}
+	}
+	callback(event) {
+		event.preventDefault();
+		var opn = !this.state.isOpen;
+		this.setState({ isOpen: opn });
+		if (this.props.callback) {
+			this.props.callback(event);
+		}
+		this.render();
+	}
+	render() {
+		var wrapperClass = "contextMenu-wrapper d-inline-block " + (this.props.wrapperClass || '');
+		wrapperClass = wrapperClass.trim();
+		if (this.state.isOpen) {
+			wrapperClass += ' open';
+		}
+		const options = this.props.items.map((item,i) => 
+			<option className="contextMenu-option" key={i} value={item.value}>{item.label}</option>
+			);
+		return (
+			<div className={wrapperClass}>
+				<a onClick={this.callback} href="javascript:;" className={this.state.icon}></a>
+				<select size={this.state.items.length} onClick={this.callback} tabIndex="-1">
+					{options}
+				</select>
+			</div>
+		)
+	}
+}
+
+class OptionIndicator extends React.Component {
+	constructor(props) {
+		super(props);
+		this.callback = this.callback.bind(this);
+		this.state = {
+			value: props.value || null,
+			label: props.label || '',
+			layout: props.layout || 'horizontal'
+		};
+	}
+	callback(event) {
+		var val = event.currentTarget.value;
+		this.setState({value: val});
+		if (this.props.callback) {
+			this.props.callback(event.currentTarget.value);
+		}
+		this.render();
+	}
+	render() {
+		var props = this.props;
+		var state = this.state;
+		var cb = this.callback;
+		var layout = state.layout;
+		const radios = this.props.options.map((opt,i) => 
+			<li className={"px-0 mx-2 pt-3 "} key={i}>
+				<label>{opt.key}
+					<input type="radio" defaultChecked={opt.value === state.value}
+					tabIndex="-1" value={opt.value} name={props.name} disabled={props.disabled} onClick={cb} />
+					<span className="checkmark"></span>
+				</label>
+			</li>
+		);
+		var listClass = "text-center px-0 mb-0 " + layout;
+		var wrapperClass = "optionIndicator text-center" +  (props.disabled ? ' disabled ' : ' ') + (this.props.className || '');
+		return (
+			<div className={wrapperClass}>
+				<label>{this.state.label}</label>
+				<ul className={listClass}>
+					{radios}
+				</ul>
+			</div>
+		)
+	}
+}
+
+class FileSelector extends React.Component {
+	constructor(props) {
+		super(props);
+		this.callback = this.callback.bind(this);
+		this.state = {
+			value: props.value || null,
+			label: props.label || ''
+		};
+	}
+	callback(event) {
+		var val = event.currentTarget.value;
+		this.setState({value: val});
+		if (this.props.callback) {
+			this.props.callback(event.currentTarget.value);
+		}
+		this.render();
+	}
+	render() {
+		var props = this.props;
+		var state = this.state;
+		var wrapperClass = "fileSelector" +  (props.disabled ? ' disabled ' : ' ') + (this.props.className || '');
+		return (
+			<div className={wrapperClass}>
+				<label>{this.state.label}</label>
+				<input type="file" tabIndex="-1" name={props.name} disabled={props.disabled} />
+			</div>
+		)
+	}
+}
+
+class Incrementer extends React.Component {
+	constructor(props) {
+		super(props);
+		this.callback = this.callback.bind(this);
+		this.state = {
+			value: props.value || '',
+			label: props.label || '',
+			min: props.min || false,
+			max: props.max || false,
+			typeMode: props.typeMode || false
+		};
+		this.increment = this.increment.bind(this);
+		this.handleChange = this.handleChange.bind(this);
+		this.handleBlur = this.handleBlur.bind(this);
+		this.typeModeOn = this.typeModeOn.bind(this);
+		this.typeModeOff = this.typeModeOff.bind(this);
+		this.keyPress = this.keyPress.bind(this);
+	}
+	callback(event) {
+		var val = event.currentTarget.value;
+		this.setState({value: val});
+		if (this.props.callback) {
+			this.props.callback(event.currentTarget.value);
+		}
+		this.render();
+	}
+	increment(val) {
+		var newVal = parseInt(this.state.value) || 0;
+		newVal += val;
+		newVal = this.sanitizeValue(newVal);
+		this.setState({value: newVal, typeMode: false});
+		if (this.props.callback) {
+			this.props.callback(newVal);
+		}
+		this.render();
+	}
+	focusOn() {
+		this.textInput.focus();
+	}
+	typeModeOn(event) {
+		this.setState({ typeMode: true });
+		this.render();
+		this.focusOn();
+	}
+	typeModeOff(event) {
+		var val = parseInt(event.target.value);
+		if (val) {
+			this.setState({value:val});
+		}
+		this.setState({ typeMode: false });
+		if (this.props.callback) {
+			this.props.callback(val);
+		}
+		this.render();
+	}
+	handleChange(event) {
+		var val = this.sanitizeValue(event.target.value);
+		this.setState({ value: val });
+		if (this.props.callback) {
+			this.props.callback(val);
+		}
+	}
+	sanitizeValue(value) {
+		var finalValue = value || 0;
+		if (this.state.min !== false) {
+			finalValue = Math.max(finalValue, this.state.min);
+		}
+		if (this.state.max !== false) {
+			finalValue = Math.min(finalValue, this.state.max);
+		}
+		if (isNaN(finalValue)) {
+			finalValue = 0;
+		}
+		return finalValue;
+	}
+	handleBlur(event) {
+		var finalValue = this.sanitizeValue(event.target.value);
+		this.setState({ value: finalValue, typeMode: false });
+		if (this.props.callback) {
+			this.props.callback(finalValue);
+		}
+	}
+	keyPress(e){
+		if(e.keyCode == 13 || e.keyCode == 10){
+			e.preventDefault();
+			var value = this.sanitizeValue(e.target.value);
+			this.setState({ value: value, typeMode: false });
+			if (this.props.callback) {
+				this.props.callback(value);
+			}
+		}
+	}
+	render() {
+		return (
+			<div className={"incrementer text-center" + ' ' + (this.props.className || '') }>
+				<label className="d-block">{this.state.label}</label>
+			<span onClick={() => this.increment(1)} >^</span>
+			<span onClick={() => this.increment(12)} >^^</span>
+				<div onClick={this.typeModeOn}>
+					<input type="text" onKeyDown={this.keyPress} tabIndex="-1" value={this.state.value} name={this.props.name} 
+						ref={elem => (this.textInput = elem)} 
+						className={"mx-auto text-center w-50 d-block " + (this.props.disabled || !this.state.typeMode ? ' disabled' : '')}
+						disabled={this.props.disabled || !this.state.typeMode}
+						onBlur={this.handleBlur}
+						onChange={this.handleChange} />
+				</div>
+						<span onClick={() => this.increment(-1)}>v</span>
+						<span onClick={() => this.increment(-12)} >vv</span>
+			</div>
+		)
+	}
 }
 
 class Channel extends React.Component {
@@ -351,6 +663,28 @@ class Channel extends React.Component {
 
 }
 
+class AudioOut extends React.Component {
+	constructor(props) {
+		super(props);
+		this.state = {
+			source: props.source || null
+		};
+		this.updateSource = this.updateSource.bind(this);
+	}
+	updateSource(value) {
+		this.setState({source: value});
+	}
+	render() {
+		return (
+			<div>
+				<audio controls tabIndex="-1">
+					<source src={this.state.source} />
+				</audio>
+			</div>
+		)
+	}
+}
+
 class Pattern extends React.Component {
 	constructor(props) {
 		super(props);
@@ -457,7 +791,7 @@ class Pattern extends React.Component {
 					{this.renderChannel('Snare','808-Snare1')}
 					<input type="submit" value="Save Pattern" tabIndex="-1" />
 				</form>
-				<AudioOut source={this.state.audioSource} />
+				<AudioOut source={this.state.audioSource} ref={this.patternOut} />
 			</div>
 		);
 	}
@@ -490,7 +824,4 @@ class Song extends React.Component {
 
 // ========================================
 
-ReactDOM.render(
-	<Song />,
-	document.getElementById('root')
-);
+export default Range;
