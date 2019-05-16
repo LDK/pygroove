@@ -374,46 +374,6 @@ div.contextMenu-wrapper:not(.open) select {
 	border-radius: 50%;
 	background: lime;
 }
-
-.dropZone .Upload {
-	display: flex;
-	flex-direction: column;
-	flex: 1;
-	align-items: flex-start;
-	text-align: left;
-	overflow: hidden;
-}
-
-.dropZone .Content {
-	display: flex;
-	flex-direction: row;
-	padding-top: 16px;
-	box-sizing: border-box;
-	width: 100%;
-}
-
-.dropZone .Files {
-	margin-left: 32px;
-	align-items: flex-start;
-	justify-items: flex-start;
-	flex: 1;
-	overflow-y: auto;
-}
-
-.dropZone .Actions {
-	display: flex;
-	flex: 1;
-	width: 100%;
-	align-items: flex-end;
-	flex-direction: column;
-	margin-top: 32px;
-}
-
-.dropZone .Title {
-	margin-bottom: 32px;
-	color: #555;
-}
-
 .dropZone {
 	height: 72px;
 	width: 100%;
@@ -424,9 +384,9 @@ div.contextMenu-wrapper:not(.open) select {
 	align-items: center;
 	justify-content: center;
 	flex-direction: column;
-	font-size: var(--small-label-size);
+	font-size: 12px;
 }
-.dropZone .Icon {
+.dropZone .icon {
 	opacity: 0.3;
 	height: 48px;
 	width: 64px;
@@ -434,9 +394,10 @@ div.contextMenu-wrapper:not(.open) select {
 	top: -3px;
 	margin-bottom: -5px;
 }
-.dropZone .FileInput {
+.dropZone .fileInput {
 	display: none;
 }
-.dropZone .Highlight {
-	background-color: rgb(188, 185, 236);
+.dropZone.highlight {
+	background-color: var(--green-light);
+	border: 2px dashed  var(--green-dark);
 }
