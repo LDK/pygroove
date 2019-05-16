@@ -19,6 +19,16 @@ function Cell(props) {
 	);
 }
 
+function StepPicker(props) {
+	return (
+		<div className="stepPicker" onClick={props.onClick}>
+			<span>
+				{props.indicator}
+			</span>
+		</div>
+	);
+}
+
 function stepFormat(step) {
 	var bar = (Math.floor((step-1) / 16)) + 1;
 	var beat = (Math.floor((step-1) / 4) % 4) + 1;
@@ -55,6 +65,7 @@ class Channel extends React.Component {
 			settingsMode: props.settingsMode || 'chan',
 			trackName: props.trackName || 'New Channel',
 			steps: steps,
+			selectedStep: null,
 			reverse: props.reverse || false,
 			trim: props.trim || false,
 			pitch: {
@@ -140,6 +151,7 @@ class Channel extends React.Component {
 		this.updatePitch = this.updatePitch.bind(this);
 		this.updateActive = this.updateActive.bind(this);
 		this.toggleSettings = this.toggleSettings.bind(this);
+		this.selectStep = this.selectStep.bind(this);
 		this.toggleFilter = this.toggleFilter.bind(this);
 		this.toggleReverse = this.toggleReverse.bind(this);
 		this.toggleTrim = this.toggleTrim.bind(this);
@@ -234,10 +246,23 @@ class Channel extends React.Component {
 			if (this.state.steps[i]) { indicator = 'X'; }
 			return <Cell bar={loc.bar} beat={loc.beat} tick={loc.tick} value={this.state.steps[i]} indicator={indicator} onClick={() => this.toggleCell(i)} key={i}/>;
 		}
+		renderStepPicker(i) {
+			var indicator = '';
+			var loc = stepFormat(i);
+			if (this.state.selectedStep == i) { indicator = '*'; }
+			return <StepPicker bar={loc.bar} beat={loc.beat} tick={loc.tick} value={this.state.steps[i]} indicator={indicator} onClick={() => this.selectStep(i)} key={i}/>;
+		}
 		cellRow(start,end) {
 			var cells = [];
 			for (var i = start; i <= end; i++) {
 				cells.push(this.renderCell(i));
+			}
+			return cells;
+		}
+		stepRow(start,end) {
+			var cells = [];
+			for (var i = start; i <= end; i++) {
+				cells.push(this.renderStepPicker(i));
 			}
 			return cells;
 		}
@@ -248,7 +273,10 @@ class Channel extends React.Component {
 			var track = this.state;
 			track.steps = steps;
 			this.props.updateTrack(track.trackName,track);
-			// this.setState({pattern: pattern});
+		}
+		selectStep(i) {
+			var selectedStep = (this.selectedStep != i) ? i : null;
+			this.setState({selectedStep: selectedStep});
 		}
 		fillCell(i) {
 			const steps = this.state.steps.slice();
@@ -304,34 +332,45 @@ class Channel extends React.Component {
 				<div className="col-1 d-none d-md-block text-center">
 				</div>
 				<div className="col-12 d-none d-md-block">
+					<div className={"container-fluid px-0 step-editor"}>
+						<div className="row mx-auto">
+							<div className={"col-9 col-md-8 offset-3 offset-md-4 px-0 steps-row " + (this.state.settingsOpen && this.state.settingsMode == 'step' ? 'open' : '')}>
+								{this.stepRow(1,this.state.pattern.state.bars * 16)}
+							</div>
+						</div>
+					</div>
+				</div>
+				<div className="col-12 d-none d-md-block">
 					<div className={"container-fluid px-0 channel-options " + this.state.settingsClass + (this.state.filterOn ? ' filterOn' : '')}>
 						<div className="row mx-auto">
 							<div className="col-3">
-								<label>Current Sample: {this.state.wav}</label>
-								<DropZone onFilesAdded={console.log} label="Upload Sample" />
+								<div className={(this.state.settingsMode == 'step' ? 'd-none' : '')}>
+									<label>Current Sample: {this.state.wav}</label>
+									<DropZone onFilesAdded={console.log} label="Upload Sample" />
+								</div>
 							</div>
 							<div className="col-1 text-center">
 								<PowerButton switchedOn={this.state.filterOn} label="Filter 1"  callback={this.toggleFilter} className="mx-auto" />
 								<PowerButton switchedOn={this.state.filter2On} label="Filter 2"  callback={this.toggleFilter2} wrapperClass="mt-3" className="mx-auto" />
 							</div>
-				<div className="col-2">
-					<OptionIndicator value={this.state.filter.type} disabled={!this.state.filterOn} options={[
-						{key: 'LP', value: 'lp'},
-						{key: 'BP', value: 'bp'},
-						{key: 'HP', value: 'hp'}
-					]} name={"filterType-"+this.state.trackName} label="Filter 1 Type" callback={this.updateFilterType} />
-					<hr className="mb-4 mt-1" />
-					<Range label="Cutoff Freq" className="mt-4 text-center" callback={this.updateFilterFrequency} disabled={!this.state.filterOn} inputClass="freq col-8 px-0 mx-auto" min="30" max="22000" value={this.state.filter.frequency} />
-				</div>
-				<div className="col-2">
-					<OptionIndicator value={this.state.filter2.type} disabled={!this.state.filter2On} options={[
-						{key: 'LP', value: 'lp'},
-						{key: 'BP', value: 'bp'},
-						{key: 'HP', value: 'hp'}
-					]} name={"filter2Type-"+this.state.trackName} label="Filter 2 Type" callback={this.updateFilter2Type} />
-					<hr className="mb-4 mt-1" />
-					<Range label="Cutoff Freq" className="mt-4 text-center" callback={this.updateFilter2Frequency} disabled={!this.state.filter2On} inputClass="freq col-8 px-0 mx-auto" min="30" max="22000" value={this.state.filter2.frequency} />
-				</div>
+							<div className="col-2">
+								<OptionIndicator value={this.state.filter.type} disabled={!this.state.filterOn} options={[
+									{key: 'LP', value: 'lp'},
+									{key: 'BP', value: 'bp'},
+									{key: 'HP', value: 'hp'}
+								]} name={"filterType-"+this.state.trackName} label="Filter 1 Type" callback={this.updateFilterType} />
+								<hr className="mb-4 mt-1" />
+								<Range label="Cutoff Freq" className="mt-4 text-center" callback={this.updateFilterFrequency} disabled={!this.state.filterOn} inputClass="freq col-8 px-0 mx-auto" min="30" max="22000" value={this.state.filter.frequency} />
+							</div>
+							<div className="col-2">
+								<OptionIndicator value={this.state.filter2.type} disabled={!this.state.filter2On} options={[
+									{key: 'LP', value: 'lp'},
+									{key: 'BP', value: 'bp'},
+									{key: 'HP', value: 'hp'}
+								]} name={"filter2Type-"+this.state.trackName} label="Filter 2 Type" callback={this.updateFilter2Type} />
+								<hr className="mb-4 mt-1" />
+								<Range label="Cutoff Freq" className="mt-4 text-center" callback={this.updateFilter2Frequency} disabled={!this.state.filter2On} inputClass="freq col-8 px-0 mx-auto" min="30" max="22000" value={this.state.filter2.frequency} />
+							</div>
 							<div className="col-2 text-center">
 								<Incrementer label="Transpose" callback={this.updatePitch} inputClass="transpose col-8 px-0 mx-auto" min="-48" max="48" value={this.state.transpose || "0"} />
 								<PowerButton className="mt-2" switchedOn={this.state.reverse} label="Reverse" labelButton={true} callback={this.toggleReverse} />

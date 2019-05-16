@@ -64,6 +64,28 @@ ol, ul {
   text-align: center;
   width: 3.275%;
 }
+.stepPicker {
+    width: 3.275%;
+	height: 16px;
+	background-color: var(--blue-dark);
+    border: 1px solid #999;
+    float: left;
+	font-size: var(--small-label-size);
+    font-weight: bold;
+    line-height: 34px;
+    padding: 0;
+    text-align: center;
+    margin-right: -1px;
+    margin-top: -1px;
+	color: var(--white);
+  }
+  .stepPicker span {
+      position: relative;
+      top: -5px;
+  }
+  .steps-row:not(.open) {
+	  display: none !important;
+  }
 .disabled .cell {
   background-color: var(--disabled-light);
 }
@@ -157,7 +179,7 @@ span.meter-display.freq:after {
 }
 
 @media (max-width: 991px) {
-	.cell {
+	.cell, .stepPicker {
 		width: 6.25%;
 	}	
 }
@@ -167,12 +189,12 @@ span.meter-display.freq:after {
 	}
 }
 @media (min-width: 1200px) {
-	.cell {
+	.cell, .stepPicker {
 		width: 3.25%;
 	}
 }
 @media (max-width: 320px) {
-	.cell {
+	.cell, .stepPicker {
 		width: 12.85%;
 	}	
 }
