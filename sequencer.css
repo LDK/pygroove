@@ -83,6 +83,10 @@ ol, ul {
       position: relative;
       top: -5px;
   }
+  .steps-row {
+      position: relative;
+      top: -6px;
+  }
   .steps-row:not(.open) {
 	  display: none !important;
   }
