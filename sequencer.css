@@ -20,6 +20,7 @@ body {
 	--blue-grey-light: #c7cee7;
 	--disabled-highlight: #676767;
 	--disabled-light: #c7c7c7;
+	--small-label-size: 12px;
 }
 input[type="range"][orient="horizontal"] {
   width: 3.5rem;
@@ -111,9 +112,9 @@ ol, ul {
   width: 100%;
 }
 .song-pattern input[type="button"] {
-    float: left;
-    width: 6rem;
-    margin-right: 1rem;
+	float: left;
+	width: 6rem;
+	margin-right: 1rem;
 }
 
 .hidden {
@@ -122,7 +123,7 @@ ol, ul {
 }
 
 .pattern-bg {
-    background-color: var(--blue-grey-light);
+	background-color: var(--blue-grey-light);
 }
 
 span.meter-display {
@@ -135,7 +136,7 @@ span.meter-display {
 }
 span.meter-display.volume:after {
 	content: 'db';
-    font-size: 12px;
+	font-size: var(--small-label-size);
 }
 
 span.pan-display:before {
@@ -145,15 +146,14 @@ span.pan-display:before {
 input.freq:before {
 	content: 'Freq: ';
 	display: block;
-	    position: absolute;
-	    top: -1rem;
-	    color: black;
-	    font-size: 12px;
-
+	position: absolute;
+	top: -1rem;
+	color: black;
+	font-size: var(--small-label-size);
 }
 span.meter-display.freq:after {
 	content: 'Hz';
-    font-size: 12px;
+	font-size: var(--small-label-size);
 }
 
 @media (max-width: 991px) {
@@ -275,17 +275,17 @@ div.contextMenu-wrapper:not(.open) select {
 }
 .noselect {
   -webkit-touch-callout: none; /* iOS Safari */
-    -webkit-user-select: none; /* Safari */
-     -khtml-user-select: none; /* Konqueror HTML */
-       -moz-user-select: none; /* Firefox */
-        -ms-user-select: none; /* Internet Explorer/Edge */
-            user-select: none; /* Non-prefixed version, currently
-                                  supported by Chrome and Opera */
+	-webkit-user-select: none; /* Safari */
+	 -khtml-user-select: none; /* Konqueror HTML */
+	   -moz-user-select: none; /* Firefox */
+		-ms-user-select: none; /* Internet Explorer/Edge */
+			user-select: none; /* Non-prefixed version, currently
+								  supported by Chrome and Opera */
 }
 /* The optionIndicator */
 .optionIndicator ul li {
-    list-style-type: none;
-    break-inside: avoid;
+	list-style-type: none;
+	break-inside: avoid;
   display: inline-block;
   position: relative;
   -webkit-user-select: none;
@@ -295,11 +295,11 @@ div.contextMenu-wrapper:not(.open) select {
 }
 
 .channel-options label {
-	font-size: 12px;
+	font-size: var(--small-label-size);
 }
 
 .incrementer input[type="text"][disabled] {
-    background: var(--green-grey);
+	background: var(--green-grey);
 }
 
 /* Hide the browser's default radio button */
@@ -341,7 +341,7 @@ div.contextMenu-wrapper:not(.open) select {
 
 /* When the radio button is checked, add a blue background */
 .optionIndicator ul li label input:checked ~ .checkmark {
-    background-color: var(--disabled-light);
+	background-color: var(--disabled-light);
 }
 .row.channel:not(.disabled) .optionIndicator:not(.disabled)  ul li label input:checked ~ .checkmark {
   background-color: #2196F3;
@@ -373,4 +373,70 @@ div.contextMenu-wrapper:not(.open) select {
 	height: 8px;
 	border-radius: 50%;
 	background: lime;
+}
+
+.dropZone .Upload {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	align-items: flex-start;
+	text-align: left;
+	overflow: hidden;
+}
+
+.dropZone .Content {
+	display: flex;
+	flex-direction: row;
+	padding-top: 16px;
+	box-sizing: border-box;
+	width: 100%;
+}
+
+.dropZone .Files {
+	margin-left: 32px;
+	align-items: flex-start;
+	justify-items: flex-start;
+	flex: 1;
+	overflow-y: auto;
+}
+
+.dropZone .Actions {
+	display: flex;
+	flex: 1;
+	width: 100%;
+	align-items: flex-end;
+	flex-direction: column;
+	margin-top: 32px;
+}
+
+.dropZone .Title {
+	margin-bottom: 32px;
+	color: #555;
+}
+
+.dropZone {
+	height: 72px;
+	width: 100%;
+	background-color: var(--green-grey);
+	border: 2px dashed var(--green-light);
+/*	border-radius: 50%;*/
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-direction: column;
+	font-size: var(--small-label-size);
+}
+.dropZone .Icon {
+	opacity: 0.3;
+	height: 48px;
+	width: 64px;
+	position: relative;
+	top: -3px;
+	margin-bottom: -5px;
+}
+.dropZone .FileInput {
+	display: none;
+}
+.dropZone .Highlight {
+	background-color: rgb(188, 185, 236);
 }

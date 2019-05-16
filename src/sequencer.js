@@ -9,6 +9,7 @@ import ContextMenu from './components/ContextMenu.js';
 import PowerButton from './components/PowerButton.js';
 import FileSelector from './components/FileSelector.js';
 import Incrementer from './components/Incrementer.js';
+import DropZone from './components/DropZone.js';
 
 function Cell(props) {
 	return (
@@ -307,7 +308,7 @@ class Channel extends React.Component {
 						<div className="row mx-auto">
 							<div className="col-3">
 								<label>Current Sample: {this.state.wav}</label>
-								<FileSelector name="test-file" />
+								<DropZone onFilesAdded={console.log} label="Upload Sample" />
 							</div>
 							<div className="col-1 text-center">
 								<PowerButton switchedOn={this.state.filterOn} label="Filter 1"  callback={this.toggleFilter} className="mx-auto" />
