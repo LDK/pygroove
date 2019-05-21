@@ -423,7 +423,8 @@ div.contextMenu-wrapper:not(.open) select {
 .dropZone .fileInput {
 	display: none;
 }
-.dropZone.highlight {
+.dropZone.highlight,
+.dropZone:hover {
 	background-color: var(--green-light);
 	border: 2px dashed  var(--green-dark);
 }

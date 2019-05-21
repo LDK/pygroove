@@ -9,6 +9,7 @@ import ContextMenu from './components/ContextMenu.js';
 import PowerButton from './components/PowerButton.js';
 import FileSelector from './components/FileSelector.js';
 import Incrementer from './components/Incrementer.js';
+// import DropZone from './components/DropZone.js';
 import DropZone from './components/DropZone.js';
 
 function Cell(props) {
@@ -159,6 +160,25 @@ class Channel extends React.Component {
 		this.updateFilter2Type = this.updateFilter2Type.bind(this);
 		this.updateFilter2Frequency = this.updateFilter2Frequency.bind(this);
 		this.runChannelAction = this.runChannelAction.bind(this);
+		this.filesAdded = this.filesAdded.bind(this);
+		this.sendRequest = this.sendRequest.bind(this);
+		}
+		sendRequest(file) {
+			return new Promise((resolve, reject) => {
+				const req = new XMLHttpRequest();
+   
+				const formData = new FormData();
+				formData.append("file", file, file.name);
+				formData.append("filename", file.name);
+
+				req.open("POST", this.props.pattern.grooveServer + "upload");
+				req.send(formData);
+			});
+		}
+		filesAdded(files) {
+			for (var n = 0; n < files.length; n++) {
+				this.sendRequest(files[n]);
+			}
 		}
 		updatePan(value) {
 			this.setState({ pan: value, panDisplay: panFormat(value) }, function () {
@@ -346,7 +366,7 @@ class Channel extends React.Component {
 							<div className="col-3">
 								<div className={(this.state.settingsMode == 'step' ? 'd-none' : '')}>
 									<label>Current Sample: {this.state.wav}</label>
-									<DropZone onFilesAdded={console.log} label="Upload Sample" />
+									<DropZone onFilesAdded={this.filesAdded} label="Upload Sample" />
 								</div>
 							</div>
 							<div className="col-1 text-center">
@@ -404,6 +424,7 @@ class Pattern extends React.Component {
 			tracks: {},
 			clipboard: {}
 		};
+		this.grooveServer = 'http://localhost:8081/';
 		this.updateBPM = this.updateBPM.bind(this);
 		this.updateSwing = this.updateSwing.bind(this);
 		this.updateTitle = this.updateTitle.bind(this);
@@ -462,7 +483,7 @@ class Pattern extends React.Component {
 		submitted.tickDiv = 32;
 		submitted.repeat = 4;
 		var pattern = this;
-		window.fetch('http://localhost:8081/', {
+		window.fetch(this.grooveServer, {
 			method: 'POST', 
 			body: JSON.stringify(submitted)
 		})
@@ -481,7 +502,7 @@ class Pattern extends React.Component {
 	render() {
 		return (
 			<div className="container mx-auto rounded p-3 pattern-bg">
-				<form onSubmit={this.handleSubmit} action="http://localhost:8081/">
+				<form onSubmit={this.handleSubmit} action="{this.grooveServer}">
 					<div className="status row">
 						<div className="col-10">
 							<label>Title:</label><input type="text" value={this.state.title} onChange={this.updateTitle} tabIndex="-1" /><br />
