@@ -42,16 +42,16 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 
   def do_POST(self):
     # Send headers
-    postvars = self.parse_POST()
     self.send_response(200)
     self.send_header('Access-Control-Allow-Origin', '*')
     self.end_headers()
 
     if (self.path == '/upload'):
+        postvars = self.parse_POST()
         fName = postvars['filename'][0]
         fData = postvars['file'][0]
-        with open(pjoin(curdir, fName), 'w+') as fh:
-            fh.write(fData.decode())
+        with open(pjoin(curdir, "audio/uploaded", fName), 'wb') as fh:
+            fh.write(fData)
         self.send_response(200)
         return;
         

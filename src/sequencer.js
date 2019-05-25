@@ -168,11 +168,17 @@ class Channel extends React.Component {
 				const req = new XMLHttpRequest();
    
 				const formData = new FormData();
-				formData.append("file", file, file.name);
+				formData.append("file", file);
 				formData.append("filename", file.name);
-
 				req.open("POST", this.props.pattern.grooveServer + "upload");
 				req.send(formData);
+				var chan = this;
+				req.onload = function(e) {
+					if (this.status == 200) {
+						chan.setState({ wav: 'uploaded/' + file.name, wavName: file.name });
+						chan.props.updateTrack(chan.state.trackName,chan.state);
+					}
+				}
 			});
 		}
 		filesAdded(files) {
@@ -365,7 +371,7 @@ class Channel extends React.Component {
 						<div className="row mx-auto">
 							<div className="col-3">
 								<div className={(this.state.settingsMode == 'step' ? 'd-none' : '')}>
-									<label>Current Sample: {this.state.wav}</label>
+									<label>Current Sample: {this.state.wavName || this.state.wav}</label>
 									<DropZone onFilesAdded={this.filesAdded} label="Upload Sample" />
 								</div>
 							</div>
