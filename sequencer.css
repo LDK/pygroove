@@ -420,6 +420,9 @@ div.contextMenu-wrapper:not(.open) select {
 	top: -3px;
 	margin-bottom: -5px;
 }
+.dropZone.waveform .icon {
+	opacity: 1;
+}
 .dropZone .fileInput {
 	display: none;
 }

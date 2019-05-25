@@ -3,7 +3,7 @@ import React, { Component } from 'react';
 class DropZone extends React.Component {
 	constructor(props) {
 		super(props);
-		this.state = { hightlight: false };
+		this.state = { hightlight: false, waveformImg: false };
 		this.fileInputRef = React.createRef();
 		this.openFileDialog = this.openFileDialog.bind(this);
 		this.onFilesAdded = this.onFilesAdded.bind(this);
@@ -50,9 +50,10 @@ class DropZone extends React.Component {
 	}
 	render() {
 		var label = this.props.label || 'Upload File';
+		var parentObj = this.props.parentObj;
 		return (
 			<div
-				className={`dropZone ${this.state.hightlight ? "highlight" : ""}`}
+				className={`dropZone ${this.state.hightlight ? "highlight" : ""} ${this.props.parentObj.state.wavImg ? "waveform" : ""}`}
 				onDragOver={this.onDragOver}
 				onDragLeave={this.onDragLeave}
 				onDrop={this.onDrop}
@@ -62,7 +63,7 @@ class DropZone extends React.Component {
 				<img
 					alt="upload"
 					className="icon"
-					src="img/cloud-upload.svg"
+					src={this.props.parentObj.state.wavImg ? this.props.parentObj.state.wavImg : "img/cloud-upload.svg"}
 					width="75%"
 				/>
 				<input

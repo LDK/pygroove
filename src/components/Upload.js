@@ -101,6 +101,7 @@ class Upload extends React.Component {
 				<div className="Content">
 					<div>
 						<DropZone
+							parentObj={this}
 							onFilesAdded={this.onFilesAdded}
 							disabled={this.state.uploading || this.state.successfullyUploaded}
 						/>

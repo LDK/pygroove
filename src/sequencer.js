@@ -14,7 +14,7 @@ import DropZone from './components/DropZone.js';
 
 function Cell(props) {
 	return (
-		<div className="cell" onClick={props.onClick}>
+		<div className={"cell"} onClick={props.onClick}>
 			{props.indicator}
 		</div>
 	);
@@ -175,7 +175,14 @@ class Channel extends React.Component {
 				var chan = this;
 				req.onload = function(e) {
 					if (this.status == 200) {
-						chan.setState({ wav: 'uploaded/' + file.name, wavName: file.name });
+						var wavImg = false;
+						if (this.responseText) {
+							var res = JSON.parse(this.responseText);
+							if (res.img) {
+								wavImg = res.img;
+							}
+						}
+						chan.setState({ wav: 'uploaded/' + file.name, wavName: file.name, wavImg: wavImg });
 						chan.props.updateTrack(chan.state.trackName,chan.state);
 					}
 				}
@@ -372,7 +379,7 @@ class Channel extends React.Component {
 							<div className="col-3">
 								<div className={(this.state.settingsMode == 'step' ? 'd-none' : '')}>
 									<label>Current Sample: {this.state.wavName || this.state.wav}</label>
-									<DropZone onFilesAdded={this.filesAdded} label="Upload Sample" />
+									<DropZone parentObj={this} onFilesAdded={this.filesAdded} label="Upload Sample" />
 								</div>
 							</div>
 							<div className="col-1 text-center">

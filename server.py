@@ -1,11 +1,13 @@
 #!/usr/bin/env python
  
-from os import curdir
+from os import curdir, rename
 from os.path import join as pjoin
 from cgi import parse_header, parse_multipart
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import parse_qs
 import groove
+import waveform
+import json
 
 # HTTPRequestHandler class
 class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
@@ -50,9 +52,19 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
         postvars = self.parse_POST()
         fName = postvars['filename'][0]
         fData = postvars['file'][0]
-        with open(pjoin(curdir, "audio/uploaded", fName), 'wb') as fh:
+        fLoc = pjoin(curdir, "audio/uploaded", fName)
+        with open(fLoc, 'wb') as fh:
             fh.write(fData)
+        imgLoc = pjoin(curdir, "img/waveform/uploaded", fName.replace('.wav','.png'))
+        waveImg = waveform.Waveform(fLoc)
+        imgInitLoc = waveImg.save()
+        rename(imgInitLoc,imgLoc)
         self.send_response(200)
+        postRes = {
+          "wav": fName,
+          "img": imgLoc
+        }
+        self.wfile.write(json.dumps(postRes).encode("utf-8"))
         return;
         
     self.data_string = self.rfile.read(int(self.headers['Content-Length']))
