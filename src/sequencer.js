@@ -73,7 +73,7 @@ function pitchValue(noteName) {
 		var pitchName = noteName.substring(0,1);
 		var octave = parseInt(noteName.substring(1,2));
 	}
-	var val = 0;
+	var val = 12;
 	val += octave * 12;
 	val += PITCH_INDEXES[pitchName];
 	return val;
