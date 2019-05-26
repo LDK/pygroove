@@ -8,6 +8,9 @@ import simplejson
 from pydub import AudioSegment
 import pydub.scipy_effects
 import cgitb
+from os import curdir, rename
+from os.path import join as pjoin
+
 cgitb.enable()
 
 channels = {}
@@ -264,10 +267,10 @@ def renderJSON(json):
             if ('pan' in note):
                 addSound = addSound.pan(int(note['pan'])/100)
             # Add note
-            out_f = open("processed-{}.wav".format(trackName), 'wb')
+            out_f = open(pjoin("rendered/tmp","processed-{}.wav".format(trackName)), 'wb')
             addSound.export(out_f, format='wav')
             addNote(trackName,addSound,noteBar,noteBeat,noteTick)
-            out_f = open("layer-{}.wav".format(trackName), 'wb')
+            out_f = open(pjoin("rendered/tmp","layer-{}.wav".format(trackName)), 'wb')
             tracks[trackName].export(out_f, format='wav')
         # Apply filter1
         if ('filterOn' in channel and channel['filterOn'] == True):
@@ -289,7 +292,7 @@ def renderJSON(json):
         master = master.overlay(tracks[trackName],0,0)
         print("{name}: {vol}db, Pan: {pan} ".format(name=trackName,vol=trackVol,pan=panDisplay(trackPan)))
 
-    renderFilename = "{}.mp3".format(title)
+    renderFilename = pjoin("rendered","{}.mp3".format(title))
     print(" ")
     print("Rendered to {}".format(renderFilename))
     print(" ")
