@@ -9,16 +9,8 @@ import ContextMenu from './components/ContextMenu.js';
 import PowerButton from './components/PowerButton.js';
 import FileSelector from './components/FileSelector.js';
 import Incrementer from './components/Incrementer.js';
-// import DropZone from './components/DropZone.js';
 import DropZone from './components/DropZone.js';
-
-function Cell(props) {
-	return (
-		<div className={"cell"} onClick={props.onClick}>
-			{props.indicator}
-		</div>
-	);
-}
+import Cell from './components/Cell.js';
 
 function StepPicker(props) {
 	return (
@@ -141,7 +133,6 @@ class Channel extends React.Component {
 		var tracks = pattern.state.tracks;
 		tracks[this.state.trackName] = this.state;
 		pattern.setState({tracks: tracks});
-		this.toggleCell = this.toggleCell.bind(this);
 		this.fillCell = this.fillCell.bind(this);
 		this.emptyCell = this.emptyCell.bind(this);
 		this.updatePan = this.updatePan.bind(this);
@@ -277,7 +268,7 @@ class Channel extends React.Component {
 			var indicator = '';
 			var loc = stepFormat(i);
 			if (this.state.steps[i]) { indicator = 'X'; }
-			return <Cell bar={loc.bar} beat={loc.beat} tick={loc.tick} value={this.state.steps[i]} indicator={indicator} onClick={() => this.toggleCell(i)} key={i}/>;
+			return <Cell channel={this} bar={loc.bar} beat={loc.beat} tick={loc.tick} value={this.state.steps[i]} indicator={indicator} onClick={() => this.toggleCell(i)} key={i} cellKey={i} />;
 		}
 		renderStepPicker(i) {
 			var indicator = '';
@@ -298,14 +289,6 @@ class Channel extends React.Component {
 				cells.push(this.renderStepPicker(i));
 			}
 			return cells;
-		}
-		toggleCell(i) {
-			const steps = this.state.steps.slice();
-			steps[i] = !steps[i];
-			this.setState({steps: steps});
-			var track = this.state;
-			track.steps = steps;
-			this.props.updateTrack(track.trackName,track);
 		}
 		selectStep(i) {
 			var selectedStep = (this.selectedStep != i) ? i : null;
