@@ -15,7 +15,7 @@ class Cell extends React.Component {
 		var channel = this.props.channel;
 		const steps = channel.state.steps.slice();
 		steps[i] = !steps[i];
-		channel.setState({steps: steps});
+		channel.setState({steps: steps, selectedStep: i});
 		var track = channel.state;
 		track.steps = steps;
 		channel.props.updateTrack(track.trackName,track);
@@ -43,7 +43,7 @@ class Cell extends React.Component {
 	render() {
 		var label = this.props.label || 'Upload File';
 		return (
-			<div className={"cell" + (this.state.highlight ? ' highlight' : '') } onClick={this.toggle}>
+			<div className={"cell " + this.props.cellKey + (this.props.channel.state.selectedStep == this.props.cellKey ? ' highlight' : '') } onClick={this.toggle}>
 				{this.props.indicator}
 			</div>
 		)

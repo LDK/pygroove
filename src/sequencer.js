@@ -293,6 +293,9 @@ class Channel extends React.Component {
 		selectStep(i) {
 			var selectedStep = (this.selectedStep != i) ? i : null;
 			this.setState({selectedStep: selectedStep});
+			var track = this.state;
+			track.steps = steps;
+			this.props.updateTrack(track.trackName,track);
 		}
 		fillCell(i) {
 			const steps = this.state.steps.slice();

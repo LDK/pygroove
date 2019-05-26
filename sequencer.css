@@ -21,6 +21,8 @@ body {
 	--disabled-highlight: #676767;
 	--disabled-light: #c7c7c7;
 	--small-label-size: 12px;
+	--yellow-highlight: #c7c767;
+	--yellow-light: #f7f7d7;
 }
 input[type="range"][orient="horizontal"] {
   width: 3.5rem;
@@ -63,6 +65,9 @@ ol, ul {
   padding: 0;
   text-align: center;
   width: 3.275%;
+}
+.cell.highlight {
+  background-color: var(--yellow-highlight);
 }
 .stepPicker {
     width: 3.275%;
@@ -107,6 +112,18 @@ ol, ul {
 .cell:nth-child(29)
 {
   background-color: var(--blue-highlight);
+}
+
+.highlight.cell:nth-child(1),
+.highlight.cell:nth-child(5),
+.highlight.cell:nth-child(9),
+.highlight.cell:nth-child(13),
+.highlight.cell:nth-child(17),
+.highlight.cell:nth-child(21),
+.highlight.cell:nth-child(25),
+.highlight.cell:nth-child(29)
+{
+  background-color: var(--yellow-highlight);
 }
 
 .disabled .cell:nth-child(1),
