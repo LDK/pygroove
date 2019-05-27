@@ -3,7 +3,7 @@ import React, { Component } from 'react';
 class DropZone extends React.Component {
 	constructor(props) {
 		super(props);
-		this.state = { hightlight: false, waveformImg: false };
+		this.state = { highlight: false, waveformImg: false };
 		this.fileInputRef = React.createRef();
 		this.openFileDialog = this.openFileDialog.bind(this);
 		this.onFilesAdded = this.onFilesAdded.bind(this);
