@@ -33,10 +33,10 @@ class DropZone extends React.Component {
 	onDragOver(event) {
 		event.preventDefault();
 		if (this.props.disabled) return;
-		this.setState({ hightlight: true });
+		this.setState({ highlight: true });
 	}
 	onDragLeave() {
-		this.setState({ hightlight: false });
+		this.setState({ highlight: false });
 	}
 	onDrop(event) {
 		event.preventDefault();
@@ -46,14 +46,14 @@ class DropZone extends React.Component {
 			const array = this.fileListToArray(files);
 			this.props.onFilesAdded(array);
 		}
-		this.setState({ hightlight: false });
+		this.setState({ highlight: false });
 	}
 	render() {
 		var label = this.props.label || 'Upload File';
 		var parentObj = this.props.parentObj;
 		return (
 			<div
-				className={`dropZone ${this.state.hightlight ? "highlight" : ""} ${this.props.parentObj.state.wavImg ? "waveform" : ""}`}
+				className={`dropZone ${this.state.highlight ? "highlight" : ""} ${this.props.parentObj.state.wavImg ? "waveform" : ""}`}
 				onDragOver={this.onDragOver}
 				onDragLeave={this.onDragLeave}
 				onDrop={this.onDrop}

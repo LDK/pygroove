@@ -4,7 +4,7 @@ class Cell extends React.Component {
 	constructor(props) {
 		super(props);
 		this.state = { 
-			hightlight: false
+			highlight: false
 		};
 		this.toggle = this.toggle.bind(this);
 		this.fill = this.fill.bind(this);
