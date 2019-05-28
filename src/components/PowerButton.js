@@ -35,7 +35,8 @@ class PowerButton extends React.Component {
 					<button className={buttonClass}
 						value={this.state.switchedOn ? 1 : 0}
 						onClick={this.callback}
-						tabIndex="-1" 
+						disabled={this.props.disabled}
+						tabIndex="-1"
 					>{this.state.labelButton ? this.state.label : ''}</button>
 				</div>
 			</div>
