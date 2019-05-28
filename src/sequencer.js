@@ -7,6 +7,7 @@ import Range from './components/Range.js';
 import OptionIndicator from './components/OptionIndicator.js';
 import ContextMenu from './components/ContextMenu.js';
 import PowerButton from './components/PowerButton.js';
+import MultiModePowerButton from './components/MultiModePowerButton.js';
 import FileSelector from './components/FileSelector.js';
 import PitchSelector from './components/PitchSelector.js';
 import Incrementer from './components/Incrementer.js';
@@ -315,9 +316,18 @@ class Channel extends React.Component {
 			});
 		}
 		toggleReverse(value) {
-			this.setState({ reverse: !this.state.reverse }, function () {
-				this.props.updateTrack(this.state.trackName,this.state);
-			});
+			if (this.state.settingsMode == 'step') {
+				const steps = this.state.steps.slice();
+				steps[this.state.selectedStep].reverse = !steps[this.state.selectedStep].reverse;
+				this.setState({ steps: steps }, function () {
+					this.props.updateTrack(this.state.trackName,this.state);
+				});
+			}
+			else {
+				this.setState({ reverse: !this.state.reverse }, function () {
+					this.props.updateTrack(this.state.trackName,this.state);
+				});
+			}
 		}
 		toggleTrim(value) {
 			this.setState({ trim: !this.state.trim }, function () {
@@ -458,7 +468,7 @@ class Channel extends React.Component {
 								<Range label="Cutoff Freq" className="mt-4 text-center" callback={this.updateFilter2Frequency} disabled={!this.state.filter2On} inputClass="freq col-8 px-0 mx-auto" min="30" max="22000" value={this.state.filter2.frequency} />
 							</div>
 							<div className="col-2 text-center">
-								<Incrementer label="Transpose" parentObj={this} callback={this.handleTranspose} inputClass="transpose col-8 px-0 mx-auto" disabled={this.state.settingsMode == 'step' && (!this.state.selectedStep || !this.state.steps[this.state.selectedStep])} min="-48" max="48"
+								<Incrementer label="Transpose" parentObj={this} settingsMode={this.state.settingsMode} callback={this.handleTranspose} inputClass="transpose col-8 px-0 mx-auto" disabled={this.state.settingsMode == 'step' && (!this.state.selectedStep || !this.state.steps[this.state.selectedStep])} min="-48" max="48"
 									value={
 										this.state.settingsMode == 'step' 
 										? (this.state.selectedStep && this.state.steps[this.state.selectedStep]
@@ -467,8 +477,25 @@ class Channel extends React.Component {
 										: (this.state.transpose || "0")
 									} 
 								/>
-								<PowerButton className="mt-2" switchedOn={this.state.reverse} label="Reverse" labelButton={true} callback={this.toggleReverse} />
-								<PowerButton className="mt-2" switchedOn={this.state.trim} label="Trim" labelButton={true} callback={this.toggleTrim} />
+								<MultiModePowerButton 
+									className="mt-2" settingsMode={this.state.settingsMode} 
+									switchedOn={
+										(
+											this.state.settingsMode == 'step' 
+										) 
+										? 
+											(
+												this.state.steps[this.state.selectedStep]
+												? this.state.steps[this.state.selectedStep].reverse
+												: false
+											)
+										: this.state.reverse
+									} 
+									disabled={this.state.settingsMode == 'step' && !this.state.steps[this.state.selectedStep]}
+									label={(this.state.reverse && this.state.settingsMode=='step' ? 'Cancel ': '') + 'Reverse'}
+									labelButton={true} callback={this.toggleReverse}
+								 />
+								<PowerButton className={"mt-2" + (this.state.settingsMode=='step' ? ' d-none' : '')} switchedOn={this.state.trim} label="Trim" labelButton={true} callback={this.toggleTrim} />
 							</div>
 							<div className="col-2">
 								<OptionIndicator layout="vertical" value={this.state.settingsMode} options={[
