@@ -13,30 +13,45 @@ class Cell extends React.Component {
 	toggle() {
 		var i = this.props.cellKey;
 		var channel = this.props.channel;
-		const steps = channel.state.steps.slice();
-		steps[i] = !steps[i];
-		channel.setState({steps: steps, selectedStep: i});
 		var track = channel.state;
+		const steps = track.steps.slice();
+		if (!steps[i]) {
+			steps[i] = {};
+			steps[i].pitch = track.rootPitch;
+			steps[i].bar = this.props.bar; 
+			steps[i].beat = this.props.beat; 
+			steps[i].tick = this.props.tick; 
+		}
+		else {
+			steps[i] = false;
+		}
+		channel.setState({steps: steps, selectedStep: i});
 		track.steps = steps;
 		channel.props.updateTrack(track.trackName,track);
 	}
 	fill() {
 		var i = this.props.cellKey;
 		var channel = this.props.channel;
-		const steps = channel.state.steps.slice();
-		steps[i] = true;
-		channel.setState({steps: steps});
 		var track = channel.state;
+		const steps = track.steps.slice();
+		if (!steps[i]) {
+			steps[i] = {};
+			steps[i].pitch = track.rootPitch;
+			steps[i].bar = this.props.bar; 
+			steps[i].beat = this.props.beat; 
+			steps[i].tick = this.props.tick; 
+		}
+		channel.setState({steps: steps});
 		track.steps = steps;
 		channel.props.updateTrack(track.trackName,track);
 	}
 	empty() {
 		var i = this.props.cellKey;
 		var channel = this.props.channel;
-		const steps = channel.state.steps.slice();
+		var track = channel.state;
+		const steps = track.steps.slice();
 		steps[i] = false;
 		channel.setState({steps: steps});
-		var track = channel.state;
 		track.steps = steps;
 		channel.props.updateTrack(track.trackName,track);
 	}
