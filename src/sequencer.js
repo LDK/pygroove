@@ -8,6 +8,7 @@ import OptionIndicator from './components/OptionIndicator.js';
 import ContextMenu from './components/ContextMenu.js';
 import PowerButton from './components/PowerButton.js';
 import FileSelector from './components/FileSelector.js';
+import PitchSelector from './components/PitchSelector.js';
 import Incrementer from './components/Incrementer.js';
 import DropZone from './components/DropZone.js';
 import Cell from './components/Cell.js';
@@ -26,8 +27,12 @@ function stepFormat(step) {
 	var bar = (Math.floor((step-1) / 16)) + 1;
 	var beat = (Math.floor((step-1) / 4) % 4) + 1;
 	var tick = (1 + (step-1) * 8) % 32;
-	// return {bar: bar, beat: beat, tick: tick};
-	return bar + "." + beat + "." + tick;
+	return {
+		bar: bar, 
+		beat: beat, 
+		tick: tick,
+		loc: bar + "." + beat + "." + tick
+	};
 }
 
 function panFormat(value) {
@@ -99,9 +104,7 @@ class Channel extends React.Component {
 			selectedStep: null,
 			reverse: props.reverse || false,
 			trim: props.trim || false,
-			pitch: {
-				
-			},
+			pitch: 'C4',
 			rootPitch: 'C4',
 			transpose: 0,
 			panDisplay: 'C',
@@ -180,6 +183,7 @@ class Channel extends React.Component {
 		this.updateFilterFrequency = this.updateFilterFrequency.bind(this);
 		this.updateVolume = this.updateVolume.bind(this);
 		this.updatePitch = this.updatePitch.bind(this);
+		this.handleTranspose = this.handleTranspose.bind(this);
 		this.updateActive = this.updateActive.bind(this);
 		this.toggleSettings = this.toggleSettings.bind(this);
 		this.selectStep = this.selectStep.bind(this);
@@ -275,6 +279,20 @@ class Channel extends React.Component {
 				this.props.updateTrack(this.state.trackName,this.state);
 			});
 		}
+		handleTranspose(value) {
+			if (this.state.settingsMode == 'step') {
+				// Set step transpose
+				const steps = this.state.steps.slice();
+				steps[this.state.selectedStep].transpose = value;
+				this.setState({ steps: steps }, function () {
+					this.props.updateTrack(this.state.trackName,this.state);
+				});
+			}
+			else {
+				// Update channel transpose value
+				this.updatePitch(value);
+			}
+		}
 		toggleSettings(value) {
 			var opn = this.state.settingsOpen;
 			opn = !opn;
@@ -282,6 +300,9 @@ class Channel extends React.Component {
 		}
 		updateSettingsMode(value) {
 			this.setState({ settingsMode: value || 'chan' });
+			if (value == 'step' && !this.state.selectedStep) {
+				this.setState({ selectedStep: 1 });
+			}
 		}
 		toggleFilter(value) {
 			this.setState({ filterOn: !this.state.filterOn }, function () {
@@ -307,13 +328,13 @@ class Channel extends React.Component {
 			var indicator = '';
 			var loc = stepFormat(i);
 			if (this.state.steps[i]) { indicator = 'X'; }
-			return <Cell channel={this} bar={loc.bar} beat={loc.beat} tick={loc.tick} value={this.state.steps[i]} indicator={indicator} onClick={() => this.toggleCell(i)} key={i} cellKey={i} />;
+			return <Cell channel={this} bar={loc.bar} beat={loc.beat} tick={loc.tick} value={this.state.steps[i] ? true : false} indicator={indicator} key={i} cellKey={i} />;
 		}
 		renderStepPicker(i) {
 			var indicator = '';
 			var loc = stepFormat(i);
 			if (this.state.selectedStep == i) { indicator = '*'; }
-			return <StepPicker bar={loc.bar} beat={loc.beat} tick={loc.tick} value={this.state.steps[i]} indicator={indicator} onClick={() => this.selectStep(i)} key={i}/>;
+			return <StepPicker bar={loc.bar} beat={loc.beat} tick={loc.tick} indicator={indicator} onClick={() => this.selectStep(i)} key={i}/>;
 		}
 		cellRow(start,end) {
 			var cells = [];
@@ -332,13 +353,14 @@ class Channel extends React.Component {
 		selectStep(i) {
 			var selectedStep = (this.selectedStep != i) ? i : null;
 			this.setState({selectedStep: selectedStep});
-			var track = this.state;
-			track.steps = steps;
-			this.props.updateTrack(track.trackName,track);
 		}
 		fillCell(i) {
 			const steps = this.state.steps.slice();
-			steps[i] = true;
+			if (!steps[i]) {
+				steps[i] = {};
+				steps[i].pitch = this.rootPitch;
+			}
+			steps[i].on = true;
 			this.setState({steps: steps});
 			var track = this.state;
 			track.steps = steps;
@@ -346,7 +368,9 @@ class Channel extends React.Component {
 		}
 		emptyCell(i) {
 			const steps = this.state.steps.slice();
-			steps[i] = false;
+			if (steps[i]) {
+				steps[i] = false;
+			}
 			this.setState({steps: steps});
 			var track = this.state;
 			track.steps = steps;
@@ -406,6 +430,10 @@ class Channel extends React.Component {
 									<label>Current Sample: {this.state.wavName || this.state.wav}</label>
 									<DropZone parentObj={this} onFilesAdded={this.filesAdded} label="Upload Sample" />
 								</div>
+								<div className={(this.state.settingsMode != 'step' ? 'd-none' : '')}>
+								<label>Pitch: </label> {this.state.steps[this.state.selectedStep] ? this.state.steps[this.state.selectedStep].pitch : 'N/A'}
+									<PitchSelector parentObj={this} />
+								</div>
 							</div>
 							<div className="col-1 text-center">
 								<PowerButton switchedOn={this.state.filterOn} label="Filter 1"  callback={this.toggleFilter} className="mx-auto" />
@@ -430,7 +458,15 @@ class Channel extends React.Component {
 								<Range label="Cutoff Freq" className="mt-4 text-center" callback={this.updateFilter2Frequency} disabled={!this.state.filter2On} inputClass="freq col-8 px-0 mx-auto" min="30" max="22000" value={this.state.filter2.frequency} />
 							</div>
 							<div className="col-2 text-center">
-								<Incrementer label="Transpose" callback={this.updatePitch} inputClass="transpose col-8 px-0 mx-auto" min="-48" max="48" value={this.state.transpose || "0"} />
+								<Incrementer label="Transpose" parentObj={this} callback={this.handleTranspose} inputClass="transpose col-8 px-0 mx-auto" disabled={this.state.settingsMode == 'step' && (!this.state.selectedStep || !this.state.steps[this.state.selectedStep])} min="-48" max="48"
+									value={
+										this.state.settingsMode == 'step' 
+										? (this.state.selectedStep && this.state.steps[this.state.selectedStep]
+											? this.state.steps[this.state.selectedStep].transpose 
+											: "0")
+										: (this.state.transpose || "0")
+									} 
+								/>
 								<PowerButton className="mt-2" switchedOn={this.state.reverse} label="Reverse" labelButton={true} callback={this.toggleReverse} />
 								<PowerButton className="mt-2" switchedOn={this.state.trim} label="Trim" labelButton={true} callback={this.toggleTrim} />
 							</div>
@@ -506,7 +542,7 @@ class Pattern extends React.Component {
 			track.notes = [];
 			for (var step in track.steps) {
 				if (track.steps[step]) {
-					var note = { loc: stepFormat(step) };
+					var note = { loc: stepFormat(step).loc };
 					track.notes.push(note);
 				}
 			}

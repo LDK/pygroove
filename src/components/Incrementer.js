@@ -3,7 +3,6 @@ import React, { Component } from 'react';
 class Incrementer extends React.Component {
 	constructor(props) {
 		super(props);
-		this.callback = this.callback.bind(this);
 		this.state = {
 			value: props.value || '',
 			label: props.label || '',
@@ -18,23 +17,19 @@ class Incrementer extends React.Component {
 		this.typeModeOff = this.typeModeOff.bind(this);
 		this.keyPress = this.keyPress.bind(this);
 	}
-	callback(event) {
-		var val = event.currentTarget.value;
-		this.setState({value: val});
-		if (this.props.callback) {
-			this.props.callback(event.currentTarget.value);
-		}
-		this.render();
-	}
 	increment(val) {
-		var newVal = parseInt(this.state.value) || 0;
+		var newVal = parseInt(this.props.value) || 0;
+		if (this.props.disabled) {
+			return this.render();
+		}
 		newVal += val;
 		newVal = this.sanitizeValue(newVal);
-		this.setState({value: newVal, typeMode: false});
-		if (this.props.callback) {
-			this.props.callback(newVal);
-		}
-		this.render();
+		this.setState({value: this.props.value, typeMode: false},function(){
+			if (this.props.callback) {
+				this.props.callback(newVal);
+			}
+			this.render();
+		});
 	}
 	focusOn() {
 		this.textInput.focus();
@@ -96,18 +91,19 @@ class Incrementer extends React.Component {
 		return (
 			<div className={"incrementer text-center" + ' ' + (this.props.className || '') }>
 				<label className="d-block">{this.state.label}</label>
-			<span onClick={() => this.increment(1)} >^</span>
-			<span onClick={() => this.increment(12)} >^^</span>
+				<span className={(this.props.disabled ? ' disabled' : '')} onClick={() => this.increment(1)} >^</span>
+				<span className={(this.props.disabled ? ' disabled' : '')} onClick={() => this.increment(12)} >^^</span>
 				<div onClick={this.typeModeOn}>
-					<input type="text" onKeyDown={this.keyPress} tabIndex="-1" value={this.state.value} name={this.props.name} 
+					<input type="text" onKeyDown={this.keyPress} tabIndex="-1" value={this.props.value} name={this.props.name} 
 						ref={elem => (this.textInput = elem)} 
 						className={"mx-auto text-center w-50 d-block " + (this.props.disabled || !this.state.typeMode ? ' disabled' : '')}
 						disabled={this.props.disabled || !this.state.typeMode}
 						onBlur={this.handleBlur}
-						onChange={this.handleChange} />
+						onChange={this.handleChange} 
+					/>
 				</div>
-						<span onClick={() => this.increment(-1)}>v</span>
-						<span onClick={() => this.increment(-12)} >vv</span>
+				<span className={(this.props.disabled ? ' disabled' : '')} onClick={() => this.increment(-1)}>v</span>
+				<span className={(this.props.disabled ? ' disabled' : '')} onClick={() => this.increment(-12)} >vv</span>
 			</div>
 		)
 	}
