@@ -306,14 +306,42 @@ class Channel extends React.Component {
 			}
 		}
 		toggleFilter(value) {
-			this.setState({ filterOn: !this.state.filterOn }, function () {
-				this.props.updateTrack(this.state.trackName,this.state);
-			});
+			if (this.state.settingsMode == 'step') {
+				const steps = this.state.steps.slice();
+				if (typeof steps[this.state.selectedStep].filterOn != 'undefined') {
+					steps[this.state.selectedStep].filterOn = !steps[this.state.selectedStep].filterOn;
+				}
+				else {
+					steps[this.state.selectedStep].filterOn = !this.state.filterOn;
+				}
+				this.setState({ steps: steps }, function () {
+					this.props.updateTrack(this.state.trackName,this.state);
+				});
+			}
+			else {
+				this.setState({ filterOn: !this.state.filterOn }, function () {
+					this.props.updateTrack(this.state.trackName,this.state);
+				});
+			}
 		}
 		toggleFilter2(value) {
-			this.setState({ filter2On: !this.state.filter2On }, function () {
-				this.props.updateTrack(this.state.trackName,this.state);
-			});
+			if (this.state.settingsMode == 'step') {
+				const steps = this.state.steps.slice();
+				if (typeof steps[this.state.selectedStep].filter2On != 'undefined') {
+					steps[this.state.selectedStep].filter2On = !steps[this.state.selectedStep].filter2On;
+				}
+				else {
+					steps[this.state.selectedStep].filter2On = !this.state.filter2On;
+				}
+				this.setState({ steps: steps }, function () {
+					this.props.updateTrack(this.state.trackName,this.state);
+				});
+			}
+			else {
+				this.setState({ filter2On: !this.state.filter2On }, function () {
+					this.props.updateTrack(this.state.trackName,this.state);
+				});
+			}
 		}
 		toggleReverse(value) {
 			if (this.state.settingsMode == 'step') {
@@ -446,8 +474,36 @@ class Channel extends React.Component {
 								</div>
 							</div>
 							<div className="col-1 text-center">
-								<PowerButton switchedOn={this.state.filterOn} label="Filter 1"  callback={this.toggleFilter} className="mx-auto" />
-								<PowerButton switchedOn={this.state.filter2On} label="Filter 2"  callback={this.toggleFilter2} wrapperClass="mt-3" className="mx-auto" />
+								<MultiModePowerButton 
+									className="mx-auto" settingsMode={this.state.filterOn} 
+									switchedOn={
+										this.state.settingsMode == 'step' && this.state.steps[this.state.selectedStep]
+										? ( 
+											typeof this.state.steps[this.state.selectedStep].filterOn == 'undefined'
+											? this.state.filterOn
+											: this.state.steps[this.state.selectedStep].filterOn
+										)
+										: this.state.filterOn
+									} 
+									disabled={this.state.settingsMode == 'step' && !this.state.steps[this.state.selectedStep]}
+									label="Filter 1"
+									callback={this.toggleFilter}
+								 />
+								<MultiModePowerButton 
+									wrapperClass="mt-3" className="mx-auto" settingsMode={this.state.filter2On} 
+									switchedOn={
+										this.state.settingsMode == 'step' && this.state.steps[this.state.selectedStep]
+										? ( 
+											typeof this.state.steps[this.state.selectedStep].filter2On == 'undefined'
+											? this.state.filter2On
+											: this.state.steps[this.state.selectedStep].filter2On
+										)
+										: this.state.filter2On
+									} 
+									disabled={this.state.settingsMode == 'step' && !this.state.steps[this.state.selectedStep]}
+									label="Filter 2"
+									callback={this.toggleFilter2}
+								 />
 							</div>
 							<div className="col-2">
 								<OptionIndicator value={this.state.filter.type} disabled={!this.state.filterOn} options={[
