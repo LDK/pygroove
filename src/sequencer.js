@@ -5,6 +5,7 @@ import 'whatwg-fetch';
 import AudioOut from './components/AudioOut.js';
 import Range from './components/Range.js';
 import OptionIndicator from './components/OptionIndicator.js';
+import MultiModeOptionIndicator from './components/MultiModeOptionIndicator.js';
 import ContextMenu from './components/ContextMenu.js';
 import PowerButton from './components/PowerButton.js';
 import MultiModePowerButton from './components/MultiModePowerButton.js';
@@ -234,23 +235,45 @@ class Channel extends React.Component {
 			});
 		}
 		updateFilterType(value) {
-			var fil = this.state.filter;
-			fil.type = value;
-			this.setState({ filter: fil }, function () {
-				this.props.updateTrack(this.state.trackName,this.state);
-			});
+			if (this.state.settingsMode == 'step') {
+				const steps = this.state.steps.slice();
+				if (steps[this.state.selectedStep]) {
+					steps[this.state.selectedStep].filterType = value;
+					this.setState({ steps: steps }, function () {
+						this.props.updateTrack(this.state.trackName,this.state);
+					});
+				}
+			}
+			else {
+				var fil = this.state.filter;
+				fil.type = value;
+				this.setState({ filter: fil }, function () {
+					this.props.updateTrack(this.state.trackName,this.state);
+				});
+			}
+		}
+		updateFilter2Type(value) {
+			if (this.state.settingsMode == 'step') {
+				const steps = this.state.steps.slice();
+				if (steps[this.state.selectedStep]) {
+					steps[this.state.selectedStep].filter2Type = value;
+					this.setState({ steps: steps }, function () {
+						this.props.updateTrack(this.state.trackName,this.state);
+					});
+				}
+			}
+			else {
+				var fil = this.state.filter2;
+				fil.type = value;
+				this.setState({ filter2: fil }, function () {
+					this.props.updateTrack(this.state.trackName,this.state);
+				});
+			}
 		}
 		updateFilterFrequency(value) {
 			var fil = this.state.filter;
 			fil.frequency = value;
 			this.setState({ filter: fil }, function () {
-				this.props.updateTrack(this.state.trackName,this.state);
-			});
-		}
-		updateFilter2Type(value) {
-			var fil = this.state.filter2;
-			fil.type = value;
-			this.setState({ filter2: fil }, function () {
 				this.props.updateTrack(this.state.trackName,this.state);
 			});
 		}
@@ -308,11 +331,14 @@ class Channel extends React.Component {
 		toggleFilter(value) {
 			if (this.state.settingsMode == 'step') {
 				const steps = this.state.steps.slice();
-				if (typeof steps[this.state.selectedStep].filterOn != 'undefined') {
+				if (steps[this.state.selectedStep] && typeof steps[this.state.selectedStep].filterOn != 'undefined') {
 					steps[this.state.selectedStep].filterOn = !steps[this.state.selectedStep].filterOn;
 				}
-				else {
+				else if (steps[this.state.selectedStep]) {
 					steps[this.state.selectedStep].filterOn = !this.state.filterOn;
+				}
+				else {
+					
 				}
 				this.setState({ steps: steps }, function () {
 					this.props.updateTrack(this.state.trackName,this.state);
@@ -327,11 +353,14 @@ class Channel extends React.Component {
 		toggleFilter2(value) {
 			if (this.state.settingsMode == 'step') {
 				const steps = this.state.steps.slice();
-				if (typeof steps[this.state.selectedStep].filter2On != 'undefined') {
+				if (steps[this.state.selectedStep] && typeof steps[this.state.selectedStep].filter2On != 'undefined') {
 					steps[this.state.selectedStep].filter2On = !steps[this.state.selectedStep].filter2On;
 				}
-				else {
+				else if (steps[this.state.selectedStep]) {
 					steps[this.state.selectedStep].filter2On = !this.state.filter2On;
+				}
+				else {
+					
 				}
 				this.setState({ steps: steps }, function () {
 					this.props.updateTrack(this.state.trackName,this.state);
@@ -490,7 +519,7 @@ class Channel extends React.Component {
 									callback={this.toggleFilter}
 								 />
 								<MultiModePowerButton 
-									wrapperClass="mt-3" className="mx-auto" settingsMode={this.state.filter2On} 
+									wrapperClass="mt-3" className="mx-auto" settingsMode={this.state.settingsMode} 
 									switchedOn={
 										this.state.settingsMode == 'step' && this.state.steps[this.state.selectedStep]
 										? ( 
@@ -506,20 +535,44 @@ class Channel extends React.Component {
 								 />
 							</div>
 							<div className="col-2">
-								<OptionIndicator value={this.state.filter.type} disabled={!this.state.filterOn} options={[
-									{key: 'LP', value: 'lp'},
-									{key: 'BP', value: 'bp'},
-									{key: 'HP', value: 'hp'}
-								]} name={"filterType-"+this.state.trackName} label="Filter 1 Type" callback={this.updateFilterType} />
+								<MultiModeOptionIndicator 
+									value={
+										this.state.settingsMode == 'step' 
+										? (
+											!this.state.steps[this.state.selectedStep] || typeof this.state.steps[this.state.selectedStep].filterType == 'undefined'
+											? this.state.filter.type
+											: this.state.steps[this.state.selectedStep].filterType
+										)
+										: this.state.filter.type
+									}
+									disabled={!this.state.filterOn || (this.state.settingsMode == 'step' && !this.state.steps[this.state.selectedStep])}
+									options={[
+										{key: 'LP', value: 'lp'},
+										{key: 'BP', value: 'bp'},
+										{key: 'HP', value: 'hp'}
+									]} 
+									name={"filterType-"+this.state.trackName} label="Filter 1 Type" callback={this.updateFilterType} />
 								<hr className="mb-4 mt-1" />
 								<Range label="Cutoff Freq" className="mt-4 text-center" callback={this.updateFilterFrequency} disabled={!this.state.filterOn} inputClass="freq col-8 px-0 mx-auto" min="30" max="22000" value={this.state.filter.frequency} />
 							</div>
 							<div className="col-2">
-								<OptionIndicator value={this.state.filter2.type} disabled={!this.state.filter2On} options={[
-									{key: 'LP', value: 'lp'},
-									{key: 'BP', value: 'bp'},
-									{key: 'HP', value: 'hp'}
-								]} name={"filter2Type-"+this.state.trackName} label="Filter 2 Type" callback={this.updateFilter2Type} />
+								<MultiModeOptionIndicator 
+									value={
+										this.state.settingsMode == 'step' 
+										? (
+											!this.state.steps[this.state.selectedStep] || typeof this.state.steps[this.state.selectedStep].filter2Type == 'undefined'
+											? this.state.filter2.type
+											: this.state.steps[this.state.selectedStep].filter2Type
+										)
+										: this.state.filter2.type
+									}
+									disabled={!this.state.filter2On || (this.state.settingsMode == 'step' && !this.state.steps[this.state.selectedStep])}
+									options={[
+										{key: 'LP', value: 'lp'},
+										{key: 'BP', value: 'bp'},
+										{key: 'HP', value: 'hp'}
+									]} 
+									name={"filter2Type-"+this.state.trackName} label="Filter2 1 Type" callback={this.updateFilter2Type} />
 								<hr className="mb-4 mt-1" />
 								<Range label="Cutoff Freq" className="mt-4 text-center" callback={this.updateFilter2Frequency} disabled={!this.state.filter2On} inputClass="freq col-8 px-0 mx-auto" min="30" max="22000" value={this.state.filter2.frequency} />
 							</div>
