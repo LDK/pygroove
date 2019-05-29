@@ -235,10 +235,16 @@ span.meter-display.freq:after {
 div.channel-options:not(.d-none) {
 	background-color: tan;
 }
+div.channel-options:not(.d-none) {
+	background-color: tan;
+}
 div.channel-options .row > div {
 	height: 180px;
 	border-right: 1px solid white;
 	background-color: #9a9a9a;
+}
+div.channel-options.step .row > div {
+	background-color: rgb(140, 180, 210);
 }
 .disabled.row div.channel-options .row > div {
 	background-color: var(--disabled-light);

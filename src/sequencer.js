@@ -490,7 +490,7 @@ class Channel extends React.Component {
 					</div>
 				</div>
 				<div className="col-12 d-none d-md-block">
-					<div className={"container-fluid px-0 channel-options " + this.state.settingsClass + (this.state.filterOn ? ' filterOn' : '')}>
+					<div className={"container-fluid px-0 channel-options " + this.state.settingsClass + ' ' + this.state.settingsMode + (this.state.filterOn ? ' filterOn' : '')}>
 						<div className="row mx-auto">
 							<div className="col-3">
 								<div className={(this.state.settingsMode == 'step' ? 'd-none' : '')}>
@@ -572,7 +572,7 @@ class Channel extends React.Component {
 										{key: 'BP', value: 'bp'},
 										{key: 'HP', value: 'hp'}
 									]} 
-									name={"filter2Type-"+this.state.trackName} label="Filter2 1 Type" callback={this.updateFilter2Type} />
+									name={"filter2Type-"+this.state.trackName} label="Filter 2 Type" callback={this.updateFilter2Type} />
 								<hr className="mb-4 mt-1" />
 								<Range label="Cutoff Freq" className="mt-4 text-center" callback={this.updateFilter2Frequency} disabled={!this.state.filter2On} inputClass="freq col-8 px-0 mx-auto" min="30" max="22000" value={this.state.filter2.frequency} />
 							</div>
