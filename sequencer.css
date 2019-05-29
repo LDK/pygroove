@@ -261,6 +261,7 @@ div.powerButton:not(.labelButton) > button {
 	height: 100%;
 	width: 100%;
 	border-radius: 3rem;
+	border-color: transparent;
 	background-position: center 35%;
 	background-color: #9a9a9a;
 	cursor: pointer;
