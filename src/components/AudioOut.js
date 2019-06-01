@@ -15,7 +15,7 @@ class AudioOut extends React.Component {
 	render() {
 		return (
 			<div>
-				<audio ref={this.props.passedRef} controls tabIndex="-1">
+				<audio ref={this.props.passedRef} tabIndex="-1">
 					<source src={this.state.source} />
 				</audio>
 			</div>

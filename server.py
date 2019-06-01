@@ -82,7 +82,7 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
         postRes = {
           "wav": fName,
           "img": imgLoc,
-          "splitter-return": groove.split(fName,16)
+          "slices": groove.split(fName,16)
         }
         self.wfile.write(json.dumps(postRes).encode("utf-8"))
         return;

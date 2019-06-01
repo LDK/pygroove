@@ -455,3 +455,9 @@ div.contextMenu-wrapper:not(.open) select {
 	background-color: var(--green-light);
 	border: 2px dashed  var(--green-dark);
 }
+.drumPad {
+	height: 96px;
+}
+.drumPad .padSurface {
+	background-color: black;
+}
