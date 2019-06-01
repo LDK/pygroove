@@ -188,6 +188,19 @@ def addNote(trackName,sound,bar,beat,tick,options = {}):
     tracks[trackName] = track
     # print("Added sound at {loc}".format(loc=loc))
 
+def split(wavFile,pieces):
+    sound = AudioSegment.from_wav('./audio/uploaded/'+wavFile)
+    slices = []
+    sliceLen = int(len(sound) / pieces);
+    for i, chunk in enumerate(sound[::sliceLen]):
+        if (i >= pieces):
+            break;
+        sliceName = "./audio/uploaded/split/{fileName}-{num}.wav".format(fileName=wavFile.replace('.wav',''),num=i+1)
+        with open(sliceName, "wb") as f:
+            chunk.export(f, format="wav")
+            slices.append(sliceName)
+    return slices
+
 def transpose(sound,st):
     octaves = float(st) / 12
     new_sample_rate = int(sound.frame_rate * (2.0 ** octaves))
