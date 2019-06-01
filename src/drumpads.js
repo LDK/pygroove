@@ -101,13 +101,14 @@ class PadGroup extends React.Component {
 		}
 	}
 	render() {
+		const PadRow = this.drumPadRow(1,16,"col-3 p-2");
 		return (
 			<div>
 				<DropZone parentObj={this} onFilesAdded={this.filesAdded} label="Upload Sample to Chop" />
 				<AudioOut source={this.state.wav} passedRef={this.sampleOut} />
 				<div className="container-fluid px-2">
 					<div className="row">
-						{this.drumPadRow(1,16,"col-3 p-2")}
+						{PadRow}
 					</div>
 				</div>
 			</div>

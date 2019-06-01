@@ -29,17 +29,14 @@ class DrumPad extends React.Component {
 		var i = this.props.padKey;
 		this.setState({ wav: null });
 	}
-	loadWav() {
-		var audioOut = this.props.group.state.padRefs[this.props.padKey];
-		audioOut.current.src = this.state.wav;
+	loadWav(audioOut) {
+		audioOut.current.src = this.props.group.state.slices[this.props.padKey-1];
 		audioOut.current.load();
 	}
 	playWav() {
-		var padKey = this.props.padKey;
-		var audioOut = this.props.group.state.padRefs[padKey];
+		var audioOut = this.props.group.state.padRefs[this.props.padKey];
 		if (audioOut.current && !this.state.wav && this.props.group.state.slices) {
-			audioOut.current.src = this.props.group.state.slices[padKey];
-			audioOut.current.load();
+			this.loadWav(audioOut);
 		}
 		audioOut.current.play();
 	}
