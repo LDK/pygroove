@@ -67,6 +67,26 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
         self.wfile.write(json.dumps(postRes).encode("utf-8"))
         return;
         
+    if (self.path == '/upload-splitter'):
+        postvars = self.parse_POST()
+        fName = postvars['filename'][0]
+        fData = postvars['file'][0]
+        fLoc = pjoin(curdir, "audio/uploaded", fName)
+        with open(fLoc, 'wb') as fh:
+            fh.write(fData)
+        imgLoc = pjoin(curdir, "img/waveform/uploaded", fName.replace('.wav','.png'))
+        waveImg = waveform.Waveform(fLoc)
+        imgInitLoc = waveImg.save()
+        rename(imgInitLoc,imgLoc)
+        self.send_response(200)
+        postRes = {
+          "wav": fName,
+          "img": imgLoc,
+          "splitter-return": groove.split(fName,16)
+        }
+        self.wfile.write(json.dumps(postRes).encode("utf-8"))
+        return;
+        
     self.data_string = self.rfile.read(int(self.headers['Content-Length']))
     fName = groove.renderJSON(self.data_string);
     self.wfile.write(bytes(fName, "utf8"))
