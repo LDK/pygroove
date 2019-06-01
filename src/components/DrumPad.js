@@ -1,5 +1,8 @@
 import React, { Component } from 'react';
 import AudioOut from './AudioOut.js';
+import Hotkeys from 'react-hot-keys';
+const HotKey = require('react-shortcut');
+import PowerButton from './PowerButton.js';
 
 class DrumPad extends React.Component {
 	constructor(props) {
@@ -25,6 +28,13 @@ class DrumPad extends React.Component {
 			this.props.group.setState({ padRefs: padRefs });
 		}
 	}
+	onKeyUp(keyName, e, handle) {
+		this.setState({highlight:false});
+	}
+	onKeyDown(keyName, e, handle) {
+		this.setState({highlight:true});
+		this.playWav();
+	}
 	empty() {
 		var i = this.props.padKey;
 		this.setState({ wav: null });
@@ -40,21 +50,35 @@ class DrumPad extends React.Component {
 		}
 		audioOut.current.play();
 	}
+	toggleSettings() {
+
+	}
 	render() {
 		var label = this.props.label || 'Upload File';
 		var audioOut = this.props.group.state.padRefs[this.props.padKey];
+		var keyArray = this.props.hotKey.split(',');
 		return (
-			<div 
-				className={
-					"drumPad " + 
-					this.props.padClass + " " + 
-					this.props.padKey + " " +
-					(this.state.highlight ? 'highlight' : '')
-				}>
-				<div onClick={this.playWav} className="padSurface w-100 h-100">
-					<AudioOut source={this.state.wav} passedRef={audioOut} />
+			<Hotkeys
+				keyName={this.props.hotKey}
+				onKeyUp={this.onKeyUp.bind(this)}
+			>
+				<HotKey
+					simultaneous
+					keys={keyArray}
+					onKeysCoincide={this.onKeyDown.bind(this)}
+				/>
+				<div 
+					className={
+						"drumPad " + 
+						this.props.padClass + " " + 
+						this.props.padKey + " " +
+						(this.state.highlight ? 'highlight' : '')
+					}>
+					<div onClick={this.playWav} className="padSurface w-100 h-100">
+						<AudioOut source={this.state.wav} passedRef={audioOut} />
+					</div>
 				</div>
-			</div>
+			</Hotkeys>
 		)
 	}
 }

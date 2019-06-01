@@ -33,8 +33,27 @@ class PadGroup extends React.Component {
 			14: React.createRef(),
 			15: React.createRef(),
 			16: React.createRef()
+			},
+			hotKeys: {
+				1: 'a',
+				2: 'w',
+				3: 's',
+				4: 'e',
+				5: 'd',
+				6: 'f',
+				7: 't',
+				8: 'g',
+				9: 'y',
+				10: 'h',
+				11: 'j',
+				12: 'i',
+				13: 'k',
+				14: 'o',
+				15: 'l',
+				16: ';'
 			}
 		 };
+		
 		this.grooveServer = 'http://localhost:8081/';
 		this.sendRequest = this.sendRequest.bind(this);
 		this.filesAdded = this.filesAdded.bind(this);
@@ -44,7 +63,7 @@ class PadGroup extends React.Component {
 		if (this.state.slices) {
 			wavName = this.state.slices[i];
 		}
-		return <DrumPad group={this} wav={wavName} key={i} padKey={i} padClass={padClass} origWav={this.state.wav} />;
+		return <DrumPad group={this} wav={wavName} key={i} padKey={i} padClass={padClass} origWav={this.state.wav} hotKey={this.state.hotKeys[i]} />;
 	}
 	drumPadRow(start,end,className) {
 		var pads = [];

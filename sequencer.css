@@ -460,4 +460,9 @@ div.contextMenu-wrapper:not(.open) select {
 }
 .drumPad .padSurface {
 	background-color: black;
+	transition: background-color 2s;
+}
+.drumPad.highlight .padSurface {
+	background-color: orange;
+	transition: background-color .15s;
 }
