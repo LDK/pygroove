@@ -23,7 +23,7 @@ class DrumPad extends React.Component {
 		this.empty = this.empty.bind(this);
 		this.playWav = this.playWav.bind(this);
 		this.loadWav = this.loadWav.bind(this);
-		this.stopWav = this.loadWav.bind(this);
+		this.pauseWav = this.pauseWav.bind(this);
 		var audioOut = this.props.group.state.padRefs[this.props.padKey];
 		if (this.props.wav) {
 			audioOut.current.src = this.state.sample.wav;
@@ -95,16 +95,7 @@ class DrumPad extends React.Component {
 			this.setState({playing:false});
 		}
 	}
-	stopWav() {
-		console.log('STOP WAV');
-		var audioOut = this.props.group.state.padRefs[this.props.padKey];
-		if (audioOut && audioOut.current) {
-			audioOut.current.pause();
-		}
-		this.setState({ playing: false });
-	}
 	pauseWav() {
-		console.log('STOP WAV');
 		var audioOut = this.props.group.state.padRefs[this.props.padKey];
 		if (audioOut && audioOut.current) {
 			audioOut.current.pause();
