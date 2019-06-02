@@ -49,9 +49,6 @@ class DrumPad extends React.Component {
 		}
 	}
 	onKeyDown(keyName, e, handle) {
-		if (this.state.playing) {
-			return;
-		}
 		this.playWav();
 	}
 	empty() {
