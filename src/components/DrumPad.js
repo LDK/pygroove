@@ -3,20 +3,30 @@ import AudioOut from './AudioOut.js';
 import Hotkeys from 'react-hot-keys';
 const HotKey = require('react-shortcut');
 import PowerButton from './PowerButton.js';
+import cloneDeep from 'lodash/cloneDeep';
 
 class DrumPad extends React.Component {
 	constructor(props) {
 		super(props);
+		var timeStamp = Math.floor(Date.now() / 1000);
 		this.state = { 
-			highlight: false,
-			wav: this.props.wav || null
+			lastInput: timeStamp,
+			playing: false,
+			sample: {
+				wav: this.props.wav || null,
+				parentWav: this.props.parentWav || null,
+				sliceLength: this.props.sliceLength || 0,
+				sliceStart: this.props.sliceStart || 0,
+				sliceEnd: this.props.sliceEnd || 0
+			}
 		};
 		this.empty = this.empty.bind(this);
 		this.playWav = this.playWav.bind(this);
 		this.loadWav = this.loadWav.bind(this);
+		this.stopWav = this.loadWav.bind(this);
 		var audioOut = this.props.group.state.padRefs[this.props.padKey];
 		if (this.props.wav) {
-			audioOut.current.src = this.state.wav;
+			audioOut.current.src = this.state.sample.wav;
 			audioOut.current.load();
 		}
 		if (this.props.group) {
@@ -29,10 +39,19 @@ class DrumPad extends React.Component {
 		}
 	}
 	onKeyUp(keyName, e, handle) {
-		this.setState({highlight:false});
+		if (this.state.playing) {
+			// this.pauseWav();
+		}
+	}
+	onMouseUp(keyName, e, handle) {
+		if (this.state.playing) {
+			// this.pauseWav();
+		}
 	}
 	onKeyDown(keyName, e, handle) {
-		this.setState({highlight:true});
+		if (this.state.playing) {
+			return;
+		}
 		this.playWav();
 	}
 	empty() {
@@ -40,15 +59,57 @@ class DrumPad extends React.Component {
 		this.setState({ wav: null });
 	}
 	loadWav(audioOut) {
-		audioOut.current.src = this.props.group.state.slices[this.props.padKey-1];
-		audioOut.current.load();
+		if (audioOut) {
+			audioOut.current.src = this.props.group.state.slices[this.props.padKey-1].filename;
+			audioOut.current.load();
+		}
+	}
+	restartWav(audioOut) {
+		if (audioOut && audioOut.current) {
+			audioOut.current.pause();
+			audioOut.current.currentTime = 0;
+		}
 	}
 	playWav() {
 		var audioOut = this.props.group.state.padRefs[this.props.padKey];
-		if (audioOut.current && !this.state.wav && this.props.group.state.slices) {
-			this.loadWav(audioOut);
+		if (this.state.playing) {
+			this.restartWav(audioOut);
 		}
-		audioOut.current.play();
+		if (audioOut.current && !this.state.sample.wav && this.props.group.state.slices) {
+			if (!audioOut.current.src || audioOut.current.src!=this.state.sample.wav) {
+				this.loadWav(audioOut);
+			}
+		}
+		if (audioOut && audioOut.current && audioOut.current.src) {
+			audioOut.current.play();
+			this.setState({playing:true});
+			var pad = this;
+			const padState = cloneDeep(this.state);
+			setTimeout(function(){
+				if (pad.state.lastInput == padState.lastInput) {
+					pad.pauseWav();
+				}
+			},this.props.group.state.slices[this.props.padKey].len);
+		}
+		else {
+			this.setState({playing:false});
+		}
+	}
+	stopWav() {
+		console.log('STOP WAV');
+		var audioOut = this.props.group.state.padRefs[this.props.padKey];
+		if (audioOut && audioOut.current) {
+			audioOut.current.pause();
+		}
+		this.setState({ playing: false });
+	}
+	pauseWav() {
+		console.log('STOP WAV');
+		var audioOut = this.props.group.state.padRefs[this.props.padKey];
+		if (audioOut && audioOut.current) {
+			audioOut.current.pause();
+		}
+		this.setState({ playing: false });
 	}
 	toggleSettings() {
 
@@ -72,10 +133,11 @@ class DrumPad extends React.Component {
 						"drumPad " + 
 						this.props.padClass + " " + 
 						this.props.padKey + " " +
-						(this.state.highlight ? 'highlight' : '')
+						(this.state.playing ? 'highlight' : '')
 					}>
 					<div onClick={this.playWav} className="padSurface w-100 h-100">
-						<AudioOut source={this.state.wav} passedRef={audioOut} />
+						<AudioOut source={this.state.sample.wav} passedRef={audioOut} />
+						<div className="hotKeyLabel">{(this.props.hotKey).toUpperCase()}</div>
 					</div>
 				</div>
 			</Hotkeys>

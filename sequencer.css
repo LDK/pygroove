@@ -466,3 +466,9 @@ div.contextMenu-wrapper:not(.open) select {
 	background-color: orange;
 	transition: background-color .15s;
 }
+.drumPad .hotKeyLabel {
+	color: white;
+	text-align: center;
+	padding-top: 24px;
+	font-size: 1.5rem;
+}

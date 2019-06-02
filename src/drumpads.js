@@ -35,20 +35,20 @@ class PadGroup extends React.Component {
 			16: React.createRef()
 			},
 			hotKeys: {
-				1: 'a',
+				1: 'q',
 				2: 'w',
-				3: 's',
-				4: 'e',
-				5: 'd',
-				6: 'f',
-				7: 't',
-				8: 'g',
-				9: 'y',
-				10: 'h',
-				11: 'j',
-				12: 'i',
-				13: 'k',
-				14: 'o',
+				3: 'e',
+				4: 'r',
+				5: 'a',
+				6: 's',
+				7: 'd',
+				8: 'f',
+				9: 'u',
+				10: 'i',
+				11: 'o',
+				12: 'p',
+				13: 'j',
+				14: 'k',
 				15: 'l',
 				16: ';'
 			}
@@ -58,12 +58,29 @@ class PadGroup extends React.Component {
 		this.sendRequest = this.sendRequest.bind(this);
 		this.filesAdded = this.filesAdded.bind(this);
 	}
-	renderDrumPad(i,padClass,wav) {
+	renderDrumPad(i,padClass,sample) {
 		var wavName = null;
-		if (this.state.slices) {
-			wavName = this.state.slices[i];
+		var sliceLength = null;
+		var sliceStart = null;
+		var sliceEnd = null;
+		if (this.state.slices && this.state.slices[i]) {
+			wavName = this.state.slices[i].filename;
+			sliceLength = this.state.slices[i].len;
+			sliceStart = this.state.slices[i].start;
+			sliceEnd = this.state.slices[i].end;
 		}
-		return <DrumPad group={this} wav={wavName} key={i} padKey={i} padClass={padClass} origWav={this.state.wav} hotKey={this.state.hotKeys[i]} />;
+		return <DrumPad 
+				group={this} 
+				wav={wavName} 
+				key={i} 
+				padKey={i} 
+				padClass={padClass} 
+				parentWav={this.state.wav} 
+				hotKey={this.state.hotKeys[i]} 
+				sliceLength={sliceLength}
+				sliceStart={sliceStart}
+				sliceEnd={sliceEnd}
+			/>;
 	}
 	drumPadRow(start,end,className) {
 		var pads = [];
