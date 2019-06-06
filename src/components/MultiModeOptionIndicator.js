@@ -5,13 +5,21 @@ class MultiModeOptionIndicator extends OptionIndicator {
 	render() {
 		var props = this.props;
 		var state = this.state;
-		var cb = this.callback;
+		var cb = this.props.callback;
 		var layout = state.layout;
+		var params = this.props.params || {};
 		const radios = this.props.options.map((opt,i) => 
 			<li className={"px-0 mx-2 pt-3 "} key={i}>
-				<label>{opt.key}
-					<input type="radio" checked={opt.value === props.value} 
-					tabIndex="-1" value={opt.value} name={props.name} disabled={props.disabled} onClick={cb} />
+				<label>
+					<input type="radio" checked={(opt.value == this.props.value)} 
+						name={props.inputName}
+						tabIndex="-1" value={opt.value} disabled={props.disabled} 
+						onClick={
+							(e) => {
+								cb(e, params)
+							}
+						} 
+					/>
 					<span className="checkmark"></span>
 				</label>
 			</li>
