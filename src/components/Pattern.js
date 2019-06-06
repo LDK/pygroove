@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom';
 import cloneDeep from 'lodash/cloneDeep';
 import 'whatwg-fetch';
 import Channel from './Channel.js';
+import PatternOptions from './sections/PatternOptions.js';
 import AudioOut from './AudioOut.js';
 import Range from './Range.js';
 
@@ -31,7 +32,6 @@ class Pattern extends React.Component {
 			tracks: {},
 			clipboard: {}
 		};
-		this.grooveServer = 'http://localhost:8081/';
 		this.updateBPM = this.updateBPM.bind(this);
 		this.updateSwing = this.updateSwing.bind(this);
 		this.updateTitle = this.updateTitle.bind(this);
@@ -90,7 +90,7 @@ class Pattern extends React.Component {
 		submitted.tickDiv = 32;
 		submitted.repeat = 4;
 		var pattern = this;
-		window.fetch(this.grooveServer, {
+		window.fetch(this.props.parentObj.grooveServer, {
 			method: 'POST', 
 			body: JSON.stringify(submitted)
 		})
@@ -109,16 +109,8 @@ class Pattern extends React.Component {
 	render() {
 		return (
 			<div className="container mx-auto rounded p-3 pattern-bg">
-				<form onSubmit={this.handleSubmit} action="{this.grooveServer}">
-					<div className="status row">
-						<div className="col-10">
-							<label>Title:</label><input type="text" value={this.state.title} onChange={this.updateTitle} tabIndex="-1" /><br />
-							<label>BPM:</label><input type="text" value={this.state.bpm} onChange={this.updateBPM} tabIndex="-1" /><br />
-						</div>
-						<div className="col-2">
-							Swing: <Range label="Swing" inputClass="pan col-8 px-0 mx-auto" meterClass="pl-2" callback={this.updateSwing} min="0" max="1.25" step=".01" value={this.state.swing} />
-						</div>
-					</div>
+				<form onSubmit={this.handleSubmit} action="{this.props.parentObj.grooveServer}">
+					<PatternOptions pattern={this} containerClass="status row" />
 					{this.renderChannel('Kick','808-Kick1')}
 					{this.renderChannel('Closed Hat','808-CH1')}
 					{this.renderChannel('Open Hat','808-OH1')}
