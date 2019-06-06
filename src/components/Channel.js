@@ -6,10 +6,8 @@ import OptionIndicator from './OptionIndicator.js';
 import ContextMenu from './ContextMenu.js';
 import PowerButton from './PowerButton.js';
 import Cell from './Cell.js';
-import FilterSection from './sections/FilterSection.js';
-import SampleSection from './sections/SampleSection.js';
-import ChannelPitchSection from './sections/ChannelPitchSection.js';
 import StepSelector from './sections/StepSelector.js';
+import ChannelOptions from './sections/ChannelOptions.js';
 import Range from './Range.js';
 
 function stepFormat(step) {
@@ -390,32 +388,7 @@ class Channel extends React.Component {
 				<div className="col-1 d-none d-md-block text-center">
 				</div>
 				<StepSelector channel={this} containerClass="col-12 d-none d-md-block" />
-				<div className="col-12 d-none d-md-block">
-					<div className={"container-fluid px-0 channel-options " + this.state.settingsClass + ' ' + this.state.settingsMode}>
-						<div className="row mx-auto">
-							<SampleSection parentObj={this} containerClass="col-4 text-center" />
-							<FilterSection parentObj={this} containerClass = "col-2 text-center"
-								filterNumber={1} label="Filter 1"
-								toggleCallback = {this.toggleFilter}
-								typeCallback = {this.updateFilterType}
-								freqCallback = {this.updateFilterFrequency}
-							/>
-							<FilterSection parentObj={this} containerClass = "col-2 text-center"
-								filterNumber={2} label="Filter 2"
-								toggleCallback = {this.toggleFilter}
-								typeCallback = {this.updateFilterType}
-								freqCallback = {this.updateFilterFrequency}
-							/>
-							<ChannelPitchSection parentObj={this} containerClass="col-2 text-center" />
-							<div className="col-2">
-								<OptionIndicator layout="vertical" value={this.state.settingsMode} options={[
-									{key: 'Chan', value: 'chan'},
-									{key: 'Step', value: 'step'}
-								]} name={"settingsMode-"+this.state.trackName} label="Settings Mode" callback={this.updateSettingsMode} />
-							</div>
-						</div>
-					</div>
-				</div>
+				<ChannelOptions channel={this} containerClass="col-12 d-none d-md-block" />
 			</div>
 			);
 		}
