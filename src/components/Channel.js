@@ -23,6 +23,22 @@ function stepFormat(step) {
 	};
 }
 
+function panFormat(value) {
+	var num = Math.abs(value);
+	var dir = 'C';
+	if (value == 0) {
+		return dir;
+	}
+	else if (value > 0) {
+		dir = 'R';
+	}
+	else {
+		dir = 'L';
+	}
+	return num + dir;
+}
+
+
 function StepPicker(props) {
 	return (
 		<div className="stepPicker" onClick={props.onClick}>
@@ -415,23 +431,17 @@ class Channel extends React.Component {
 					<div className={"container-fluid px-0 channel-options " + this.state.settingsClass + ' ' + this.state.settingsMode}>
 						<div className="row mx-auto">
 							<SampleSection parentObj={this} containerClass="col-4 text-center" />
-							<FilterSection 
-								parentObj={this}
-								filterNumber={1}
-								label="Filter 1"
+							<FilterSection parentObj={this} containerClass = "col-2 text-center"
+								filterNumber={1} label="Filter 1"
 								toggleCallback = {this.toggleFilter}
 								typeCallback = {this.updateFilterType}
 								freqCallback = {this.updateFilterFrequency}
-								containerClass = "col-2 text-center"
 							/>
-							<FilterSection 
-								parentObj={this}
-								filterNumber={2}
-								label="Filter 2"
+							<FilterSection parentObj={this} containerClass = "col-2 text-center"
+								filterNumber={2} label="Filter 2"
 								toggleCallback = {this.toggleFilter}
 								typeCallback = {this.updateFilterType}
 								freqCallback = {this.updateFilterFrequency}
-								containerClass = "col-2 text-center"
 							/>
 							<ChannelPitchSection parentObj={this} containerClass="col-2 text-center" />
 							<div className="col-2">
