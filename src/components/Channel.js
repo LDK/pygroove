@@ -9,6 +9,7 @@ import Cell from './Cell.js';
 import FilterSection from './sections/FilterSection.js';
 import SampleSection from './sections/SampleSection.js';
 import ChannelPitchSection from './sections/ChannelPitchSection.js';
+import StepSelector from './sections/StepSelector.js';
 import Range from './Range.js';
 
 function stepFormat(step) {
@@ -37,18 +38,6 @@ function panFormat(value) {
 	}
 	return num + dir;
 }
-
-
-function StepPicker(props) {
-	return (
-		<div className="stepPicker" onClick={props.onClick}>
-			<span>
-				{props.indicator}
-			</span>
-		</div>
-	);
-}
-
 
 class Channel extends React.Component {
 	constructor(props) {
@@ -146,7 +135,6 @@ class Channel extends React.Component {
 		this.handleTranspose = this.handleTranspose.bind(this);
 		this.updateActive = this.updateActive.bind(this);
 		this.toggleSettings = this.toggleSettings.bind(this);
-		this.selectStep = this.selectStep.bind(this);
 		this.toggleFilter = this.toggleFilter.bind(this);
 		this.toggleReverse = this.toggleReverse.bind(this);
 		this.toggleTrim = this.toggleTrim.bind(this);
@@ -331,29 +319,12 @@ class Channel extends React.Component {
 			if (this.state.steps[i]) { indicator = 'X'; }
 			return <Cell channel={this} bar={loc.bar} beat={loc.beat} tick={loc.tick} value={this.state.steps[i] ? true : false} indicator={indicator} key={i} cellKey={i} />;
 		}
-		renderStepPicker(i) {
-			var indicator = '';
-			var loc = stepFormat(i);
-			if (this.state.selectedStep == i) { indicator = '*'; }
-			return <StepPicker bar={loc.bar} beat={loc.beat} tick={loc.tick} indicator={indicator} onClick={() => this.selectStep(i)} key={i}/>;
-		}
 		cellRow(start,end) {
 			var cells = [];
 			for (var i = start; i <= end; i++) {
 				cells.push(this.renderCell(i));
 			}
 			return cells;
-		}
-		stepRow(start,end) {
-			var cells = [];
-			for (var i = start; i <= end; i++) {
-				cells.push(this.renderStepPicker(i));
-			}
-			return cells;
-		}
-		selectStep(i) {
-			var selectedStep = (this.selectedStep != i) ? i : null;
-			this.setState({selectedStep: selectedStep});
 		}
 		fillCell(i) {
 			const steps = this.state.steps.slice();
@@ -418,15 +389,7 @@ class Channel extends React.Component {
 				</div>
 				<div className="col-1 d-none d-md-block text-center">
 				</div>
-				<div className="col-12 d-none d-md-block">
-					<div className={"container-fluid px-0 step-editor"}>
-						<div className="row mx-auto">
-							<div className={"col-9 col-md-8 offset-3 offset-md-4 px-0 steps-row " + (this.state.settingsOpen && this.state.settingsMode == 'step' ? 'open' : '')}>
-								{this.stepRow(1,this.state.pattern.state.bars * 16)}
-							</div>
-						</div>
-					</div>
-				</div>
+				<StepSelector channel={this} containerClass="col-12 d-none d-md-block" />
 				<div className="col-12 d-none d-md-block">
 					<div className={"container-fluid px-0 channel-options " + this.state.settingsClass + ' ' + this.state.settingsMode}>
 						<div className="row mx-auto">
