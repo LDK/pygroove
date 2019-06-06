@@ -18,7 +18,6 @@ function stepFormat(step) {
 	};
 }
 
-
 class Pattern extends React.Component {
 	constructor(props) {
 		super(props);
