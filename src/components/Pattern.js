@@ -2,14 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import cloneDeep from 'lodash/cloneDeep';
 import 'whatwg-fetch';
-import OptionIndicator from './OptionIndicator.js';
-import ContextMenu from './ContextMenu.js';
-import PowerButton from './PowerButton.js';
-import Cell from './Cell.js';
-import FilterSection from './sections/FilterSection.js';
-import SampleSection from './sections/SampleSection.js';
 import Channel from './Channel.js';
-import ChannelPitchSection from './sections/ChannelPitchSection.js';
 import AudioOut from './AudioOut.js';
 import Range from './Range.js';
 
