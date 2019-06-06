@@ -15,7 +15,7 @@ class Range extends React.Component {
 	
 	callback(event) {
 		this.setState({ value: event.target.value });
-		this.props.callback(event.target.value);
+		this.props.callback(event.target.value,this.props.params || {});
 	}
 	
 	render() {
@@ -28,6 +28,7 @@ class Range extends React.Component {
 					min={this.props.min || 0}
 					max={this.props.max || 100}
 					step={this.props.step || 1}
+					name={this.props.inputName}
 					onChange={this.callback}
 					tabIndex="-1" >
 				</input>
