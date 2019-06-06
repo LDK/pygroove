@@ -10,17 +10,27 @@ class Cell extends React.Component {
 		this.fill = this.fill.bind(this);
 		this.empty = this.empty.bind(this);
 	}
+	populate(step) {
+		var channel = this.props.channel;
+		var track = channel.state;
+		step = {};
+		step.pitch = track.rootPitch;
+		step.bar = this.props.bar; 
+		step.beat = this.props.beat; 
+		step.tick = this.props.tick; 
+		for (var listKey in channel.state.filterList) {
+			var filterKey = channel.state.filterList[listKey];
+			step[filterKey] = {}
+		}
+		return step;
+	}
 	toggle() {
 		var i = this.props.cellKey;
 		var channel = this.props.channel;
 		var track = channel.state;
 		const steps = track.steps.slice();
 		if (!steps[i]) {
-			steps[i] = {};
-			steps[i].pitch = track.rootPitch;
-			steps[i].bar = this.props.bar; 
-			steps[i].beat = this.props.beat; 
-			steps[i].tick = this.props.tick; 
+			steps[i] = this.populate(steps[i]);
 		}
 		else {
 			steps[i] = false;
@@ -35,11 +45,7 @@ class Cell extends React.Component {
 		var track = channel.state;
 		const steps = track.steps.slice();
 		if (!steps[i]) {
-			steps[i] = {};
-			steps[i].pitch = track.rootPitch;
-			steps[i].bar = this.props.bar; 
-			steps[i].beat = this.props.beat; 
-			steps[i].tick = this.props.tick; 
+			steps[i] = this.populate(steps[i]);
 		}
 		channel.setState({steps: steps});
 		track.steps = steps;
