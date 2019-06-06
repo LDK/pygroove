@@ -3,11 +3,10 @@ import ReactDOM from 'react-dom';
 import cloneDeep from 'lodash/cloneDeep';
 import 'whatwg-fetch';
 import OptionIndicator from './OptionIndicator.js';
-import ContextMenu from './ContextMenu.js';
-import PowerButton from './PowerButton.js';
 import Cell from './Cell.js';
 import StepSelector from './sections/StepSelector.js';
 import ChannelOptions from './sections/ChannelOptions.js';
+import ChannelControls from './sections/ChannelControls.js'
 import Range from './Range.js';
 
 function stepFormat(step) {
@@ -358,22 +357,7 @@ class Channel extends React.Component {
 		render() {
 			return (
 			<div className={this.state.disabledClass + " channel row no-gutters mb-3"}>
-				<div className="col-1 d-none d-md-block text-left">
-					<PowerButton switchedOn={true} className="d-inline-block" callback={this.updateActive} />
-					<PowerButton switchedOn={false} className="d-inline-block gearIcon" callback={this.toggleSettings} />
-					<ContextMenu open={false} className="d-inline-block channelActions"
-						callback={this.runChannelAction}
-					 	items={[
-							{value: 'fill', label: 'Fill All Notes'},
-							{value: 'fill2', label: 'Fill Every 2 Notes'},
-							{value: 'fill4', label: 'Fill Every 4 Notes'},
-							{value: 'fill8', label: 'Fill Every 8 Notes'},
-							{value: 'clear', label: 'Clear All Notes', prompt: 'Are you Sure?'},
-							{value: 'copy', label: 'Copy Pattern'},
-							{value: 'cut', label: 'Cut Pattern'},
-							{value: 'paste', label: 'Paste Pattern'},
-						]} />
-				</div>
+				<ChannelControls channel={this} containerClass="col-1 d-none d-md-block text-left" />
 				<input className="col-12 col-sm-1" type="button" tabIndex="-1"  value={this.state.trackName} />
 				<div className="col-1 d-none d-md-block text-center">
 					<Range label="Pan" inputClass="pan col-8 px-0 mx-auto" meterClass="hidden" callback={this.updatePan} min="-100" value={this.state.pan} />
