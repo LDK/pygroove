@@ -5,16 +5,13 @@ import 'whatwg-fetch';
 import AudioOut from './components/AudioOut.js';
 import Range from './components/Range.js';
 import OptionIndicator from './components/OptionIndicator.js';
-import MultiModeOptionIndicator from './components/MultiModeOptionIndicator.js';
 import ContextMenu from './components/ContextMenu.js';
 import PowerButton from './components/PowerButton.js';
-import MultiModePowerButton from './components/MultiModePowerButton.js';
-import FileSelector from './components/FileSelector.js';
 import PitchSelector from './components/PitchSelector.js';
 import Incrementer from './components/Incrementer.js';
-import DropZone from './components/DropZone.js';
 import Cell from './components/Cell.js';
 import FilterSection from './components/sections/FilterSection.js';
+import SampleSection from './components/sections/SampleSection.js';
 
 function StepPicker(props) {
 	return (
@@ -108,6 +105,7 @@ class Channel extends React.Component {
 			selectedStep: null,
 			reverse: props.reverse || false,
 			trim: props.trim || false,
+			normalize: props.normalize || false,
 			pitch: 'C4',
 			rootPitch: 'C4',
 			transpose: 0,
@@ -190,6 +188,7 @@ class Channel extends React.Component {
 		this.toggleFilter = this.toggleFilter.bind(this);
 		this.toggleReverse = this.toggleReverse.bind(this);
 		this.toggleTrim = this.toggleTrim.bind(this);
+		this.toggleNormalize = this.toggleNormalize.bind(this);
 		this.runChannelAction = this.runChannelAction.bind(this);
 		this.filesAdded = this.filesAdded.bind(this);
 		this.sendRequest = this.sendRequest.bind(this);
@@ -359,6 +358,11 @@ class Channel extends React.Component {
 				this.props.updateTrack(this.state.trackName,this.state);
 			});
 		}
+		toggleNormalize(value) {
+			this.setState({ normalize: !this.state.normalize }, function () {
+				this.props.updateTrack(this.state.trackName,this.state);
+			});
+		}
 		renderCell(i) {
 			var indicator = '';
 			var loc = stepFormat(i);
@@ -464,16 +468,10 @@ class Channel extends React.Component {
 				<div className="col-12 d-none d-md-block">
 					<div className={"container-fluid px-0 channel-options " + this.state.settingsClass + ' ' + this.state.settingsMode}>
 						<div className="row mx-auto">
-							<div className="col-4">
-								<div className={(this.state.settingsMode == 'step' ? 'd-none' : '')}>
-									<label>Current Sample: {this.state.wavName || this.state.wav}</label>
-									<DropZone parentObj={this} onFilesAdded={this.filesAdded} label="Upload Sample" />
-								</div>
-								<div className={(this.state.settingsMode != 'step' ? 'd-none' : '')}>
-								<label>Pitch: </label> {this.state.steps[this.state.selectedStep] ? this.state.steps[this.state.selectedStep].pitch : 'N/A'}
-									<PitchSelector parentObj={this} />
-								</div>
-							</div>
+							<SampleSection 
+								parentObj={this}
+								containerClass = "col-4 text-center"
+							/>
 							<FilterSection 
 								parentObj={this}
 								filterNumber={1}
@@ -502,25 +500,6 @@ class Channel extends React.Component {
 										: (this.state.transpose || "0")
 									} 
 								/>
-								<MultiModePowerButton 
-									className="mt-2" settingsMode={this.state.settingsMode} 
-									switchedOn={
-										(
-											this.state.settingsMode == 'step' 
-										) 
-										? 
-											(
-												this.state.steps[this.state.selectedStep]
-												? this.state.steps[this.state.selectedStep].reverse
-												: false
-											)
-										: this.state.reverse
-									} 
-									disabled={this.state.settingsMode == 'step' && !this.state.steps[this.state.selectedStep]}
-									label={(this.state.reverse && this.state.settingsMode=='step' ? 'Cancel ': '') + 'Reverse'}
-									labelButton={true} callback={this.toggleReverse}
-								 />
-								<PowerButton className={"mt-2" + (this.state.settingsMode=='step' ? ' d-none' : '')} switchedOn={this.state.trim} label="Trim" labelButton={true} callback={this.toggleTrim} />
 							</div>
 							<div className="col-2">
 								<OptionIndicator layout="vertical" value={this.state.settingsMode} options={[
@@ -644,25 +623,10 @@ class Pattern extends React.Component {
 					{this.renderChannel('Snare','808-Snare1')}
 					<input type="submit" value="Save Pattern" tabIndex="-1" />
 				</form>
-				<AudioOut source={this.state.audioSource} />
+				<AudioOut source={this.state.audioSource} passedRef={this.patternOut} />
 			</div>
 		);
 	}
-}
-
-class Note extends React.Component {
-		constructor(props) {
-			super(props);
-			this.state = {
-				offset: 0,
-				transpose: 0,
-				pan: 0,
-				volume: 0,
-				bar: props.bar || null,
-				beat: props.beat || null,
-				tick: props.tick || null
-			};
-		}
 }
 
 class Song extends React.Component {
