@@ -7,9 +7,7 @@ import Pattern from './components/Pattern.js';
 class Song extends React.Component {
 	render() {
 		return (
-			<div>
-				<Pattern />
-			</div>
+			<Pattern />
 		);
 	}
 }
