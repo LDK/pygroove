@@ -8,7 +8,6 @@ import StepSelector from './sections/StepSelector.js';
 import ChannelOptions from './sections/ChannelOptions.js';
 import ChannelControls from './sections/ChannelControls.js'
 import {stepFormat} from './Helpers.js';
-import {panFormat} from './Helpers.js';
 
 class Channel extends React.Component {
 	constructor(props) {

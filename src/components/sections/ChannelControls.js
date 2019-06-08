@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import PowerButton from '../PowerButton.js';
 import ContextMenu from '../ContextMenu.js';
 import Range from '../Range.js';
+import {panFormat} from '../Helpers.js';
 
 const channelActions = {
 	fill: function(channel) {
