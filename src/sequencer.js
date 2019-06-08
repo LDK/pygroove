@@ -64,9 +64,8 @@ class Song extends React.Component {
 			data.text().then(function(text) {
 				song.setState({ renderedFile: text });
 				song.setState({ audioSource: text })
-				song.songOut.current.refs.audio.src = '';
-				song.songOut.current.refs.audio.load();
-				song.songOut.current.refs.audio.src = song.state.audioSource;
+				song.songOut.current.src = song.state.audioSource;
+				song.songOut.current.load();
 			});
 		}).catch(function(error) {
 			console.log('Request failed', error);
