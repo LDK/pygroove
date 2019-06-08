@@ -54,9 +54,10 @@ class Channel extends React.Component {
 			}
 		}
 		var pattern = props.pattern;
-		var tracks = pattern.state.tracks;
+		var song = pattern.props.parentObj;
+		var tracks = song.state.tracks;
 		tracks[this.state.trackName] = this.state;
-		pattern.setState({tracks: tracks});
+		song.setState({tracks: tracks});
 		this.fillCell = this.fillCell.bind(this);
 		this.emptyCell = this.emptyCell.bind(this);
 		this.updateSettingsMode = this.updateSettingsMode.bind(this);
