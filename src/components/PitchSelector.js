@@ -1,4 +1,7 @@
 import React, { Component } from 'react';
+import {pitchDiff} from './Helpers.js';
+import {pitchValue} from './Helpers.js';
+import {PITCH_INDEXES} from './Helpers.js';
 
 class PitchSelector extends React.Component {
 	constructor(props) {

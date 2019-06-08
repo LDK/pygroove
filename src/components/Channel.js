@@ -8,33 +8,8 @@ import StepSelector from './sections/StepSelector.js';
 import ChannelOptions from './sections/ChannelOptions.js';
 import ChannelControls from './sections/ChannelControls.js'
 import Range from './Range.js';
-
-function stepFormat(step) {
-	var bar = (Math.floor((step-1) / 16)) + 1;
-	var beat = (Math.floor((step-1) / 4) % 4) + 1;
-	var tick = (1 + (step-1) * 8) % 32;
-	return {
-		bar: bar, 
-		beat: beat, 
-		tick: tick,
-		loc: bar + "." + beat + "." + tick
-	};
-}
-
-function panFormat(value) {
-	var num = Math.abs(value);
-	var dir = 'C';
-	if (value == 0) {
-		return dir;
-	}
-	else if (value > 0) {
-		dir = 'R';
-	}
-	else {
-		dir = 'L';
-	}
-	return num + dir;
-}
+import {stepFormat} from './Helpers.js';
+import {panFormat} from './Helpers.js';
 
 class Channel extends React.Component {
 	constructor(props) {

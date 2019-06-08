@@ -6,18 +6,7 @@ import Channel from './Channel.js';
 import PatternOptions from './sections/PatternOptions.js';
 import AudioOut from './AudioOut.js';
 import Range from './Range.js';
-
-function stepFormat(step) {
-	var bar = (Math.floor((step-1) / 16)) + 1;
-	var beat = (Math.floor((step-1) / 4) % 4) + 1;
-	var tick = (1 + (step-1) * 8) % 32;
-	return {
-		bar: bar, 
-		beat: beat, 
-		tick: tick,
-		loc: bar + "." + beat + "." + tick
-	};
-}
+import {stepFormat} from './Helpers.js';
 
 class Pattern extends React.Component {
 	constructor(props) {
