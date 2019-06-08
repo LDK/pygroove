@@ -21,18 +21,22 @@ class Pattern extends React.Component {
 		clip[k] = v;
 		this.setState({ clipboard: clip });
 	}
-	renderChannel(trackName,wav) {
-		return <Channel trackName={trackName} wav={wav+'.wav'} pattern={this} updateTrack={this.props.parentObj.updateTrack} />;
+	renderChannel(i,trackName,wav) {
+		return <Channel trackName={trackName} wav={wav+'.wav'} pattern={this} updateTrack={this.props.parentObj.updateTrack} key={i} />;
+	}
+	channelRows() {
+		var channels = [];
+		channels.push(this.renderChannel(1,'Kick','808-Kick1'));
+		channels.push(this.renderChannel(2,'Closed Hat','808-CH1'));
+		channels.push(this.renderChannel(3,'Open Hat','808-OH1'));
+		channels.push(this.renderChannel(4,'Snare','808-Snare1'));
+		return channels;
 	}
 	render() {
 		return (
-				<section id="pattern">
-					{this.renderChannel('Kick','808-Kick1')}
-					{this.renderChannel('Closed Hat','808-CH1')}
-					{this.renderChannel('Open Hat','808-OH1')}
-					{this.renderChannel('Snare','808-Snare1')}
-					<input type="submit" value="Save Pattern" tabIndex="-1" />
-				</section>
+			<section id="pattern">
+				{this.channelRows()}
+			</section>
 		);
 	}
 }

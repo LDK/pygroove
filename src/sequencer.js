@@ -50,7 +50,7 @@ class Song extends React.Component {
 			delete track.trackName;
 		}
 		submitted.author = 'Daniel Swinney';
-		submitted.year = 2018;
+		submitted.year = 2019;
 		submitted.beatDiv = 4;
 		submitted.tickDiv = 32;
 		submitted.repeat = 4;
@@ -78,6 +78,7 @@ class Song extends React.Component {
 				<form onSubmit={this.handleSubmit} action="{this.grooveServer}">
 					<SongOptions parentObj={this} containerClass="status row" />
 					<Pattern parentObj={this} />
+					<input type="submit" value="Save Song" tabIndex="-1" />
 				</form>
 				<AudioOut source={this.state.audioSource} passedRef={this.songOut} />
 			</div>
