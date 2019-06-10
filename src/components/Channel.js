@@ -59,6 +59,7 @@ class Channel extends React.Component {
 		this.fillCell = this.fillCell.bind(this);
 		this.emptyCell = this.emptyCell.bind(this);
 		this.updateSettingsMode = this.updateSettingsMode.bind(this);
+		this.machine = this.props.machine || 'simple';
 		}
 		updateSettingsMode(value) {
 			this.setState({ settingsMode: value || 'chan' });
