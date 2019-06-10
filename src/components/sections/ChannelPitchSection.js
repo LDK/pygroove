@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import Incrementer from '../Incrementer.js';
+import Incrementer from '../widgets/Incrementer.js';
 
 class ChannelPitchSection extends React.Component {
 	constructor(props) {

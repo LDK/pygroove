@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import OptionIndicator from '../OptionIndicator.js';
+import OptionIndicator from '../widgets/OptionIndicator.js';
 import FilterSection from './FilterSection.js';
 import SampleSection from './SampleSection.js';
 import ChannelPitchSection from './ChannelPitchSection.js';

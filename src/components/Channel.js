@@ -2,8 +2,8 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import cloneDeep from 'lodash/cloneDeep';
 import 'whatwg-fetch';
-import OptionIndicator from './OptionIndicator.js';
-import Cell from './Cell.js';
+import OptionIndicator from './widgets/OptionIndicator.js';
+import Cell from './widgets/Cell.js';
 import StepSelector from './sections/StepSelector.js';
 import ChannelOptions from './sections/ChannelOptions.js';
 import ChannelControls from './sections/ChannelControls.js'

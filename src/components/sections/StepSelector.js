@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import Incrementer from '../Incrementer.js';
+import Incrementer from '../widgets/Incrementer.js';
 import {stepFormat} from '../Helpers.js';
 
 function StepPicker(props) {

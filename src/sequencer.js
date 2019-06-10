@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 import cloneDeep from 'lodash/cloneDeep';
 import 'whatwg-fetch';
 import Pattern from './components/Pattern.js';
-import AudioOut from './components/AudioOut.js';
+import AudioOut from './components/widgets/AudioOut.js';
 import SongOptions from './components/sections/SongOptions.js';
 import {stepFormat} from './components/Helpers.js';
 

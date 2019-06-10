@@ -1,8 +1,8 @@
 import React, { Component } from 'react';
-import PowerButton from '../PowerButton.js';
-import DropZone from '../DropZone.js';
-import PitchSelector from '../PitchSelector.js';
-import MultiModePowerButton from '../MultiModePowerButton.js';
+import PowerButton from '../widgets/PowerButton.js';
+import DropZone from '../widgets/DropZone.js';
+import PitchSelector from '../widgets/PitchSelector.js';
+import MultiModePowerButton from '../widgets/MultiModePowerButton.js';
 
 class SampleSection extends React.Component {
 	constructor(props) {

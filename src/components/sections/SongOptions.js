@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import Range from '../Range.js';
+import Range from '../widgets/Range.js';
 
 class SongOptions extends React.Component {
 	constructor(props) {

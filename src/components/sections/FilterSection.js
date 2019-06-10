@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
-import MultiModeOptionIndicator from '../MultiModeOptionIndicator.js';
-import MultiModePowerButton from '../MultiModePowerButton.js';
-import Range from '../Range.js';
+import MultiModeOptionIndicator from '../widgets/MultiModeOptionIndicator.js';
+import MultiModePowerButton from '../widgets/MultiModePowerButton.js';
+import Range from '../widgets/Range.js';
 
 class FilterSection extends React.Component {
 	constructor(props) {

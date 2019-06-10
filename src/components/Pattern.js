@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 import cloneDeep from 'lodash/cloneDeep';
 import 'whatwg-fetch';
 import Channel from './Channel.js';
-import Range from './Range.js';
+import Range from './widgets/Range.js';
 import {stepFormat} from './Helpers.js';
 
 class Pattern extends React.Component {

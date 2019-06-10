@@ -2,15 +2,15 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import cloneDeep from 'lodash/cloneDeep';
 import 'whatwg-fetch';
-import AudioOut from './components/AudioOut.js';
-import Range from './components/Range.js';
-import OptionIndicator from './components/OptionIndicator.js';
-import MultiModeOptionIndicator from './components/MultiModeOptionIndicator.js';
-import ContextMenu from './components/ContextMenu.js';
-import PowerButton from './components/PowerButton.js';
-import MultiModePowerButton from './components/MultiModePowerButton.js';
-import DropZone from './components/DropZone.js';
-import DrumPad from './components/DrumPad.js';
+import AudioOut from './components/widgets/AudioOut.js';
+import Range from './components/widgets/Range.js';
+import OptionIndicator from './components/widgets/OptionIndicator.js';
+import MultiModeOptionIndicator from './components/widgets/MultiModeOptionIndicator.js';
+import ContextMenu from './components/widgets/ContextMenu.js';
+import PowerButton from './components/widgets/PowerButton.js';
+import MultiModePowerButton from './components/widgets/MultiModePowerButton.js';
+import DropZone from './components/widgets/DropZone.js';
+import DrumPad from './components/widgets/DrumPad.js';
 
 class PadGroup extends React.Component {
 	constructor(props) {
