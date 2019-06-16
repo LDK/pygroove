@@ -38,6 +38,21 @@ channelDefaults = {'volume': -12.0, 'pan': 0}
 # Start with an empty dictionary of tracks
 tracks = {}
 
+# Pitch indexes
+pitchIndexes = {'C': 0, 'C#': 1, 'D': 2, 'D#': 3, 'E': 4, 'F': 5, 'F#': 6, 'G': 7, 'G#': 8, 'A': 9, 'A#': 10, 'B': 11}
+
+def pitch_diff(fromPitch, toPitch):
+    for octave in range(9):
+      if str(octave) in fromPitch:
+          fromOctave = octave
+          fromNote = fromPitch.replace(str(fromOctave),"")
+      if str(octave) in toPitch:
+          toOctave = octave
+          toNote = toPitch.replace(str(toOctave),"")
+    fromDiff = (toOctave - fromOctave) * 12
+    fromDiff = fromDiff + (pitchIndexes[toNote] - pitchIndexes[fromNote])
+    return fromDiff
+    
 def detect_leading_silence(sound, silence_threshold=-50.0, chunk_size=10):
     trim_ms = 0 # ms
 
@@ -243,8 +258,8 @@ def renderJSON(json):
         newTrack(trackName)
         # Add the notes
         trackNotes = channel['notes']
-        trackWav = channel['wav']
-        trackSound = AudioSegment.from_wav('./audio/'+trackWav)
+        trackWav = './audio/' + channel['wav']
+        trackSound = AudioSegment.from_wav(trackWav)
         trackTranspose = 0
         if 'trim' in channel:
             if (channel['trim'] == True):
@@ -275,6 +290,9 @@ def renderJSON(json):
             # Transpose
             if ('transpose' in note):
                 addSound = transpose(addSound,int(note['transpose']))
+            # Pitch
+            if ('pitch' in note):
+                addSound = transpose(addSound,pitch_diff(channel['rootPitch'],note['pitch']))
             # Apply the volume
             if ('volume' in note):
                 addSound = addSound + int(note['volume'])
