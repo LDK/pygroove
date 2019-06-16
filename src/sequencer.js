@@ -40,7 +40,12 @@ class Song extends React.Component {
 			track.notes = [];
 			for (var step in track.steps) {
 				if (track.steps[step]) {
-					var note = { loc: stepFormat(step).loc };
+					var note = { 
+						loc: stepFormat(step).loc,
+						pitch: track.steps[step].pitch,
+						filter: track.steps[step].filter,
+						reverse: track.steps[step].reverse || false
+					 };
 					track.notes.push(note);
 				}
 			}
