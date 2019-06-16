@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import PowerButton from '../widgets/PowerButton.js';
 import DropZone from '../widgets/DropZone.js';
 import PitchSelector from '../widgets/PitchSelector.js';
+import MultiModePitchSelector from '../widgets/MultiModePitchSelector.js';
 import MultiModePowerButton from '../widgets/MultiModePowerButton.js';
 
 class SampleSection extends React.Component {
@@ -13,6 +14,7 @@ class SampleSection extends React.Component {
 		this.toggleReverse = this.toggleReverse.bind(this);
 		this.filesAdded = this.filesAdded.bind(this);
 		this.sendRequest = this.sendRequest.bind(this);
+		this.updatePitch = this.updatePitch.bind(this);
 	}
 	sendRequest(file) {
 		var channel = this.props.parentObj;
@@ -56,6 +58,16 @@ class SampleSection extends React.Component {
 			channel.props.updateTrack(channel.state.trackName,channel.state);
 		});
 	}
+	updatePitch(value) {
+		var channel = this.props.parentObj;
+		if (channel.state.settingsMode == 'step') {
+			const steps = channel.state.steps.slice();
+			steps[channel.state.selectedStep].pitch = value;
+			channel.setState({ steps: steps }, function () {
+				channel.props.updateTrack(channel.state.trackName,channel.state);
+			});
+		}
+	}
 	toggleReverse(value) {
 		var channel = this.props.parentObj;
 		if (channel.state.settingsMode == 'step') {
@@ -82,7 +94,12 @@ class SampleSection extends React.Component {
 				</div>
 				<div className={(parentObj.state.settingsMode != 'step' ? 'd-none' : '')}>
 					<label>Pitch: </label> {parentObj.state.steps[parentObj.state.selectedStep] ? parentObj.state.steps[parentObj.state.selectedStep].pitch : 'N/A'}
-					<PitchSelector parentObj={parentObj} />
+					<MultiModePitchSelector 
+						parentObj={parentObj}
+						value={parentObj.state.steps[parentObj.state.selectedStep]}
+						callback={this.updatePitch}
+						className=""
+					/>
 				</div>
 				<div className="buttons-row text-center">
 					<MultiModePowerButton 
