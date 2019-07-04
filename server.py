@@ -5,9 +5,13 @@ from os.path import join as pjoin
 from cgi import parse_header, parse_multipart
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import parse_qs
+sqlite_file = './pygroove.sqlite'
 import groove
 import waveform
 import json
+import sqlite3
+conn = sqlite3.connect(sqlite_file)
+c = conn.cursor()
 
 # HTTPRequestHandler class
 class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
