@@ -42,6 +42,7 @@
     "react-scripts": "2.1.1",
     "react-shortcut": "^1.0.6",
     "reset-css": "^4.0.1",
+    "universal-cookie": "^4.0.1",
     "whatwg-fetch": "^3.0.0"
   }
 }
