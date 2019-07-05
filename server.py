@@ -10,11 +10,15 @@ import groove
 import waveform
 import json
 import sqlite3
-conn = sqlite3.connect(sqlite_file)
-c = conn.cursor()
+import random
+import string
 
 # HTTPRequestHandler class
 class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
+  def randomString(self,stringLength=10):
+    """Generate a random string of fixed length """
+    letters = string.ascii_lowercase
+    return ''.join(random.choice(letters) for i in range(stringLength))
   def parse_POST(self):
     ctype, pdict = parse_header(self.headers.get('Content-Type'))
     pdict['boundary'] = bytes(pdict['boundary'], "utf-8")
@@ -52,8 +56,9 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
     self.end_headers()
 
   def do_POST(self):
-    # Send headers
-
+    conn = sqlite3.connect(sqlite_file)
+    c = conn.cursor()
+    
     if (self.path == '/login'):
         postvars = self.parse_POST()
         uName = postvars['username'][0]
@@ -80,6 +85,43 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
             postRes['pyKey'] = user_match[1]
             postRes['username'] = uName
         self.wfile.write(json.dumps(postRes).encode("utf-8"))
+        conn.close()
+        return;
+        
+    if (self.path == '/register'):
+        postvars = self.parse_POST()
+        uName = postvars['username'][0]
+        uPass = postvars['password'][0]
+        uEmail = postvars['email'][0]
+        c.execute("SELECT id, pyKey FROM `user` WHERE `username` = '{username}'".format(username=uName))
+        user_match = c.fetchone()
+        if user_match:
+            self.respond(401)
+            postRes = {
+                "error": 'username-taken'
+            }
+        else:
+            c.execute("SELECT id, pyKey FROM `user` WHERE `email` = '{email}'".format(email=uEmail))
+            email_match = c.fetchone()
+            if email_match:
+                self.respond(401)
+                postRes = {
+                    "error": 'email-taken'
+                }
+            else:
+                uKey = self.randomString(32)
+                insertSql = "INSERT INTO `user` (username,email,password,pyKey) VALUES ('{un}','{em}','{pw}','{pk}')"\
+                .format(un=uName, em=uEmail, pw=uPass, pk=uKey)
+                c.execute(insertSql)
+                conn.commit()
+                self.respond(200)
+                postRes = {
+                    "username" : uName,
+                    "email" : uEmail,
+                    "pyKey" : uKey
+                }
+        self.wfile.write(json.dumps(postRes).encode("utf-8"))
+        conn.close()
         return;
         
     if (self.path == '/upload'):
@@ -99,6 +141,7 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
           "img": imgLoc
         }
         self.wfile.write(json.dumps(postRes).encode("utf-8"))
+        conn.close()
         return;
         
     if (self.path == '/upload-splitter'):
@@ -119,6 +162,7 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
           "slices": groove.split(fName,16)
         }
         self.wfile.write(json.dumps(postRes).encode("utf-8"))
+        conn.close()
         return;
         
     self.data_string = self.rfile.read(int(self.headers['Content-Length']))
