@@ -58,29 +58,27 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
         postvars = self.parse_POST()
         uName = postvars['username'][0]
         uPass = postvars['password'][0]
-        c.execute("SELECT * FROM `user` WHERE `username` = '{username}' AND `password` = '{password}'".\
+        c.execute("SELECT id, pyKey FROM `user` WHERE `username` = '{username}' AND `password` = '{password}'".\
             format(username=uName, password=uPass))
-        all_rows = c.fetchall()
-        num_found = len(all_rows)
-        if (num_found < 1):
-            c.execute("SELECT * FROM `user` WHERE `username` = '{username}'".format(username=uName))
-            username_rows = c.fetchall()
-            username_found = len(username_rows)
-            if (username_found < 1):
-                self.respond(401)
-                postRes = {
-                    "error": 'no-user'
-                }
-            else:
-                self.respond(401)
+        user_match = c.fetchone()
+        if not user_match:
+            self.respond(401)
+            c.execute("SELECT id FROM `user` WHERE `username` = '{username}'".format(username=uName))
+            username_found = c.fetchone()
+            if username_found:
                 postRes = {
                     "error": 'wrong-password'
                 }
+            else:
+                postRes = {
+                    "error": 'no-user'
+                }
         else:
             self.respond(200)
-            postRes = {
-                "nothing": 'yet'
-            }
+            postRes = {}
+            postRes['user_id'] = user_match[0]
+            postRes['pyKey'] = user_match[1]
+            postRes['username'] = uName
         self.wfile.write(json.dumps(postRes).encode("utf-8"))
         return;
         

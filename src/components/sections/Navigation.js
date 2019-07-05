@@ -24,16 +24,19 @@ class Navigation extends React.Component {
 		var song = this.props.song;
 		var state = cloneDeep(this.state);
 		var formData = new FormData();
+		var props = this.props;
 		formData.append('username',state.userInput);
 		formData.append('password',state.passInput);
-		console.log('formData',formData);
 		window.fetch(song.grooveServer+'login', {
 			method: 'POST', 
 			body: formData
 		})
 		.then(function(data) {
 			data.text().then(function(text) {
-				console.log('HE SAID',text);
+				var res = JSON.parse(text);
+				if (props.loginCallback) {
+					props.loginCallback(res);
+				}
 			});
 		}).catch(function(error) {
 			console.log('Request failed', error);
@@ -41,16 +44,22 @@ class Navigation extends React.Component {
 	}
 	render() {
 		var song = this.props.song;
+		var formClass = song.state.currentUser ? 'd-none' : '';
+		var userClass = !song.state.currentUser ? 'd-none' : '';
+		var username = song.state.currentUser.username;
 		return (
 			<div className="navigation row py-2 mb-2">
 				<div className="col-7">
 				</div>
 				<div className="col-5 text-right">
-					<form onSubmit={this.sendLogin} action={song.grooveServer+'login'}>
+					<form onSubmit={this.sendLogin} action={song.grooveServer+'login'} className={formClass}>
 						<input type="text" value={this.state.userInput} onChange={this.updateUserInput} size="14" className="mr-2" name="username" placeholder="Username" />
 						<input type="password" value={this.passInput} onChange={this.updatePassInput} name="password" size="14" className="mr-2" placeholder="Password" />
 						<input type="submit" value="Go" size="3" onClick={this.sendLogin} />
 					</form>
+					<div className={userClass}>
+						<span className="username">{username} is at work.</span>
+					</div>
 				</div>
 			</div>
 		)
