@@ -46,12 +46,44 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
     self.wfile.write(bytes(message, "utf8"))
     return
 
-  def do_POST(self):
-    # Send headers
-    self.send_response(200)
+  def respond(self, value):
+    self.send_response(value)
     self.send_header('Access-Control-Allow-Origin', '*')
     self.end_headers()
 
+  def do_POST(self):
+    # Send headers
+
+    if (self.path == '/login'):
+        postvars = self.parse_POST()
+        uName = postvars['username'][0]
+        uPass = postvars['password'][0]
+        c.execute("SELECT * FROM `user` WHERE `username` = '{username}' AND `password` = '{password}'".\
+            format(username=uName, password=uPass))
+        all_rows = c.fetchall()
+        num_found = len(all_rows)
+        if (num_found < 1):
+            c.execute("SELECT * FROM `user` WHERE `username` = '{username}'".format(username=uName))
+            username_rows = c.fetchall()
+            username_found = len(username_rows)
+            if (username_found < 1):
+                self.respond(401)
+                postRes = {
+                    "error": 'no-user'
+                }
+            else:
+                self.respond(401)
+                postRes = {
+                    "error": 'wrong-password'
+                }
+        else:
+            self.respond(200)
+            postRes = {
+                "nothing": 'yet'
+            }
+        self.wfile.write(json.dumps(postRes).encode("utf-8"))
+        return;
+        
     if (self.path == '/upload'):
         postvars = self.parse_POST()
         fName = postvars['filename'][0]
@@ -63,7 +95,7 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
         waveImg = waveform.Waveform(fLoc)
         imgInitLoc = waveImg.save()
         rename(imgInitLoc,imgLoc)
-        self.send_response(200)
+        self.respond(200)
         postRes = {
           "wav": fName,
           "img": imgLoc
@@ -82,7 +114,7 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
         waveImg = waveform.Waveform(fLoc)
         imgInitLoc = waveImg.save()
         rename(imgInitLoc,imgLoc)
-        self.send_response(200)
+        self.respond(200)
         postRes = {
           "wav": fName,
           "img": imgLoc,
