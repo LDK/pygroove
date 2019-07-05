@@ -5,6 +5,7 @@ import 'whatwg-fetch';
 import Pattern from './components/Pattern.js';
 import AudioOut from './components/widgets/AudioOut.js';
 import SongOptions from './components/sections/SongOptions.js';
+import Navigation from './components/sections/Navigation.js';
 import {stepFormat} from './components/Helpers.js';
 
 class Song extends React.Component {
@@ -78,10 +79,11 @@ class Song extends React.Component {
 	}
 	render() {
 		return (
-			<div className="container mx-auto rounded p-3 pattern-bg">
-				<form onSubmit={this.handleSubmit} action="{this.grooveServer}">
-					<SongOptions parentObj={this} containerClass="status row" />
-					<Pattern parentObj={this} />
+			<div className="container mx-auto rounded px-3 pb-3 pattern-bg">
+				<Navigation song={this} />
+				<form onSubmit={this.handleSubmit} action={this.grooveServer}>
+					<SongOptions song={this} containerClass="status row" />
+					<Pattern song={this} />
 					<input type="submit" value="Save Song" tabIndex="-1" />
 				</form>
 				<AudioOut source={this.state.audioSource} passedRef={this.songOut} />

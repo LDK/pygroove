@@ -22,7 +22,7 @@ class Pattern extends React.Component {
 		this.setState({ clipboard: clip });
 	}
 	renderChannel(i,trackName,wav) {
-		return <Channel trackName={trackName} wav={wav+'.wav'} pattern={this} updateTrack={this.props.parentObj.updateTrack} key={i} />;
+		return <Channel trackName={trackName} wav={wav+'.wav'} pattern={this} updateTrack={this.props.song.updateTrack} key={i} />;
 	}
 	channelRows() {
 		var channels = [];

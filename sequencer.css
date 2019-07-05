@@ -472,3 +472,7 @@ div.contextMenu-wrapper:not(.open) select {
 	padding-top: 24px;
 	font-size: 1.5rem;
 }
+.navigation.row {
+	background-color: royalblue;
+	color: white;
+}

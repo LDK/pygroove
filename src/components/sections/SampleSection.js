@@ -23,7 +23,7 @@ class SampleSection extends React.Component {
 			const formData = new FormData();
 			formData.append("file", file);
 			formData.append("filename", file.name);
-			req.open("POST", channel.props.pattern.props.parentObj.grooveServer + "upload");
+			req.open("POST", channel.props.pattern.props.song.grooveServer + "upload");
 			req.send(formData);
 			var chan = this.props.parentObj;
 			req.onload = function(e) {

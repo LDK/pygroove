@@ -10,19 +10,19 @@ class SongOptions extends React.Component {
 		this.updateBPM = this.updateBPM.bind(this);
 	}
 	updateBPM(event) {
-		var song = this.props.parentObj;
+		var song = this.props.song;
 		song.setState({bpm: event.target.value});
 	}
 	updateTitle(event) {
-		var song = this.props.parentObj;
+		var song = this.props.song;
 		song.setState({title: event.target.value});
 	}
 	updateSwing(value) {
-		var song = this.props.parentObj;
+		var song = this.props.song;
 		song.setState({swing: value});
 	}
 	render() {
-		var song = this.props.parentObj;
+		var song = this.props.song;
 		return (
 			<div className="status row">
 				<div className="col-10">
