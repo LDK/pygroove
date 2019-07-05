@@ -476,3 +476,51 @@ div.contextMenu-wrapper:not(.open) select {
 	background-color: royalblue;
 	color: white;
 }
+.modal-wrapper {
+	position: absolute;
+	display: block;
+	width: 55%;
+	background: white;
+	height: 80%;
+	z-index: 3;
+	margin: 0px 15%;
+	border-radius: 1rem;
+	border: 1px solid #333;
+	opacity: 0;
+	transition: all .35s;
+	pointer-events: none;
+}
+.modal-container.open .modal-wrapper {
+	transition: all .35s;
+	opacity: 1;
+	pointer-events: auto;
+}
+.text-black {
+	color: #333;
+}
+.modal-container {
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	pointer-events: none;
+	transition: all .35s;
+}
+.modal-overlay {
+	opacity: 0;
+	pointer-events: none;
+	z-index: 2;
+	background-color: rgba(0,0,0,.66);
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+}
+.modal-container.open {
+	transition: all .35s;
+	pointer-events: auto;
+}
+.modal-container.open .modal-overlay {
+	opacity: 1;
+	pointer-events: auto;
+}

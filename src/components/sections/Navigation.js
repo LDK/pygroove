@@ -1,12 +1,15 @@
 import React, { Component } from 'react';
 import cloneDeep from 'lodash/cloneDeep';
+import Modal from '../widgets/Modal.js';
 
 class Navigation extends React.Component {
 	constructor(props) {
 		super(props);
 		this.state = {
 			userInput: '',
-			passInput: ''
+			passInput: '',
+			pass2Input: '',
+			regFormOpen: false
 		};
 		this.sendLogin = this.sendLogin.bind(this);
 		this.updateUserInput = this.updateUserInput.bind(this);
@@ -18,13 +21,16 @@ class Navigation extends React.Component {
 	updatePassInput(event) {
 		this.setState({passInput: event.target.value});
 	}
+	updatePass2Input(event) {
+		this.setState({pass2Input: event.target.value});
+	}
 	sendLogin(event) {
 		event.preventDefault();
-		console.log('u',this.state.userInput,'p',this.state.passInput);
 		var song = this.props.song;
 		var state = cloneDeep(this.state);
 		var formData = new FormData();
 		var props = this.props;
+		var nav = this;
 		formData.append('username',state.userInput);
 		formData.append('password',state.passInput);
 		window.fetch(song.grooveServer+'login', {
@@ -34,7 +40,13 @@ class Navigation extends React.Component {
 		.then(function(data) {
 			data.text().then(function(text) {
 				var res = JSON.parse(text);
-				if (props.loginCallback) {
+				if (res.error) {
+					if (res.error == 'no-user') {
+						nav.setState({regFormOpen: true});
+						nav.render();
+					}
+				}
+				else if (props.loginCallback) {
 					props.loginCallback(res);
 				}
 			});
@@ -42,11 +54,23 @@ class Navigation extends React.Component {
 			console.log('Request failed', error);
 		});
 	}
+	sendRegistration(event) {
+		event.preventDefault();
+	}
 	render() {
 		var song = this.props.song;
 		var formClass = song.state.currentUser ? 'd-none' : '';
 		var userClass = !song.state.currentUser ? 'd-none' : '';
 		var username = song.state.currentUser.username;
+		const regForm = (
+			<form action={song.state.grooveServer+"register"} onSubmit={this.sendRegistration}>
+				<h3 className="mb-2">That username was not found in the database.<br />Maybe you should register!</h3>
+				<input type="text" value={this.state.userInput} onChange={this.updateUserInput} size="14" className="mr-2" name="username" placeholder="Username" /><br />
+				<input type="password" value={this.state.passInput} onChange={this.updatePassInput} name="password" size="14" className="mr-2" placeholder="Password" /><br />
+				<input type="password" value={this.state.pass2Input} onChange={this.updatePass2Input} name="password2" size="14" className="mr-2" placeholder="Enter Password Again" /><br />
+				<input type="submit" value="Go" size="3" onClick={this.sendRegistration} />
+			</form>
+		);
 		return (
 			<div className="navigation row py-2 mb-2">
 				<div className="col-7">
@@ -54,13 +78,19 @@ class Navigation extends React.Component {
 				<div className="col-5 text-right">
 					<form onSubmit={this.sendLogin} action={song.grooveServer+'login'} className={formClass}>
 						<input type="text" value={this.state.userInput} onChange={this.updateUserInput} size="14" className="mr-2" name="username" placeholder="Username" />
-						<input type="password" value={this.passInput} onChange={this.updatePassInput} name="password" size="14" className="mr-2" placeholder="Password" />
+						<input type="password" value={this.state.passInput} onChange={this.updatePassInput} name="password" size="14" className="mr-2" placeholder="Password" />
 						<input type="submit" value="Go" size="3" onClick={this.sendLogin} />
 					</form>
 					<div className={userClass}>
 						<span className="username">{username} is at work.</span>
 					</div>
 				</div>
+				<Modal 
+					id="registration-modal"
+					content={regForm}
+					open={this.state.regFormOpen}
+					additionalClasses={"p-5 text-black"}
+				/>
 			</div>
 		)
 	}
