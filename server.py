@@ -9,6 +9,7 @@ sqlite_file = './pygroove.sqlite'
 import groove
 import waveform
 import json
+import simplejson
 import sqlite3
 import random
 import string
@@ -55,6 +56,115 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
     self.send_header('Access-Control-Allow-Origin', '*')
     self.end_headers()
 
+  def saveSongData(self, data):
+    conn = sqlite3.connect(sqlite_file)
+    c = conn.cursor()
+    if ('id' in data):
+        updateSql = "UPDATE `song` SET title='{title}',user_id='{uid}',bpm='{bpm}',swing='{swing}') WHERE id = '{id}'".\
+            format(title=data['title'], uid=data['user_id'], bpm=data['bpm'], swing=data['swing'], id=data['id'])
+        c.execute(updateSql)
+    else:
+        insertSql = "REPLACE INTO `song` (title,user_id,bpm,swing) VALUES ('{title}','{uid}','{bpm}','{swing}')".\
+            format(title=data['title'], uid=data['user_id'], bpm=data['bpm'], swing=data['swing'])
+        c.execute(insertSql)
+    conn.commit()
+    conn.close()
+    return c.lastrowid
+
+  def savePattern(self, data):
+    conn = sqlite3.connect(sqlite_file)
+    c = conn.cursor()
+    if ('id' in data):
+        updateSql = "UPDATE `pattern` SET name='{name}',song_id='{sid}',bars='{bars}',position='{position}') WHERE id = '{id}'".\
+            format(name=data['name'], sid=data['song_id'], bars=data['bars'], position=data['position'], id=data['id'])
+        c.execute(updateSql)
+    else:
+        insertSql = "REPLACE INTO `pattern` (name,song_id,bars,position) VALUES ('{name}','{sid}','{bars}','{position}')".\
+            format(name=data['name'], sid=data['song_id'], bars=data['bars'], position=data['position'])
+        c.execute(insertSql)
+    conn.commit()
+    conn.close()
+    return c.lastrowid
+
+  def savePattern(self, data):
+    conn = sqlite3.connect(sqlite_file)
+    c = conn.cursor()
+    if ('id' in data):
+        updateSql = "UPDATE `pattern` SET name='{name}',song_id='{sid}',bars='{bars}',position='{position}') WHERE id = '{id}'".\
+            format(name=data['name'], sid=data['song_id'], bars=data['bars'], position=data['position'], id=data['id'])
+        c.execute(updateSql)
+    else:
+        insertSql = "REPLACE INTO `pattern` (name,song_id,bars,position) VALUES ('{name}','{sid}','{bars}','{position}')".\
+            format(name=data['name'], sid=data['song_id'], bars=data['bars'], position=data['position'])
+        c.execute(insertSql)
+    conn.commit()
+    conn.close()
+    return c.lastrowid
+
+  def saveStepSequence(self, data):
+    conn = sqlite3.connect(sqlite_file)
+    c = conn.cursor()
+    if ('id' in data):
+        updateSql = "UPDATE `stepSequence` SET pattern_id='{pid}',channel_id='{cid}',steps='{steps}') WHERE id = '{id}'".\
+            format(pid=data['pattern_id'], cid=data['channel_id'], steps=data['steps'], id=data['id'])
+        c.execute(updateSql)
+    else:
+        insertSql = "REPLACE INTO `stepSequence` (pattern_id,channel_id,steps) VALUES ('{pid}','{cid}',\"{steps}\")".\
+            format(pid=data['pattern_id'], cid=data['channel_id'], steps=data['steps'])
+        c.execute(insertSql)
+    conn.commit()
+    conn.close()
+    return c.lastrowid
+
+  def saveSongChannel(self, data):
+    conn = sqlite3.connect(sqlite_file)
+    c = conn.cursor()
+    if ('id' in data):
+        updateSql = "UPDATE `channel` SET "\
+        "name='{name}',song_id='{sid}',pan='{pan}',volume='{volume}',transpose='{transpose}',disabled='{disabled}',sample_id='{spid}',) WHERE id = '{id}'".\
+            format(name=data['name'], sid=data['song_id'], pan=data['pan'], volume=data['amp']['volume'], transpose=data['transpose'], disabled=data['disabled'], spid=data['sample_id'], id=data['id'])
+        c.execute(updateSql)
+    else:
+        insertSql = "REPLACE INTO `channel` (name,song_id,pan,volume,transpose,disabled,sample_id)"\
+            " VALUES ('{name}','{sid}','{pan}','{volume}','{transpose}','{disabled}','{spid}')".\
+            format(name=data['name'], sid=data['song_id'], pan=data['pan'], volume=data['amp']['volume'], transpose=data['transpose'], disabled=data['disabled'], spid=data['sample_id'])
+        c.execute(insertSql)
+    conn.commit()
+    conn.close()
+    return c.lastrowid
+
+  def saveSample(self, data):
+    conn = sqlite3.connect(sqlite_file)
+    c = conn.cursor()
+    if ('id' in data):
+        updateSql = "UPDATE `sample` SET filename='{filename}',normalize='{normalize}',reverse='{reverse}',trim='{trim}') WHERE id = '{id}'".\
+            format(filename=data['filename'], normalize=data['normalize'], reverse=data['reverse'], trim=data['trim'], id=data['id'])
+        c.execute(updateSql)
+    else:
+        insertSql = "REPLACE INTO `sample` (filename,normalize,reverse,trim) VALUES ('{filename}','{normalize}','{reverse}','{trim}')".\
+            format(filename=data['filename'], normalize=data['normalize'], reverse=data['reverse'], trim=data['trim'])
+        c.execute(insertSql)
+    conn.commit()
+    conn.close()
+    return c.lastrowid
+
+  def saveFilterSection(self, position, channelId, data):
+    conn = sqlite3.connect(sqlite_file)
+    c = conn.cursor()
+    if ('id' in data):
+        updateSql = "UPDATE `filterSection` SET "\
+        "position='{position}',channel_id='{cid}',`on`='{on}',type='{type}',frequency='{frequency}') WHERE id = '{id}'".\
+            format(position=position, cid=channelId, on=data['on'], type=data['type'], frequency=data['frequency'], id=data['id'])
+        c.execute(updateSql)
+    else:
+        insertSql = "REPLACE INTO `filterSection` (position,channel_id,`on`,type,frequency)"\
+            " VALUES ('{position}','{cid}','{on}','{type}','{frequency}')".\
+            format(position=position, cid=channelId, on=data['on'], type=data['type'], frequency=data['frequency'])
+        c.execute(insertSql)
+    conn.commit()
+    conn.close()
+    return c.lastrowid
+
   def do_POST(self):
     conn = sqlite3.connect(sqlite_file)
     c = conn.cursor()
@@ -86,9 +196,9 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
             postRes['username'] = uName
         self.wfile.write(json.dumps(postRes).encode("utf-8"))
         conn.close()
-        return;
+        return
         
-    if (self.path == '/register'):
+    elif (self.path == '/register'):
         postvars = self.parse_POST()
         uName = postvars['username'][0]
         uPass = postvars['password'][0]
@@ -122,9 +232,9 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
                 }
         self.wfile.write(json.dumps(postRes).encode("utf-8"))
         conn.close()
-        return;
+        return
         
-    if (self.path == '/upload'):
+    elif (self.path == '/upload'):
         postvars = self.parse_POST()
         fName = postvars['filename'][0]
         fData = postvars['file'][0]
@@ -142,9 +252,9 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
         }
         self.wfile.write(json.dumps(postRes).encode("utf-8"))
         conn.close()
-        return;
+        return
         
-    if (self.path == '/upload-splitter'):
+    elif (self.path == '/upload-splitter'):
         postvars = self.parse_POST()
         fName = postvars['filename'][0]
         fData = postvars['file'][0]
@@ -163,11 +273,53 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
         }
         self.wfile.write(json.dumps(postRes).encode("utf-8"))
         conn.close()
-        return;
+        return
         
-    self.data_string = self.rfile.read(int(self.headers['Content-Length']))
-    fName = groove.renderJSON(self.data_string);
-    self.wfile.write(bytes(fName, "utf8"))
+    else:
+        self.data_string = self.rfile.read(int(self.headers['Content-Length']))
+        data = simplejson.loads(self.data_string)
+        fName = groove.renderJSON(self.data_string);
+        pyKey = data['currentUser']['pyKey']
+        # TODO HERE: checkUserKey(pyKey,data['currentUser']['user_id']) ... if fail, return
+        songId = self.saveSongData({
+            "user_id": data['currentUser']['user_id'],
+            "title": data['title'],
+            "bpm": int(data['bpm']),
+            "swing": data['swing']
+        })
+        trackPos=0
+        for key, track in data['tracks'].items():
+            sampleId = self.saveSample({
+                "filename": track['wav'],
+                "reverse": track['reverse'],
+                "normalize": track['normalize'],
+                "trim": track['trim'],
+            })
+            track['sample_id'] = sampleId
+            track['song_id'] = songId
+            track['name'] = key
+            channelId = self.saveSongChannel(track)
+            track['channel_id'] = channelId
+            filterSectionId = self.saveFilterSection(1,channelId,track['filter'])
+            filterSection2Id = self.saveFilterSection(2,channelId,track['filter2'])
+            track['filter_id'] = filterSectionId
+            track['filter2_id'] = filterSection2Id
+        # NOTE: We don't have multiple patterns yet so this will get a little more complex
+        position = 1
+        patternId = self.savePattern({
+            "bars": data['bars'],
+            "song_id": songId,
+            "position": position,
+            "name": data['title'] + " Pattern  " + str(position)
+        })    
+        for key, track in data['tracks'].items():
+            self.saveStepSequence({
+                "pattern_id": patternId,
+                "channel_id": track['channel_id'],
+                "steps": track['notes']
+            })
+        self.respond(200)
+        self.wfile.write(bytes(fName, "utf8"))
 
     return
 

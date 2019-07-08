@@ -102,7 +102,7 @@ class Song extends React.Component {
 				<Navigation song={this} loginCallback={this.setCurrentUser} />
 				<form onSubmit={this.handleSubmit} action={this.grooveServer}>
 					<SongOptions song={this} containerClass="status row" />
-					<Pattern song={this} />
+					<Pattern song={this} position={1} />
 					<input type="submit" value="Save Song" tabIndex="-1" />
 				</form>
 				<AudioOut source={this.state.audioSource} passedRef={this.songOut} />
