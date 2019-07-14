@@ -32,7 +32,7 @@ class Range extends React.Component {
 					onChange={this.callback}
 					tabIndex="-1" >
 				</input>
-				<span className={'meter-display ' + (this.props.inputClass || '') + ' ' + (this.props.meterClass || '')}>{this.state.value}</span>
+				<span className={'meter-display ' + (this.props.inputClass || '') + ' ' + (this.props.meterClass || '')}>{this.props.value || 0}</span>
 			</div>
 		)
 	}

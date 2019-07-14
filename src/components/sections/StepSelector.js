@@ -40,12 +40,16 @@ class StepSelector extends React.Component {
 	render() {
 		var channel = this.props.channel;
 		var props = this.props;
+		var bars = 2;
+		if (props.channel.props.song.state.activePattern && props.channel.props.song.state.activePattern.state) {
+			bars = props.channel.props.song.state.activePattern.state.bars;
+		}
 		return (
 			<div className={props.containerClass}>
 				<div className={"container-fluid px-0 step-editor"}>
 					<div className="row mx-auto">
 						<div className={"col-9 col-md-8 offset-3 offset-md-4 px-0 steps-row " + (channel.state.settingsOpen && channel.state.settingsMode == 'step' ? 'open' : '')}>
-							{this.stepRow(1,channel.state.pattern.state.bars * 16)}
+							{this.stepRow(1,bars * 16)}
 						</div>
 					</div>
 				</div>

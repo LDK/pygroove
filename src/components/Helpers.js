@@ -15,6 +15,23 @@ export const panFormat = (value) => {
 	return num + dir;
 }
 
+export const sanitizeBooleans = (value) => {
+	if (typeof value == 'object' || typeof value=='array') {
+		for (var i in value) {
+			value[i] = sanitizeBooleans(value[i]);
+		}
+		return value;
+	}
+	if (value == 'False') {
+		value = false;
+	}
+	if (value == 'True') {
+		value = true;
+	}
+	return value
+}
+
+
 export const stepFormat = (step) => {
 	var bar = (Math.floor((step-1) / 16)) + 1;
 	var beat = (Math.floor((step-1) / 4) % 4) + 1;

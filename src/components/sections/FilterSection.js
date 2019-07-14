@@ -104,6 +104,7 @@ class FilterSection extends React.Component {
 			: parentObj.state[filterKey].type);
 		return (
 			<div className={props.containerClass}>
+			{parentObj.state[filterKey].on}
 				<MultiModePowerButton 
 					className="mx-auto" settingsMode={parentObj.state.settingsMode} 
 					switchedOn={

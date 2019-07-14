@@ -40,7 +40,7 @@ class Channel extends React.Component {
 				sustain: 0,
 				release: 0
 			},
-			pattern: props.pattern,
+			pattern: props.song.state.activePattern,
 			wav: props.wav
 		};
 		for (var listKey in this.state.filterList) {
@@ -51,8 +51,8 @@ class Channel extends React.Component {
 				frequency: 22000
 			}
 		}
-		var pattern = props.pattern;
-		var song = pattern.props.song;
+		var song = props.song;
+		var pattern = song.state.activePattern;
 		var tracks = song.state.tracks;
 		tracks[this.state.trackName] = this.state;
 		song.setState({tracks: tracks});
@@ -60,6 +60,7 @@ class Channel extends React.Component {
 		this.emptyCell = this.emptyCell.bind(this);
 		this.updateSettingsMode = this.updateSettingsMode.bind(this);
 		this.machine = this.props.machine || 'simple';
+		song.registerChannel(props.position,this);
 		}
 		updateSettingsMode(value) {
 			this.setState({ settingsMode: value || 'chan' });
@@ -107,11 +108,16 @@ class Channel extends React.Component {
 			this.props.updateTrack(track.trackName,track);
 		}
 		render() {
+			var props = this.props;
+			var bars = 2;
+			if (props.song.state.activePattern && props.song.state.activePattern.state) {
+				bars = props.song.state.activePattern.state.bars;
+			}
 			return (
 			<div className={this.state.disabledClass + " channel row no-gutters mb-3"}>
 				<ChannelControls parentObj={this} containerClass="col-12 col-sm-3 col-md-4 text-left" />
 				<div className="pattern-row col-12 col-sm-9 col-md-8">
-					{this.cellRow(1,this.state.pattern.state.bars * 16)}
+					{this.cellRow(1,bars * 16)}
 				</div>
 				<StepSelector channel={this} containerClass="col-12 d-none d-md-block" />
 				<ChannelOptions channel={this} containerClass="col-12 d-none d-md-block" />
