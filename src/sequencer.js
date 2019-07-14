@@ -8,6 +8,7 @@ import AudioOut from './components/widgets/AudioOut.js';
 import SongOptions from './components/sections/SongOptions.js';
 import Navigation from './components/sections/Navigation.js';
 import {stepFormat} from './components/Helpers.js';
+import {cellFormat} from './components/Helpers.js';
 import {sanitizeBooleans} from './components/Helpers.js';
 import Cookies from 'universal-cookie';
 
@@ -34,6 +35,7 @@ class Song extends React.Component {
 			channelRows: []
 		};
 		this.channels = {};
+		this.patterns = {};
 		this.updateTrack = this.updateTrack.bind(this);
 		this.handleSubmit = this.handleSubmit.bind(this);
 		this.setCurrentUser = this.setCurrentUser.bind(this);
@@ -42,7 +44,9 @@ class Song extends React.Component {
 		this.renderChannel = this.renderChannel.bind(this);
 		this.registerChannel = this.registerChannel.bind(this);
 		this.renderPattern = this.renderPattern.bind(this);
+		this.registerPattern = this.registerPattern.bind(this);
 		this.buildChannelRows = this.buildChannelRows.bind(this);
+		this.getPatterns = this.getPatterns.bind(this);
 		if (props.id) {
 			this.loadSong(props.id);
 		}
@@ -60,7 +64,15 @@ class Song extends React.Component {
 		this.channels[position] = channel;
 	}
 	renderPattern(position) {
-		return <Pattern song={this} position={position} />;
+		var initData = {};
+		if (this.patterns[position]) {
+			initData = this.patterns[position];
+		}
+		var pattern = <Pattern song={this} position={position} />;
+		return pattern;
+	}
+	registerPattern(position,pattern) {
+		this.patterns[position] = pattern;
 	}
 	getDefaultChannels() {
 		var channels = [];
@@ -69,6 +81,40 @@ class Song extends React.Component {
 		channels.push(this.renderChannel(3,'Open Hat','808-OH1'));
 		channels.push(this.renderChannel(4,'Snare','808-Snare1'));
 		return channels;
+	}
+	getPatterns() {
+		var song = this;
+		var patterns = [];
+		var formData = new FormData();
+		formData.append('song_id',this.state.id);
+		formData.append('user_id',this.state.currentUser.user_id);
+		formData.append('pyKey',this.state.currentUser.pyKey);
+		window.fetch(this.grooveServer+'patterns', {
+			method: 'POST', 
+			body: formData
+		})
+		.then(function(data) {
+			data.text().then(function(text) {
+				if (!text.length) {
+					return;
+				}
+				var patternData = JSON.parse(text);
+				for (var chanPos in song.channels) {
+					for (var position in patternData) {
+						var pattern = patternData[position];
+						patterns.push(pattern);
+						var steps = JSON.parse(pattern.chanSequences[chanPos].replace(/'/g, '"').toLowerCase());
+						for (var i in steps) {
+							var step = cellFormat(steps[i]);
+							song.channels[chanPos].fillCell(step);
+						}
+						song.registerPattern(position,pattern);
+					}
+				}
+				song.patternsLoaded = true;
+			});
+			return patterns;
+		});
 	}
 	buildChannelRows() {
 		var channels = [];
@@ -98,6 +144,7 @@ class Song extends React.Component {
 					}
 					song.channelsLoaded = true;
 					song.setState({ channelRows: channels });
+					song.getPatterns();
 				});
 				return channels;
 			});

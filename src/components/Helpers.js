@@ -36,12 +36,27 @@ export const stepFormat = (step) => {
 	var bar = (Math.floor((step-1) / 16)) + 1;
 	var beat = (Math.floor((step-1) / 4) % 4) + 1;
 	var tick = (1 + (step-1) * 8) % 32;
-	return {
+	var stepInfo = {
 		bar: bar, 
 		beat: beat, 
 		tick: tick,
 		loc: bar + "." + beat + "." + tick
 	};
+	return stepInfo;
+}
+
+export const cellFormat = (stepInfo) => {
+	var loc = stepInfo.loc.split('.');
+	var bar = loc[0];
+	var beat = loc[1];
+	var tick = loc[2];
+	for (var i = 1;i<=64;i++) {
+		var checkInfo = stepFormat(i);
+		if (checkInfo.loc == stepInfo.loc) {
+			return i;
+		}
+	}
+	return false;
 }
 
 // This const is a modification of an excerpt of https://raw.githubusercontent.com/kevinsqi/react-piano/master/src/MidiNumbers.js

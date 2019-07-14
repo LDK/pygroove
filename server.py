@@ -141,6 +141,34 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
     conn.close()
     return savedId
 
+  def getSongPatterns(self, songId):
+    conn = sqlite3.connect(sqlite_file)
+    c = conn.cursor()
+    selectSql = """
+        SELECT p.id, p.position as patternPosition, p.name as patternName, p.bars, c.id as chanId, c.position as chanPosition, c.name as chanName, ss.steps
+        FROM song s
+        LEFT JOIN pattern p
+        ON p.song_id = s.id
+        LEFT JOIN stepSequence ss
+        ON ss.pattern_id = p.id
+        LEFT JOIN channel c
+        ON c.id = ss.channel_id
+        WHERE s.id = {sid};
+    """.format(sid=songId)
+    c.execute(selectSql)
+    patterns = c.fetchall()
+    conn.close()
+    postRes = {}
+    for pattern in patterns:
+        if not (pattern[1] in postRes):
+            postRes[pattern[1]] = {'chanSequences': {}}
+        postRes[pattern[1]]['id'] = pattern[0]
+        postRes[pattern[1]]['position'] = pattern[1]
+        postRes[pattern[1]]['name'] = pattern[2]
+        postRes[pattern[1]]['bars'] = pattern[3]
+        postRes[pattern[1]]['chanSequences'][pattern[5]] = pattern[7]
+    return postRes
+
   def getSongChannels(self, songId):
     conn = sqlite3.connect(sqlite_file)
     c = conn.cursor()
@@ -342,6 +370,7 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
         postRes = self.getSongData(sid)
         postRes['id'] = sid
         postRes['channels'] = self.getSongChannels(sid)
+        postRes['patterns'] = self.getSongPatterns(sid)
         self.wfile.write(json.dumps(postRes).encode("utf-8"))
         conn.close()
         return
@@ -357,6 +386,21 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
             return
         self.respond(200)
         postRes = self.getSongChannels(sid)
+        self.wfile.write(json.dumps(postRes).encode("utf-8"))
+        conn.close()
+        return
+        
+    elif (self.path == '/patterns'):
+        postvars = self.parse_POST()
+        pyKey = postvars['pyKey'][0]
+        uid = postvars['user_id'][0]
+        sid = postvars['song_id'][0]
+        authorized = self.checkCreds(uid,pyKey)
+        if not authorized:
+            self.respond(401)
+            return
+        self.respond(200)
+        postRes = self.getSongPatterns(sid)
         self.wfile.write(json.dumps(postRes).encode("utf-8"))
         conn.close()
         return
