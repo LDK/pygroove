@@ -10,7 +10,7 @@ class MultiModeOptionIndicator extends OptionIndicator {
 		var params = this.props.params || {};
 		const radios = this.props.options.map((opt,i) => 
 			<li className={"px-0 mx-2 pt-3 "} key={i}>
-				<label>
+				<label>{opt.key}
 					<input type="radio" checked={(opt.value == this.props.value)} 
 						name={props.inputName}
 						tabIndex="-1" value={opt.value} disabled={props.disabled} 
