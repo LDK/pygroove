@@ -58,6 +58,14 @@ class Song extends React.Component {
 	renderPattern(position) {
 		return <Pattern song={this} position={position} />;
 	}
+	getDefaultChannels() {
+		var channels = [];
+		channels.push(this.renderChannel(1,'Kick','808-Kick1'));
+		channels.push(this.renderChannel(2,'Closed Hat','808-CH1'));
+		channels.push(this.renderChannel(3,'Open Hat','808-OH1'));
+		channels.push(this.renderChannel(4,'Snare','808-Snare1'));
+		return channels;
+	}
 	buildChannelRows() {
 		var channels = [];
 		if (this.state.id && !this.channelsLoaded) {
@@ -72,7 +80,11 @@ class Song extends React.Component {
 			})
 			.then(function(data) {
 				data.text().then(function(text) {
-					if (!text.length) return;
+					if (!text.length) {
+						var channelList = song.getDefaultChannels();
+						song.setState({ channelRows: channelList, id: false });
+						return;
+					}
 					var chanData = JSON.parse(text);
 					for (var chanName in chanData) {
 						var channel = chanData[chanName];
@@ -87,13 +99,9 @@ class Song extends React.Component {
 			});
 		}
 		else {
-			var channels = [];
-			channels.push(this.renderChannel(1,'Kick','808-Kick1'));
-			channels.push(this.renderChannel(2,'Closed Hat','808-CH1'));
-			channels.push(this.renderChannel(3,'Open Hat','808-OH1'));
-			channels.push(this.renderChannel(4,'Snare','808-Snare1'));
-			this.channelsLoaded = true;
+			var channels = this.getDefaultChannels();
 			this.state.channelRows = channels;
+			this.channelsLoaded = true;
 			return channels;
 		}
 	}
