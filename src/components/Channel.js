@@ -60,6 +60,12 @@ class Channel extends React.Component {
 		this.emptyCell = this.emptyCell.bind(this);
 		this.updateSettingsMode = this.updateSettingsMode.bind(this);
 		this.machine = this.props.machine || 'simple';
+		if (props.initData) {
+			for (var i in props.initData) {
+				var item = props.initData[i];
+				this.state[i] = item;
+			}
+		}
 		song.registerChannel(props.position,this);
 		}
 		updateSettingsMode(value) {

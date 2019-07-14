@@ -49,7 +49,11 @@ class Song extends React.Component {
 		this.buildChannelRows();
 	}
 	renderChannel(i,trackName,wav) {
-		var channel = <Channel trackName={trackName} wav={wav+'.wav'} song={this} updateTrack={this.updateTrack} position={i} key={i} />;
+		var initData = {};
+		if (this.channels[i]) {
+			initData = this.channels[i];
+		}
+		var channel = <Channel trackName={trackName} wav={wav+'.wav'} song={this} updateTrack={this.updateTrack} position={i} key={i} initData={initData} />;
 		return channel;
 	}
 	registerChannel(position,channel) {
@@ -169,6 +173,7 @@ class Song extends React.Component {
 		delete submitted.__proto__;
 		delete submitted.activePattern;
 		delete submitted.channels;
+		delete submitted.channelRows;
 		for (var trackName in submitted.tracks) {
 			var track = submitted.tracks[trackName];
 			delete track.pattern;
