@@ -50,6 +50,8 @@ def pitch_diff(fromPitch, toPitch):
           toOctave = octave
           toNote = toPitch.replace(str(toOctave),"")
     fromDiff = (toOctave - fromOctave) * 12
+    fromNote = fromNote.upper()
+    toNote = toNote.upper()
     fromDiff = fromDiff + (pitchIndexes[toNote] - pitchIndexes[fromNote])
     return fromDiff
     
