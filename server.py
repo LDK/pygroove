@@ -59,7 +59,7 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
   def saveSongData(self, data):
     conn = sqlite3.connect(sqlite_file)
     c = conn.cursor()
-    if ('id' in data):
+    if ('id' in data and data['id']):
         updateSql = "UPDATE `song` SET title='{title}',user_id='{uid}',bpm='{bpm}',swing='{swing}' WHERE id = '{id}'".\
             format(title=data['title'], uid=data['user_id'], bpm=data['bpm'], swing=data['swing'], id=data['id'])
         c.execute(updateSql)
@@ -125,16 +125,16 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
   def saveSongChannel(self, data):
     conn = sqlite3.connect(sqlite_file)
     c = conn.cursor()
-    if ('id' in data):
+    if ('id' in data and data['id']):
         updateSql = "UPDATE `channel` SET "\
-        "name='{name}',song_id='{sid}',pan='{pan}',volume='{volume}',transpose='{transpose}',disabled='{disabled}',sample_id='{spid}' WHERE id = '{id}'".\
-            format(name=data['name'], sid=data['song_id'], pan=data['pan'], volume=data['amp']['volume'], transpose=data['transpose'], disabled=data['disabled'], spid=data['sample_id'], id=data['id'])
+        "name='{name}',song_id='{sid}',pan='{pan}',volume='{volume}',transpose='{transpose}',disabled='{disabled}',sample_id='{spid}', position='{position}' WHERE id = '{id}'".\
+            format(name=data['name'], sid=data['song_id'], pan=data['pan'], volume=data['amp']['volume'], transpose=data['transpose'], disabled=data['disabled'], spid=data['sample_id'], id=data['id'], position=data['position'])
         c.execute(updateSql)
         savedId = data['id']
     else:
-        insertSql = "REPLACE INTO `channel` (name,song_id,pan,volume,transpose,disabled,sample_id)"\
-            " VALUES ('{name}','{sid}','{pan}','{volume}','{transpose}','{disabled}','{spid}')".\
-            format(name=data['name'], sid=data['song_id'], pan=data['pan'], volume=data['amp']['volume'], transpose=data['transpose'], disabled=data['disabled'], spid=data['sample_id'])
+        insertSql = "REPLACE INTO `channel` (position,name,song_id,pan,volume,transpose,disabled,sample_id)"\
+            " VALUES ('{position}','{name}','{sid}','{pan}','{volume}','{transpose}','{disabled}','{spid}')".\
+            format(name=data['name'], sid=data['song_id'], pan=data['pan'], volume=data['amp']['volume'], transpose=data['transpose'], disabled=data['disabled'], spid=data['sample_id'], position=data['position'])
         c.execute(insertSql)
         savedId = c.lastrowid
     conn.commit()
@@ -188,6 +188,7 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
         AND f1.position = 1
         AND f2.position = 2""".format(sid=songId)
 
+
     c.execute(selectSql)
     channels = c.fetchall()
     conn.close()
@@ -226,7 +227,7 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
   def saveSample(self, data):
     conn = sqlite3.connect(sqlite_file)
     c = conn.cursor()
-    if ('id' in data):
+    if ('id' in data and data['id']):
         updateSql = "UPDATE `sample` SET filename='{filename}',normalize='{normalize}',reverse='{reverse}',trim='{trim}') WHERE id = '{id}'".\
             format(filename=data['filename'], normalize=data['normalize'], reverse=data['reverse'], trim=data['trim'], id=data['id'])
         c.execute(updateSql)
@@ -243,7 +244,7 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
   def saveFilterSection(self, position, channelId, data):
     conn = sqlite3.connect(sqlite_file)
     c = conn.cursor()
-    if ('id' in data):
+    if ('id' in data and data['id']):
         updateSql = "UPDATE `filterSection` SET "\
         "position='{position}',channel_id='{cid}',`on`='{on}',type='{type}',frequency='{frequency}' WHERE id = '{id}'".\
             format(position=position, cid=channelId, on=data['on'], type=data['type'], frequency=data['frequency'], id=data['id'])
@@ -432,7 +433,7 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
         fName = groove.renderJSON(self.data_string);
         pyKey = data['currentUser']['pyKey']
         # TODO HERE: checkUserKey(pyKey,data['currentUser']['user_id']) ... if fail, return
-        if ('id' in data):
+        if ('id' in data and data['id']):
             songId = data['id']
             self.saveSongData({
                 "user_id": data['currentUser']['user_id'],
@@ -456,9 +457,11 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
                 "normalize": track['normalize'],
                 "trim": track['trim'],
             })
+            trackPos = trackPos + 1
             track['sample_id'] = sampleId
             track['song_id'] = songId
             track['name'] = key
+            track['position'] = trackPos
             channelId = self.saveSongChannel(track)
             track['channel_id'] = channelId
             filterSectionId = self.saveFilterSection(1,channelId,track['filter'])
