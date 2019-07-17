@@ -52,6 +52,7 @@ class ChannelControls extends React.Component {
 		this.runChannelAction = this.runChannelAction.bind(this);
 		this.updatePan = this.updatePan.bind(this);
 		this.updateVolume = this.updateVolume.bind(this);
+		this.updatePan(props.parentObj.state.pan);
 	}
 	updateActive(value) {
 		var channel = this.props.parentObj;
