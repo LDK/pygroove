@@ -87,7 +87,7 @@ class Channel extends React.Component {
 			}
 			return cells;
 		}
-		fillCell(i) {
+		fillCell(i,stepData) {
 			const steps = this.state.steps.slice();
 			if (!steps[i]) {
 				steps[i] = {};
@@ -98,6 +98,12 @@ class Channel extends React.Component {
 				}
 			}
 			steps[i].on = true;
+			if (typeof stepData != 'undefined') {
+				for (var key in stepData) {
+					var value = stepData[key];
+					steps[i][key] = value;
+				}
+			} 
 			this.setState({steps: steps});
 			var track = this.state;
 			track.steps = steps;

@@ -106,7 +106,7 @@ class Song extends React.Component {
 						var steps = JSON.parse(pattern.chanSequences[chanPos].replace(/'/g, '"').toLowerCase());
 						for (var i in steps) {
 							var step = cellFormat(steps[i]);
-							song.channels[chanPos].fillCell(step);
+							song.channels[chanPos].fillCell(step,steps[i]);
 						}
 						song.registerPattern(position,pattern);
 					}
@@ -280,6 +280,6 @@ class Song extends React.Component {
 // ========================================
 
 ReactDOM.render(
-	<Song id={1} />,
+	<Song />,
 	document.getElementById('root')
 );
