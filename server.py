@@ -108,16 +108,21 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
   def saveStepSequence(self, data):
     conn = sqlite3.connect(sqlite_file)
     c = conn.cursor()
-    if ('id' in data):
-        updateSql = "UPDATE `stepSequence` SET pattern_id='{pid}',channel_id='{cid}',steps='{steps}' WHERE id = '{id}'".\
-            format(pid=data['pattern_id'], cid=data['channel_id'], steps=data['steps'], id=data['id'])
-        c.execute(updateSql)
-        savedId = data['id']
-    else:
-        insertSql = "REPLACE INTO `stepSequence` (pattern_id,channel_id,steps) VALUES ('{pid}','{cid}',\"{steps}\")".\
-            format(pid=data['pattern_id'], cid=data['channel_id'], steps=data['steps'])
-        c.execute(insertSql)
-        savedId = c.lastrowid
+    savedId = False
+    if ('channel_id' in data and 'pattern_id' in data):
+        selectSql = "select id from stepSequence where pattern_id = {pid} and channel_id = {cid}".\
+            format(cid=data['channel_id'], pid=data['pattern_id'])
+        c.execute(selectSql)
+        savedId = c.fetchone()
+        if (savedId):
+            updateSql = "UPDATE `stepSequence` SET pattern_id='{pid}',channel_id='{cid}',steps=\"{steps}\" WHERE id = '{id}'".\
+                format(pid=data['pattern_id'], cid=data['channel_id'], steps=data['steps'], id=savedId)
+            c.execute(updateSql)
+        else:
+            insertSql = "REPLACE INTO `stepSequence` (pattern_id,channel_id,steps) VALUES ('{pid}','{cid}',\"{steps}\")".\
+                format(pid=data['pattern_id'], cid=data['channel_id'], steps=data['steps'])
+            c.execute(insertSql)
+            savedId = c.lastrowid
     conn.commit()
     conn.close()
     return savedId
@@ -469,13 +474,24 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
             track['filter_id'] = filterSectionId
             track['filter2_id'] = filterSection2Id
         # NOTE: We don't have multiple patterns yet so this will get a little more complex
-        position = 1
-        patternId = self.savePattern({
-            "bars": data['bars'],
-            "song_id": songId,
-            "position": position,
-            "name": data['title'] + " Pattern  " + str(position)
-        })    
+        for key, pattern in data['patterns'].items():
+            patternId = pattern['id']
+            if (patternId):
+                self.savePattern({
+                    "id": pattern['id'],
+                    "bars": pattern['bars'],
+                    "song_id": songId,
+                    "position": pattern['position'],
+                    "name": pattern['name']
+                })    
+            else:
+                position = key
+                patternId = self.savePattern({
+                    "bars": data['bars'],
+                    "song_id": songId,
+                    "position": position,
+                    "name": data['title'] + " Pattern  " + str(position)
+                })    
         for key, track in data['tracks'].items():
             self.saveStepSequence({
                 "pattern_id": patternId,
