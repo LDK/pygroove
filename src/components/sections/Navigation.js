@@ -61,6 +61,9 @@ class Navigation extends React.Component {
 			console.log('Request failed', error);
 		});
 	}
+	logout(event) {
+		event.preventDefault();
+	}
 	sendRegistration(event) {
 		event.preventDefault();
 		if (!this.state.passInput || this.state.passInput != this.state.pass2Input) {
@@ -129,6 +132,7 @@ class Navigation extends React.Component {
 					</form>
 					<div className={userClass}>
 						<span className="username">{username} is at work.</span>
+						<a onClick={this.props.logoutCallback}>Log out</a>
 					</div>
 				</div>
 				<Modal 

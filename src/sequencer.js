@@ -39,6 +39,7 @@ class Song extends React.Component {
 		this.updateTrack = this.updateTrack.bind(this);
 		this.handleSubmit = this.handleSubmit.bind(this);
 		this.setCurrentUser = this.setCurrentUser.bind(this);
+		this.logUserOut = this.logUserOut.bind(this);
 		this.loadSong = this.loadSong.bind(this);
 		this.songOut = React.createRef();
 		this.renderChannel = this.renderChannel.bind(this);
@@ -206,6 +207,11 @@ class Song extends React.Component {
 		cookies.set("pyGroove-user", JSON.stringify(user), { path: "/", expires: d });
 		this.setState({currentUser: user});
 	}
+	logUserOut() {
+		const cookies = new Cookies();
+		cookies.remove("pyGroove-user");
+		this.setState({currentUser: false});
+	}
 	updateTrack(trackName,track) {
 		var tracks = this.state.tracks;
 		tracks[trackName] = track;
@@ -219,7 +225,6 @@ class Song extends React.Component {
 		const submitted = cloneDeep(this.state);
 		delete submitted.__proto__;
 		delete submitted.activePattern;
-		delete submitted.channels;
 		delete submitted.channelRows;
 		for (var trackName in submitted.tracks) {
 			var track = submitted.tracks[trackName];
@@ -265,7 +270,7 @@ class Song extends React.Component {
 	render() {
 		return (
 			<div className="container mx-auto rounded px-3 pb-3 pattern-bg">
-				<Navigation song={this} loginCallback={this.setCurrentUser} />
+				<Navigation song={this} loginCallback={this.setCurrentUser} logoutCallback={this.logUserOut} />
 				<form onSubmit={this.handleSubmit} action={this.grooveServer}>
 					<SongOptions song={this} containerClass="status row" />
 					{this.renderPattern(1)}
