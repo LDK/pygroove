@@ -34,13 +34,14 @@ class Navigation extends React.Component {
 	sendLogin(event) {
 		event.preventDefault();
 		var song = this.props.song;
+		var app = song.app;
 		var state = cloneDeep(this.state);
 		var formData = new FormData();
 		var props = this.props;
 		var nav = this;
 		formData.append('username',state.userInput);
 		formData.append('password',state.passInput);
-		window.fetch(song.grooveServer+'login', {
+		window.fetch(app.grooveServer+'login', {
 			method: 'POST', 
 			body: formData
 		})
@@ -71,6 +72,7 @@ class Navigation extends React.Component {
 			return;
 		}
 		var song = this.props.song;
+		var app = song.app;
 		var state = cloneDeep(this.state);
 		var formData = new FormData();
 		var props = this.props;
@@ -78,7 +80,7 @@ class Navigation extends React.Component {
 		formData.append('username',state.userInput);
 		formData.append('email',state.emailInput);
 		formData.append('password',state.passInput);
-		window.fetch(song.grooveServer+'register', {
+		window.fetch(app.grooveServer+'register', {
 			method: 'POST', 
 			body: formData
 		})
@@ -106,11 +108,12 @@ class Navigation extends React.Component {
 	}
 	render() {
 		var song = this.props.song;
-		var formClass = song.state.currentUser ? 'd-none' : '';
-		var userClass = !song.state.currentUser ? 'd-none' : '';
-		var username = song.state.currentUser.username;
+		var app = song.app;
+		var formClass = app.state.currentUser ? 'd-none' : '';
+		var userClass = !app.state.currentUser ? 'd-none' : '';
+		var username = app.state.currentUser.username;
 		const regForm = (
-			<form action={song.state.grooveServer+"register"} onSubmit={this.sendRegistration}>
+			<form action={app.state.grooveServer+"register"} onSubmit={this.sendRegistration}>
 				<h3 className="mb-2">That username was not found in the database.<br />Maybe you should register!</h3>
 				<input type="text" value={this.state.userInput} onChange={this.updateUserInput} size="22" className="mr-2" name="username" placeholder="Username" /><br />
 				<input type="text" value={this.state.emailInput} onChange={this.updateEmailInput} size="22" className="mr-2" name="email" placeholder="E-mail Address" /><br />
@@ -124,7 +127,7 @@ class Navigation extends React.Component {
 				<div className="col-1 col-sm-3 col-md-4 col-lg-7">
 				</div>
 				<div className="col-11 col-sm-9 col-md-8 col-lg-5 text-right">
-					<form onSubmit={this.sendLogin} action={song.grooveServer+'login'} className={formClass}>
+					<form onSubmit={this.sendLogin} action={app.grooveServer+'login'} className={formClass}>
 						<label className="mr-2">Register/Login</label>
 						<input type="text" value={this.state.userInput} onChange={this.updateUserInput} size="14" className="mr-2" name="username" placeholder="Username" />
 						<input type="password" value={this.state.passInput} onChange={this.updatePassInput} name="password" size="14" className="mr-2" placeholder="Password" />

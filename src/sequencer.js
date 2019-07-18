@@ -12,7 +12,7 @@ import {cellFormat} from './components/Helpers.js';
 import {sanitizeBooleans} from './components/Helpers.js';
 import Cookies from 'universal-cookie';
 
-class Song extends React.Component {
+class App extends React.Component {
 	constructor(props) {
 		super(props);
 		this.grooveServer = 'http://localhost:8081/';
@@ -23,12 +23,45 @@ class Song extends React.Component {
 			currentUser = userCookie;
 		}
 		this.state = {
+			currentUser: currentUser,
+			activeSong: null
+		};
+		this.setCurrentUser = this.setCurrentUser.bind(this);
+		this.logUserOut = this.logUserOut.bind(this);
+	}
+	setCurrentUser(user) {
+		if (user.hasOwnProperty('error')) {
+			return;
+		}
+		const cookies = new Cookies();
+		var d = new Date();
+		d.setTime(d.getTime() + ((60*24*30)*60*1000));
+		cookies.set("pyGroove-user", JSON.stringify(user), { path: "/", expires: d });
+		this.setState({currentUser: user});
+	}
+	setActiveSong(song) {
+		this.setState({activeSong: song});
+	}
+	logUserOut() {
+		const cookies = new Cookies();
+		cookies.remove("pyGroove-user");
+		this.setState({currentUser: false});
+	}
+	render() {
+		return (
+			<Song app={this} />
+		);
+	}
+}
+class Song extends React.Component {
+	constructor(props) {
+		super(props);
+		this.state = {
 			bpm: 126,
 			audioSource: 'fix that.mp3',
 			tracks: {},
 			title: '',
 			swing: .75,
-			currentUser: currentUser,
 			id: this.props.id || false,
 			activePattern: null,
 			channelsLoaded: false,
@@ -36,10 +69,9 @@ class Song extends React.Component {
 		};
 		this.channels = {};
 		this.patterns = {};
+		this.app = this.props.app;
 		this.updateTrack = this.updateTrack.bind(this);
 		this.handleSubmit = this.handleSubmit.bind(this);
-		this.setCurrentUser = this.setCurrentUser.bind(this);
-		this.logUserOut = this.logUserOut.bind(this);
 		this.loadSong = this.loadSong.bind(this);
 		this.songOut = React.createRef();
 		this.renderChannel = this.renderChannel.bind(this);
@@ -50,6 +82,9 @@ class Song extends React.Component {
 		this.getPatterns = this.getPatterns.bind(this);
 		if (props.id) {
 			this.loadSong(props.id);
+		}
+		else {
+			this.app.setActiveSong(this);
 		}
 		this.buildChannelRows();
 	}
@@ -87,10 +122,11 @@ class Song extends React.Component {
 		var song = this;
 		var patterns = [];
 		var formData = new FormData();
+		var app = this.app;
 		formData.append('song_id',this.state.id);
-		formData.append('user_id',this.state.currentUser.user_id);
-		formData.append('pyKey',this.state.currentUser.pyKey);
-		window.fetch(this.grooveServer+'patterns', {
+		formData.append('user_id',app.state.currentUser.user_id);
+		formData.append('pyKey',app.state.currentUser.pyKey);
+		window.fetch(app.grooveServer+'patterns', {
 			method: 'POST', 
 			body: formData
 		})
@@ -121,11 +157,12 @@ class Song extends React.Component {
 		var channels = [];
 		if (this.state.id && !this.channelsLoaded) {
 			var formData = new FormData();
+			var app = this.app;
 			formData.append('song_id',this.state.id);
-			formData.append('user_id',this.state.currentUser.user_id);
-			formData.append('pyKey',this.state.currentUser.pyKey);
+			formData.append('user_id',app.state.currentUser.user_id);
+			formData.append('pyKey',app.state.currentUser.pyKey);
 			var song = this;
-			window.fetch(this.grooveServer+'channels', {
+			window.fetch(app.grooveServer+'channels', {
 				method: 'POST', 
 				body: formData
 			})
@@ -161,11 +198,12 @@ class Song extends React.Component {
 		id = parseInt(id);
 		if (!id) return;
 		var formData = new FormData();
+		var app = this.app;
 		formData.append('song_id',this.state.id);
-		formData.append('user_id',this.state.currentUser.user_id);
-		formData.append('pyKey',this.state.currentUser.pyKey);
+		formData.append('user_id',app.state.currentUser.user_id);
+		formData.append('pyKey',app.state.currentUser.pyKey);
 		var song = this;
-		window.fetch(this.grooveServer+'song', {
+		window.fetch(app.grooveServer+'song', {
 			method: 'POST', 
 			body: formData
 		})
@@ -192,25 +230,11 @@ class Song extends React.Component {
 					}
 				}
 			});
+			app.setState({ activeSong: song });
 		}).catch(function(error) {
 			console.log('Request failed', error);
 		});
 		
-	}
-	setCurrentUser(user) {
-		if (user.hasOwnProperty('error')) {
-			return;
-		}
-		const cookies = new Cookies();
-		var d = new Date();
-		d.setTime(d.getTime() + ((60*24*30)*60*1000));
-		cookies.set("pyGroove-user", JSON.stringify(user), { path: "/", expires: d });
-		this.setState({currentUser: user});
-	}
-	logUserOut() {
-		const cookies = new Cookies();
-		cookies.remove("pyGroove-user");
-		this.setState({currentUser: false});
 	}
 	updateTrack(trackName,track) {
 		var tracks = this.state.tracks;
@@ -253,7 +277,8 @@ class Song extends React.Component {
 		submitted.repeat = 4;
 		submitted.bars = 2;
 		var song = this;
-		window.fetch(this.grooveServer, {
+		var app = song.app;
+		window.fetch(app.grooveServer, {
 			method: 'POST', 
 			body: JSON.stringify(submitted)
 		})
@@ -268,10 +293,11 @@ class Song extends React.Component {
 		});
 	}
 	render() {
+		var app = this.app;
 		return (
 			<div className="container mx-auto rounded px-3 pb-3 pattern-bg">
-				<Navigation song={this} loginCallback={this.setCurrentUser} logoutCallback={this.logUserOut} />
-				<form onSubmit={this.handleSubmit} action={this.grooveServer}>
+				<Navigation song={this} loginCallback={app.setCurrentUser} logoutCallback={app.logUserOut} />
+				<form onSubmit={this.handleSubmit} action={app.grooveServer}>
 					<SongOptions song={this} containerClass="status row" />
 					{this.renderPattern(1)}
 					<input type="submit" value="Save Song" tabIndex="-1" />
@@ -285,6 +311,6 @@ class Song extends React.Component {
 // ========================================
 
 ReactDOM.render(
-	<Song />,
+	<App />,
 	document.getElementById('root')
 );
