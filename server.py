@@ -56,6 +56,15 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
     self.send_header('Access-Control-Allow-Origin', '*')
     self.end_headers()
 
+  def saveSampleImage(self, data):
+    fName = data['wav']
+    fLoc = pjoin(curdir, "audio", fName)
+    imgLoc = pjoin(curdir, "img/waveform/uploaded", fName.replace('.wav','.png'))
+    waveImg = waveform.Waveform(fLoc)
+    imgInitLoc = waveImg.save()
+    rename(imgInitLoc,imgLoc)
+    return imgLoc
+
   def saveSongData(self, data):
     conn = sqlite3.connect(sqlite_file)
     c = conn.cursor()
@@ -181,7 +190,7 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
     selectSql = """SELECT c.id as channel_id, s.filename, s.reverse, s.trim, s.normalize, c.sample_id, c.volume, c.pan, c.transpose, c.disabled,
         f1.`on` as filterOn, f1.frequency as filterFrequency, f1.type as filterType, f2.`on` as filter2On,
         f2.frequency as filter2Frequency, f2.type as filter2Type,
-        c.name
+        c.name, s.image_filename
         FROM channel c
         LEFT JOIN sample s
         ON c.sample_id = s.id
@@ -192,8 +201,6 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
         WHERE c.song_id = {sid}
         AND f1.position = 1
         AND f2.position = 2""".format(sid=songId)
-
-
     c.execute(selectSql)
     channels = c.fetchall()
     conn.close()
@@ -205,11 +212,15 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
             'id': channel[0],
             'position': key,
             'name': channel[16],
-            'wav': channel[1],
             'reverse': channel[2],
             'trim': channel[3],
             'normalize': channel[4],
             'sampleId': channel[5],
+            'sample': {
+                'id': channel[5],
+                'wav': channel[1],
+                'image': channel[17]
+            },
             'amp': {
                 'volume': channel[6],
             },
@@ -232,14 +243,23 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
   def saveSample(self, data):
     conn = sqlite3.connect(sqlite_file)
     c = conn.cursor()
-    if ('id' in data and data['id']):
-        updateSql = "UPDATE `sample` SET filename='{filename}',normalize='{normalize}',reverse='{reverse}',trim='{trim}') WHERE id = '{id}'".\
-            format(filename=data['filename'], normalize=data['normalize'], reverse=data['reverse'], trim=data['trim'], id=data['id'])
-        c.execute(updateSql)
-        savedId = data['id']
+    if (data['image'] == None):
+        data['image'] = 'NULL'
     else:
-        insertSql = "REPLACE INTO `sample` (filename,normalize,reverse,trim) VALUES ('{filename}','{normalize}','{reverse}','{trim}')".\
-            format(filename=data['filename'], normalize=data['normalize'], reverse=data['reverse'], trim=data['trim'])
+        data['image'] = '"' + data['image'] + '"'
+    
+    selectSql = "select id from sample where filename = '{filename}' and normalize = '{normalize}' and reverse = '{reverse}' and trim = '{trim}'".\
+        format(filename=data['filename'], normalize=data['normalize'], reverse=data['reverse'], trim=data['trim'])
+    c.execute(selectSql)
+    savedId = c.fetchone()[0]
+
+    if (savedId):
+        updateSql = "UPDATE `sample` SET filename='{filename}',normalize='{normalize}',reverse='{reverse}',trim='{trim}',image_filename={image} WHERE id = '{id}'".\
+            format(filename=data['filename'], normalize=data['normalize'], reverse=data['reverse'], trim=data['trim'], id=savedId, image=data['image'])
+        c.execute(updateSql)
+    else:
+        insertSql = "REPLACE INTO `sample` (filename,normalize,reverse,trim) VALUES ('{filename}','{normalize}','{reverse}','{trim}','{image}')".\
+            format(filename=data['filename'], normalize=data['normalize'], reverse=data['reverse'], trim=data['trim'], image=data['image'])
         c.execute(insertSql)
         savedId = c.lastrowid
     conn.commit()
@@ -456,11 +476,17 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
             })
         trackPos=0
         for key, track in data['tracks'].items():
+            if not ('image' in track):
+                track['image'] = self.saveSampleImage(track)
+            else:
+                #
+
             sampleId = self.saveSample({
                 "filename": track['wav'],
                 "reverse": track['reverse'],
                 "normalize": track['normalize'],
                 "trim": track['trim'],
+                "image": track['image']
             })
             trackPos = trackPos + 1
             track['sample_id'] = sampleId

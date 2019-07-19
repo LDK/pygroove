@@ -53,7 +53,7 @@ class DropZone extends React.Component {
 		var parentObj = this.props.parentObj;
 		return (
 			<div
-				className={`dropZone ${this.state.highlight ? "highlight" : ""} ${this.props.parentObj.state.wavImg ? "waveform" : ""}`}
+				className={`dropZone ${this.state.highlight ? "highlight" : ""} ${this.props.parentObj.state.sample.image ? "waveform" : ""}`}
 				onDragOver={this.onDragOver}
 				onDragLeave={this.onDragLeave}
 				onDrop={this.onDrop}
@@ -63,7 +63,7 @@ class DropZone extends React.Component {
 				<img
 					alt="upload"
 					className="icon"
-					src={this.props.parentObj.state.wavImg ? this.props.parentObj.state.wavImg : "img/cloud-upload.svg"}
+					src={this.props.parentObj.state.sample.image ? this.props.parentObj.state.sample.image : "img/cloud-upload.svg"}
 					width="75%"
 				/>
 				<input

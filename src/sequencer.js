@@ -93,7 +93,8 @@ class Song extends React.Component {
 		if (this.channels[i]) {
 			initData = this.channels[i];
 		}
-		var channel = <Channel trackName={trackName} wav={wav+'.wav'} song={this} updateTrack={this.updateTrack} position={i} key={i} initData={initData} />;
+		var wav = wav ? wav+'.wav' : null;
+		var channel = <Channel trackName={trackName} wav={wav} song={this} updateTrack={this.updateTrack} position={i} key={i} initData={initData} />;
 		return channel;
 	}
 	registerChannel(position,channel) {
@@ -176,7 +177,8 @@ class Song extends React.Component {
 					var chanData = JSON.parse(text);
 					for (var chanName in chanData) {
 						var channel = chanData[chanName];
-						var chanObj = song.renderChannel(parseInt(channel.position),channel.name,channel.wav.replace('.wav',''));
+						var wav = channel.sample.wav ? channel.sample.wav.replace('.wav','') : null;
+						var chanObj = song.renderChannel(parseInt(channel.position),channel.name,wav);
 						channels.push(chanObj);
 						song.registerChannel(channel.position,chanObj);
 					}
@@ -250,6 +252,7 @@ class Song extends React.Component {
 		delete submitted.__proto__;
 		delete submitted.activePattern;
 		delete submitted.channelRows;
+		submitted.currentUser = this.app.state.currentUser;
 		for (var trackName in submitted.tracks) {
 			var track = submitted.tracks[trackName];
 			delete track.pattern;

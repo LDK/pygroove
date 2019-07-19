@@ -41,7 +41,11 @@ class Channel extends React.Component {
 				release: 0
 			},
 			pattern: props.song.state.activePattern,
-			wav: props.wav
+			sample: {
+				wav: props.wav,
+				id: props.sampleId || null,
+				image: props.sampleImage || null
+			}
 		};
 		for (var listKey in this.state.filterList) {
 			var filterKey = this.state.filterList[listKey];

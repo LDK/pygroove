@@ -23,7 +23,7 @@ class SampleSection extends React.Component {
 			const formData = new FormData();
 			formData.append("file", file);
 			formData.append("filename", file.name);
-			req.open("POST", channel.props.pattern.props.song.app.grooveServer + "upload");
+			req.open("POST", channel.props.song.app.grooveServer + "upload");
 			req.send(formData);
 			var chan = this.props.parentObj;
 			req.onload = function(e) {
@@ -35,7 +35,11 @@ class SampleSection extends React.Component {
 							wavImg = res.img;
 						}
 					}
-					chan.setState({ wav: 'uploaded/' + file.name, wavName: file.name, wavImg: wavImg });
+					var sample = {};
+					sample.wav = 'uploaded/' + file.name;
+					sample.wavName = file.name;
+					sample.image = wavImg;
+					chan.setState({ sample: sample });
 					chan.props.updateTrack(chan.state.trackName,chan.state);
 				}
 			}
@@ -89,7 +93,7 @@ class SampleSection extends React.Component {
 		return (
 			<div className={props.containerClass}>
 				<div className={(parentObj.state.settingsMode == 'step' ? 'd-none' : '')}>
-					<label>Current Sample: {parentObj.state.wavName || parentObj.state.wav}</label>
+					<label>Current Sample: {parentObj.state.wavName || parentObj.state.sample.wav}</label>
 					<DropZone parentObj={parentObj} onFilesAdded={this.filesAdded} label="Upload Sample" />
 				</div>
 				<div className={(parentObj.state.settingsMode != 'step' ? 'd-none' : '')}>
