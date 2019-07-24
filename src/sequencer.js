@@ -88,13 +88,15 @@ class Song extends React.Component {
 		}
 		this.buildChannelRows();
 	}
-	renderChannel(i,trackName,wav) {
+	renderChannel(i,trackName,sampleData) {
 		var initData = {};
 		if (this.channels[i]) {
 			initData = this.channels[i];
 		}
-		var wav = wav ? wav+'.wav' : null;
-		var channel = <Channel trackName={trackName} wav={wav} song={this} updateTrack={this.updateTrack} position={i} key={i} initData={initData} />;
+		var wav = sampleData.wav ? sampleData.wav+'.wav' : null;
+		var img = sampleData.image ? sampleData.image : null;
+		var id = sampleData.id ? sampleData.id : null;
+		var channel = <Channel trackName={trackName} wav={wav} sampleImage={img} sampleId={id} song={this} updateTrack={this.updateTrack} position={i} key={i} initData={initData} />;
 		return channel;
 	}
 	registerChannel(position,channel) {
@@ -113,10 +115,10 @@ class Song extends React.Component {
 	}
 	getDefaultChannels() {
 		var channels = [];
-		channels.push(this.renderChannel(1,'Kick','808-Kick1'));
-		channels.push(this.renderChannel(2,'Closed Hat','808-CH1'));
-		channels.push(this.renderChannel(3,'Open Hat','808-OH1'));
-		channels.push(this.renderChannel(4,'Snare','808-Snare1'));
+		channels.push(this.renderChannel(1,'Kick',{ id: 1, wav: '808-Kick1', image: 'img/waveform/default/808-Kick1.png' }));
+		channels.push(this.renderChannel(2,'Closed Hat',{ id: 2, wav: '808-CH1', image: 'img/waveform/default/808-CH1.png' }));
+		channels.push(this.renderChannel(3,'Open Hat',{ id: 3, wav: '808-OH1', image: 'img/waveform/default/808-OH1.png' }));
+		channels.push(this.renderChannel(4,'Snare',{ id: 4, wav: '808-Snare1', image: 'img/waveform/default/808-Snare1.png' }));
 		return channels;
 	}
 	getPatterns() {
@@ -177,8 +179,7 @@ class Song extends React.Component {
 					var chanData = JSON.parse(text);
 					for (var chanName in chanData) {
 						var channel = chanData[chanName];
-						var wav = channel.sample.wav ? channel.sample.wav.replace('.wav','') : null;
-						var chanObj = song.renderChannel(parseInt(channel.position),channel.name,wav);
+						var chanObj = song.renderChannel(parseInt(channel.position),channel.name,channel);
 						channels.push(chanObj);
 						song.registerChannel(channel.position,chanObj);
 					}

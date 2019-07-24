@@ -260,7 +260,7 @@ def renderJSON(json):
         newTrack(trackName)
         # Add the notes
         trackNotes = channel['notes']
-        trackWav = './audio/' + channel['wav']
+        trackWav = './audio/' + channel['sample']['wav']
         trackSound = AudioSegment.from_wav(trackWav)
         trackTranspose = 0
         if 'trim' in channel:

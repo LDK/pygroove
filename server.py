@@ -57,9 +57,9 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
     self.end_headers()
 
   def saveSampleImage(self, data):
-    fName = data['wav']
+    fName = data['sample']['wav']
     fLoc = pjoin(curdir, "audio", fName)
-    imgLoc = pjoin(curdir, "img/waveform/uploaded", fName.replace('.wav','.png'))
+    imgLoc = pjoin(curdir, "img/waveform", fName.replace('.wav','.png'))
     waveImg = waveform.Waveform(fLoc)
     imgInitLoc = waveImg.save()
     rename(imgInitLoc,imgLoc)
@@ -246,19 +246,23 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
     if (data['image'] == None):
         data['image'] = 'NULL'
     else:
-        data['image'] = '"' + data['image'] + '"'
+        data['image'] = '"' + data['image'].replace('./','') + '"'
     
     selectSql = "select id from sample where filename = '{filename}' and normalize = '{normalize}' and reverse = '{reverse}' and trim = '{trim}'".\
         format(filename=data['filename'], normalize=data['normalize'], reverse=data['reverse'], trim=data['trim'])
     c.execute(selectSql)
-    savedId = c.fetchone()[0]
+    foundRow = c.fetchone()
+    if (foundRow):
+        savedId = foundRow[0]
+    else:
+        savedId = None
 
     if (savedId):
         updateSql = "UPDATE `sample` SET filename='{filename}',normalize='{normalize}',reverse='{reverse}',trim='{trim}',image_filename={image} WHERE id = '{id}'".\
             format(filename=data['filename'], normalize=data['normalize'], reverse=data['reverse'], trim=data['trim'], id=savedId, image=data['image'])
         c.execute(updateSql)
     else:
-        insertSql = "REPLACE INTO `sample` (filename,normalize,reverse,trim) VALUES ('{filename}','{normalize}','{reverse}','{trim}','{image}')".\
+        insertSql = "REPLACE INTO `sample` (filename,normalize,reverse,trim,image_filename) VALUES ('{filename}','{normalize}','{reverse}','{trim}',{image})".\
             format(filename=data['filename'], normalize=data['normalize'], reverse=data['reverse'], trim=data['trim'], image=data['image'])
         c.execute(insertSql)
         savedId = c.lastrowid
@@ -478,11 +482,8 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
         for key, track in data['tracks'].items():
             if not ('image' in track):
                 track['image'] = self.saveSampleImage(track)
-            else:
-                #
-
             sampleId = self.saveSample({
-                "filename": track['wav'],
+                "filename": track['sample']['wav'],
                 "reverse": track['reverse'],
                 "normalize": track['normalize'],
                 "trim": track['trim'],
