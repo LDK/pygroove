@@ -62,7 +62,9 @@ class Channel extends React.Component {
 		song.setState({tracks: tracks});
 		this.fillCell = this.fillCell.bind(this);
 		this.emptyCell = this.emptyCell.bind(this);
+		this.clearCells = this.clearCells.bind(this);
 		this.updateSettingsMode = this.updateSettingsMode.bind(this);
+		this.updateChannelSequences = this.updateChannelSequences.bind(this);
 		this.machine = this.props.machine || 'simple';
 		if (props.initData) {
 			for (var i in props.initData) {
@@ -91,6 +93,28 @@ class Channel extends React.Component {
 			}
 			return cells;
 		}
+		updateChannelSequences(steps) {
+			var channel = this;
+			var idx = channel.props.song.state.activePatternIndex;
+			if (!idx || !channel.props.song.patterns[idx]) {
+				return;
+			}
+			var seq = [];
+			for (var i in steps) {
+				if (steps[i] != null) {
+					var step = cloneDeep(steps[i]);
+					var stepInfo = stepFormat(i);
+					if (step && stepInfo) {
+						step.loc = stepInfo.loc;
+					}
+					delete step.bar;
+					delete step.beat;
+					delete step.tick;
+					seq.push(step);
+				}
+			}
+			channel.props.song.patterns[idx].chanSequences[channel.state.position] = JSON.stringify(seq);
+		}
 		fillCell(i,stepData) {
 			const steps = this.state.steps.slice();
 			if (!steps[i]) {
@@ -111,6 +135,7 @@ class Channel extends React.Component {
 			this.setState({steps: steps});
 			var track = this.state;
 			track.steps = steps;
+			var idx = this.props.song.state.activePatternIndex;
 			this.props.updateTrack(track.trackName,track);
 		}
 		emptyCell(i) {
@@ -122,6 +147,13 @@ class Channel extends React.Component {
 			var track = this.state;
 			track.steps = steps;
 			this.props.updateTrack(track.trackName,track);
+		}
+		clearCells() {
+			const steps = this.state.steps.slice();
+			for (var i in steps) {
+				this.emptyCell(i);
+			}
+			this.updateChannelSequences(steps);
 		}
 		render() {
 			var props = this.props;

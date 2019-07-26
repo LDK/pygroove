@@ -15,8 +15,10 @@ class Pattern extends React.Component {
 			clipboard: {}
 		};
 		this.addToClipboard = this.addToClipboard.bind(this);
-		var stateObj = { activePattern: this };
-		this.props.song.setState(stateObj);
+		if (!this.props.song.state.activePattern) {
+			var stateObj = { activePattern: this };
+			this.props.song.setState(stateObj);
+		}
 	}
 	addToClipboard(k,v) {
 		var clip = this.state.clipboard;

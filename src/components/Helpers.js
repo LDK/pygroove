@@ -46,6 +46,9 @@ export const stepFormat = (step) => {
 }
 
 export const cellFormat = (stepInfo) => {
+	if (!stepInfo || !stepInfo.loc) {
+		return false;
+	}
 	var loc = stepInfo.loc.split('.');
 	var bar = loc[0];
 	var beat = loc[1];

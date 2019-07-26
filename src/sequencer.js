@@ -64,6 +64,7 @@ class Song extends React.Component {
 			swing: .75,
 			id: this.props.id || false,
 			activePattern: null,
+			activePatternIndex: this.props.initPattern || 1,
 			channelsLoaded: false,
 			channelRows: []
 		};
@@ -107,7 +108,7 @@ class Song extends React.Component {
 		if (this.patterns[position]) {
 			initData = this.patterns[position];
 		}
-		var pattern = <Pattern song={this} position={position} />;
+		var pattern = <Pattern song={this} position={this.state.activePatternIndex} />;
 		return pattern;
 	}
 	registerPattern(position,pattern) {
@@ -140,13 +141,16 @@ class Song extends React.Component {
 				}
 				var patternData = JSON.parse(text);
 				for (var chanPos in song.channels) {
+					// song.channels[chanPos].clearCells();
 					for (var position in patternData) {
 						var pattern = patternData[position];
 						patterns.push(pattern);
 						var steps = JSON.parse(pattern.chanSequences[chanPos].replace(/'/g, '"').toLowerCase());
-						for (var i in steps) {
-							var step = cellFormat(steps[i]);
-							song.channels[chanPos].fillCell(step,steps[i]);
+						if (position == song.state.activePatternIndex) {
+							for (var i in steps) {
+								var step = cellFormat(steps[i]);
+								song.channels[chanPos].fillCell(step,steps[i]);
+							}
 						}
 						song.registerPattern(position,pattern);
 					}
@@ -158,7 +162,11 @@ class Song extends React.Component {
 	}
 	buildChannelRows() {
 		var channels = [];
-		if (this.state.id && !this.channelsLoaded) {
+		var song = this;
+		song.channelsLoaded = false;
+		var init = song.getDefaultChannels();
+		song.setState({ channelRows: [] });
+		if (this.state.id) {
 			var formData = new FormData();
 			var app = this.app;
 			formData.append('song_id',this.state.id);
@@ -179,7 +187,7 @@ class Song extends React.Component {
 					var chanData = JSON.parse(text);
 					for (var chanName in chanData) {
 						var channel = chanData[chanName];
-						var chanObj = song.renderChannel(parseInt(channel.position),channel.name,channel);
+						var chanObj = song.renderChannel(parseInt(channel.position),channel.name,channel.sample);
 						channels.push(chanObj);
 						song.registerChannel(channel.position,chanObj);
 					}

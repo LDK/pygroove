@@ -1,4 +1,6 @@
 import React, { Component } from 'react';
+import cloneDeep from 'lodash/cloneDeep';
+import {stepFormat} from '../Helpers.js';
 
 class Cell extends React.Component {
 	constructor(props) {
@@ -9,6 +11,7 @@ class Cell extends React.Component {
 		this.toggle = this.toggle.bind(this);
 		this.fill = this.fill.bind(this);
 		this.empty = this.empty.bind(this);
+		this.populate = this.populate.bind(this);
 	}
 	populate(step) {
 		var channel = this.props.channel;
@@ -38,6 +41,7 @@ class Cell extends React.Component {
 		channel.setState({steps: steps, selectedStep: i});
 		track.steps = steps;
 		channel.props.updateTrack(track.trackName,track);
+		channel.updateChannelSequences(steps);
 	}
 	fill() {
 		var i = this.props.cellKey;
@@ -50,6 +54,7 @@ class Cell extends React.Component {
 		channel.setState({steps: steps});
 		track.steps = steps;
 		channel.props.updateTrack(track.trackName,track);
+		channel.updateChannelSequences(steps);
 	}
 	empty() {
 		var i = this.props.cellKey;
@@ -60,6 +65,7 @@ class Cell extends React.Component {
 		channel.setState({steps: steps});
 		track.steps = steps;
 		channel.props.updateTrack(track.trackName,track);
+		channel.updateChannelSequences(steps);
 	}
 	render() {
 		var label = this.props.label || 'Upload File';
