@@ -288,6 +288,7 @@ class Song extends React.Component {
 		submitted.tickDiv = 32;
 		submitted.repeat = 4;
 		submitted.bars = 2;
+		submitted.patterns = this.patterns;
 		var song = this;
 		var app = song.app;
 		window.fetch(app.grooveServer, {
@@ -296,9 +297,11 @@ class Song extends React.Component {
 		})
 		.then(function(data) {
 			data.text().then(function(text) {
-				song.setState({ renderedFile: text, audioSource: text });
-				song.songOut.current.src = song.state.audioSource;
-				song.songOut.current.load();
+				// TODO: Move these lines to a separate render function
+				// song.setState({ renderedFile: text, audioSource: text });
+				// song.songOut.current.src = song.state.audioSource;
+				// song.songOut.current.load();
+				song.setState({ id: JSON.parse(text).id });
 			});
 		}).catch(function(error) {
 			console.log('Request failed', error);

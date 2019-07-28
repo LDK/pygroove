@@ -10,6 +10,8 @@ class SongOptions extends React.Component {
 		this.updateTitle = this.updateTitle.bind(this);
 		this.updateBPM = this.updateBPM.bind(this);
 		this.selectPattern = this.selectPattern.bind(this);
+		this.newPattern = this.newPattern.bind(this);
+		this.deletePattern = this.deletePattern.bind(this);
 	}
 	updateBPM(event) {
 		var song = this.props.song;
@@ -26,7 +28,6 @@ class SongOptions extends React.Component {
 	selectPattern(event) {
 		var song = this.props.song;
 		var position = event.target.value;
-		song.setState({ activePatternIndex: position });
 		for (var chanPos in song.channels) {
 			var channel = song.channels[chanPos];
 			channel.clearCells();
@@ -36,7 +37,29 @@ class SongOptions extends React.Component {
 				song.channels[chanPos].fillCell(step,steps[i]);
 			}
 		}
+		song.setState({ activePatternIndex: position });
 		song.render();
+	}
+	deletePattern(event) {
+		
+	}
+	newPattern(event) {
+		var song = this.props.song;
+		console.log('new pattern in addition to',song.patterns);
+		var position = Object.keys(song.patterns).length + 1;
+		song.setState({ activePatternIndex: position });
+		for (var chanPos in song.channels) {
+			var channel = song.channels[chanPos];
+			channel.clearCells();
+		}
+		var patternObj = { 
+			name: "Pattern " + position,
+			position: position,
+			bars: 2,
+			id: null,
+			chanSequences: {}
+		};
+		this.props.song.registerPattern(position,patternObj);
 	}
 	render() {
 		var song = this.props.song;
@@ -44,6 +67,11 @@ class SongOptions extends React.Component {
 		const patternOptions = patternKeys.map((index,i) =>
 		<option className="contextMenu-option" key={i} value={song.patterns[index].position}>{song.patterns[index].position}: {song.patterns[index].name}</option>
 		);
+		for (var i in patternOptions) {
+			if (patternOptions[i] == song.state.activePatternIndex) {
+				patternOptions[i].props.selected = true;
+			}
+		}
 		return (
 			<div className="status row">
 				<div className="col-6">
@@ -51,9 +79,11 @@ class SongOptions extends React.Component {
 					<label>BPM:</label><input type="text" value={song.state.bpm} onChange={this.updateBPM} tabIndex="-1" /><br />
 				</div>
 				<div className="col-4 text-left">
-					<select name="activePattern" onChange={this.selectPattern}>
+					<select name="activePattern" onChange={this.selectPattern} value={song.state.activePatternIndex}>
 						{patternOptions}
 					</select>
+					<a href="javascript:;" className="d-block" onClick={this.newPattern}>New Pattern</a>
+					<a href="javascript:;" className="d-block" onClick={this.deletePattern}>Delete Pattern</a>
 				</div>
 				<div className="col-2">
 					Swing: <Range label="Swing" inputClass="pan col-8 px-0 mx-auto" meterClass="pl-2" callback={this.updateSwing} min="0" max="1.25" step=".01" value={song.state.swing} />
