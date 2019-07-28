@@ -16,6 +16,7 @@ class Channel extends React.Component {
 		delete steps[0];
 		this.state = {
 			filterList: ['filter','filter2'],
+			position: props.position,
 			disabled: props.disabled || false,
 			disabledClass: props.disabled ? 'disabled' : '',
 			settingsOpen: props.settingsOpen || false,
