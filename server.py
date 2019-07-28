@@ -456,10 +456,14 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
         conn.close()
         return
         
+    elif (self.path == '/render'):
+        self.data_string = self.rfile.read(int(self.headers['Content-Length']))
+        fName = groove.renderJSON(self.data_string);
+        self.wfile.write(bytes(fName, "utf8"))
     else:
         self.data_string = self.rfile.read(int(self.headers['Content-Length']))
         data = simplejson.loads(self.data_string)
-        fName = groove.renderJSON(self.data_string);
+        postRes = {}
         pyKey = data['currentUser']['pyKey']
         # TODO HERE: checkUserKey(pyKey,data['currentUser']['user_id']) ... if fail, return
         if ('id' in data and data['id']):
@@ -478,6 +482,7 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
                 "bpm": int(data['bpm']),
                 "swing": data['swing']
             })
+        postRes['id'] = songId
         trackPos=0
         for key, track in data['tracks'].items():
             if not ('image' in track):
@@ -526,8 +531,7 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
                 "steps": track['notes']
             })
         self.respond(200)
-        self.wfile.write(bytes(fName, "utf8"))
-
+        self.wfile.write(json.dumps(postRes).encode("utf-8"))
     return
 
 def run():
