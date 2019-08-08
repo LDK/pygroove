@@ -11,10 +11,12 @@ import {stepFormat} from './components/Helpers.js';
 import {cellFormat} from './components/Helpers.js';
 import {sanitizeBooleans} from './components/Helpers.js';
 import Cookies from 'universal-cookie';
+import DataBrowser from './components/widgets/DataBrowser.js';
 
 class App extends React.Component {
 	constructor(props) {
 		super(props);
+		this.songs = [];
 		this.grooveServer = 'http://localhost:8081/';
 		const cookies = new Cookies();
 		var userCookie = cookies.get('pyGroove-user');
@@ -24,10 +26,43 @@ class App extends React.Component {
 		}
 		this.state = {
 			currentUser: currentUser,
-			activeSong: null
+			activeSong: null,
+			songs: []
 		};
 		this.setCurrentUser = this.setCurrentUser.bind(this);
 		this.logUserOut = this.logUserOut.bind(this);
+		this.getSongs = this.getSongs.bind(this);
+		this.getSongs();
+	}
+	getSongs() {
+		var uid = this.state.currentUser.user_id;
+		if (!uid) {
+			return [];
+		}
+		var formData = new FormData();
+		var app = this;
+		formData.append('user_id',this.state.currentUser.user_id);
+		formData.append('pyKey',this.state.currentUser.pyKey);
+		window.fetch(this.grooveServer+'songs', {
+			method: 'POST', 
+			body: formData
+		}).then(function(data){
+			data.text().then(function(text) {
+				if (!text.length) {
+					return;
+				}
+				var songData = JSON.parse(text);
+				var songs = [];
+				for (var i in songData) {
+					var song = songData[i];
+					songs.push({
+						id: song.id,
+						name: song.title
+					});
+				}
+				app.setState({songs: songs});
+			});
+		});
 	}
 	setCurrentUser(user) {
 		if (user.hasOwnProperty('error')) {
@@ -38,6 +73,7 @@ class App extends React.Component {
 		d.setTime(d.getTime() + ((60*24*30)*60*1000));
 		cookies.set("pyGroove-user", JSON.stringify(user), { path: "/", expires: d });
 		this.setState({currentUser: user});
+		this.getSongs();
 	}
 	setActiveSong(song) {
 		this.setState({activeSong: song});
@@ -45,7 +81,10 @@ class App extends React.Component {
 	logUserOut() {
 		const cookies = new Cookies();
 		cookies.remove("pyGroove-user");
-		this.setState({currentUser: false});
+		this.state.activeSong.patterns = {};
+		this.state.activeSong.channels = {};
+		this.state.activeSong.setState({ id: null, title: null, bpm: 126, swing: .75 });
+		this.setState({currentUser: false, activeSong: null, songs: []});
 	}
 	render() {
 		return (
@@ -87,7 +126,7 @@ class Song extends React.Component {
 		else {
 			this.app.setActiveSong(this);
 		}
-		this.buildChannelRows();
+		this.buildChannelRows(false);
 	}
 	renderChannel(i,trackName,sampleData) {
 		var initData = {};
@@ -122,6 +161,7 @@ class Song extends React.Component {
 		channels.push(this.renderChannel(4,'Snare',{ id: 4, wav: '808-Snare1', image: 'img/waveform/default/808-Snare1.png' }));
 		return channels;
 	}
+
 	getPatterns() {
 		var song = this;
 		var patterns = [];
@@ -160,16 +200,19 @@ class Song extends React.Component {
 			return patterns;
 		});
 	}
-	buildChannelRows() {
+	buildChannelRows(renderAfter,songId) {
+		if (!songId) {
+			songId = this.state.id;
+		}
 		var channels = [];
 		var song = this;
 		song.channelsLoaded = false;
 		var init = song.getDefaultChannels();
 		song.setState({ channelRows: [] });
-		if (this.state.id) {
+		if (songId) {
 			var formData = new FormData();
 			var app = this.app;
-			formData.append('song_id',this.state.id);
+			formData.append('song_id',songId);
 			formData.append('user_id',app.state.currentUser.user_id);
 			formData.append('pyKey',app.state.currentUser.pyKey);
 			var song = this;
@@ -205,22 +248,27 @@ class Song extends React.Component {
 			return channels;
 		}
 	}
-	loadSong(id) {
+	loadSong(id,buildAfter) {
 		id = parseInt(id);
 		if (!id) return;
 		var formData = new FormData();
 		var app = this.app;
-		formData.append('song_id',this.state.id);
+		formData.append('song_id',id);
 		formData.append('user_id',app.state.currentUser.user_id);
 		formData.append('pyKey',app.state.currentUser.pyKey);
 		var song = this;
+		song.patterns = {};
+		song.channels = {};
 		window.fetch(app.grooveServer+'song', {
 			method: 'POST', 
 			body: formData
 		})
 		.then(function(data) {
+			app.setState({ activeSong: null });
 			data.text().then(function(text) {
-				if (!text.length) return;
+				if (!text.length) {
+					return;
+				}
 				var songData = JSON.parse(text);
 				songData.id = id;
 				var songChannels = cloneDeep(songData['channels']);
@@ -231,7 +279,9 @@ class Song extends React.Component {
 					var chan = songChannels[channelName];
 					for (var key in chan) {
 						var item = chan[key];
-						chan[key] = sanitizeBooleans(item);
+						if (!chan.hasOwnProperty('setState')) {
+							chan[key] = sanitizeBooleans(item);
+						}
 					}
 					if (song.channels[chan.position]) {
 						song.channels[chan.position].setState(chan);
@@ -242,6 +292,10 @@ class Song extends React.Component {
 				}
 			});
 			app.setState({ activeSong: song });
+			if (buildAfter) {
+				song.buildChannelRows(true,id);
+			}
+			app.state.activeSong.render();
 		}).catch(function(error) {
 			console.log('Request failed', error);
 		});

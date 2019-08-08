@@ -73,7 +73,9 @@ class Channel extends React.Component {
 				this.state[i] = item;
 			}
 		}
-		song.registerChannel(props.position,this);
+		}
+		componentDidMount() {
+			this.props.song.registerChannel(this.props.position,this);
 		}
 		updateSettingsMode(value) {
 			this.setState({ settingsMode: value || 'chan' });
@@ -175,3 +177,5 @@ class Channel extends React.Component {
 		}
 }
 export default Channel;
+
+

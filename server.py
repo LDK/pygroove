@@ -97,6 +97,24 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
     conn.close()
     return postRes
 
+  def getSongList(self, uid):
+    conn = sqlite3.connect(sqlite_file)
+    c = conn.cursor()
+    selectSql = "SELECT title, id, bpm, swing FROM `song` WHERE user_id = '{uid}'".format(uid=uid)
+    print("select sql",selectSql)
+    c.execute(selectSql)
+    songs = c.fetchall()
+    conn.close()
+    postRes = {}
+    for song in songs:
+        if not (song[1] in postRes):
+            postRes[song[1]] = {}
+        postRes[song[1]]['title'] = song[0]
+        postRes[song[1]]['id'] = song[1]
+        postRes[song[1]]['bpm'] = song[2]
+        postRes[song[1]]['swing'] = song[3]
+    return postRes
+
   def savePattern(self, data):
     conn = sqlite3.connect(sqlite_file)
     c = conn.cursor()
@@ -401,6 +419,23 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
         postRes['id'] = sid
         postRes['channels'] = self.getSongChannels(sid)
         postRes['patterns'] = self.getSongPatterns(sid)
+        self.wfile.write(json.dumps(postRes).encode("utf-8"))
+        conn.close()
+        return
+        
+    elif (self.path == '/songs'):
+        postvars = self.parse_POST()
+        pyKey = postvars['pyKey'][0]
+        uid = postvars['user_id'][0]
+        authorized = self.checkCreds(uid,pyKey)
+        if not authorized:
+            self.respond(401)
+            return
+        self.respond(200)
+        postRes = self.getSongList(uid)
+        # postRes['id'] = sid
+        # postRes['channels'] = self.getSongChannels(sid)
+        # postRes['patterns'] = self.getSongPatterns(sid)
         self.wfile.write(json.dumps(postRes).encode("utf-8"))
         conn.close()
         return

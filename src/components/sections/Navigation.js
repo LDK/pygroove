@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import cloneDeep from 'lodash/cloneDeep';
 import Modal from '../widgets/Modal.js';
+import DataBrowser from '../widgets/DataBrowser.js';
 
 class Navigation extends React.Component {
 	constructor(props) {
@@ -13,6 +14,7 @@ class Navigation extends React.Component {
 			regFormOpen: false
 		};
 		this.sendLogin = this.sendLogin.bind(this);
+		this.songChange = this.songChange.bind(this);
 		this.sendRegistration = this.sendRegistration.bind(this);
 		this.updateUserInput = this.updateUserInput.bind(this);
 		this.updatePassInput = this.updatePassInput.bind(this);
@@ -106,6 +108,10 @@ class Navigation extends React.Component {
 			console.log('Request failed', error);
 		});
 	}
+	songChange(id) {
+		var song = this.props.song;
+		song.loadSong(id,true);
+	}
 	render() {
 		var song = this.props.song;
 		var app = song.app;
@@ -114,6 +120,7 @@ class Navigation extends React.Component {
 		var username = app.state.currentUser.username;
 		const regForm = (
 			<form action={app.state.grooveServer+"register"} onSubmit={this.sendRegistration}>
+
 				<h3 className="mb-2">That username was not found in the database.<br />Maybe you should register!</h3>
 				<input type="text" value={this.state.userInput} onChange={this.updateUserInput} size="22" className="mr-2" name="username" placeholder="Username" /><br />
 				<input type="text" value={this.state.emailInput} onChange={this.updateEmailInput} size="22" className="mr-2" name="email" placeholder="E-mail Address" /><br />
@@ -122,6 +129,10 @@ class Navigation extends React.Component {
 				<input type="submit" value="Go" size="3" onClick={this.sendRegistration} />
 			</form>
 		);
+		var songs = app.state.songs;
+		if (songs.length && songs[0].id && !app.state.activeSong.id) {
+			songs.unshift({ id: '', name: ''});
+		}
 		return (
 			<div className="navigation row py-2 mb-2">
 				<div className="col-1 col-sm-3 col-md-4 col-lg-7">
@@ -137,6 +148,7 @@ class Navigation extends React.Component {
 						<span className="username">{username} is at work.</span>
 						<a onClick={this.props.logoutCallback}>Log out</a>
 					</div>
+					<DataBrowser label="Song:" items={app.state.songs} view="select" callback={this.songChange} id="songList" value={song.state.id} />
 				</div>
 				<Modal 
 					id="registration-modal"

@@ -45,7 +45,6 @@ class SongOptions extends React.Component {
 	}
 	newPattern(event) {
 		var song = this.props.song;
-		console.log('new pattern in addition to',song.patterns);
 		var position = Object.keys(song.patterns).length + 1;
 		song.setState({ activePatternIndex: position });
 		for (var chanPos in song.channels) {
@@ -75,7 +74,7 @@ class SongOptions extends React.Component {
 		return (
 			<div className="status row">
 				<div className="col-6">
-					<label>Title:</label><input type="text" value={song.state.title} onChange={this.updateTitle} tabIndex="-1" /><br />
+					<label>Title:</label><input type="text" value={song.state.title || ''} onChange={this.updateTitle} tabIndex="-1" /><br />
 					<label>BPM:</label><input type="text" value={song.state.bpm} onChange={this.updateBPM} tabIndex="-1" /><br />
 				</div>
 				<div className="col-4 text-left">
