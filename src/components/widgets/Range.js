@@ -22,7 +22,7 @@ class Range extends React.Component {
 		var mode = (this.state.mode == 'range') ? 'text' : 'range';
 		this.setState({mode: mode});
 	}
-	renderRange(range) {
+	renderRange() {
 		return (
 			<div className={"meter " + (this.props.className || '')}>
 				<input className={this.props.inputClass || ''} type="range"
@@ -35,11 +35,13 @@ class Range extends React.Component {
 					onChange={this.callback}
 					tabIndex="-1" >
 				</input>
-				<span onClick={this.toggleMode} className={'meter-display ' + (this.props.inputClass || '') + ' ' + (this.props.meterClass || '')}>{this.props.value || 0}</span>
+				<span 
+					onClick={this.toggleMode} 
+					className={'meter-display ' + (this.props.inputClass || '') + ' ' + (this.props.meterClass || '')}>{this.props.value || 0}</span>
 			</div>
 		);
 	}
-	renderText(range) {
+	renderText() {
 		return (
 			<div className={"meter " + (this.props.className || '')}>
 				<input className={this.props.inputClass || ''} type="range"
@@ -63,14 +65,13 @@ class Range extends React.Component {
 		);
 	}
 	render() {
-		const { range } = this.props;
 		switch (this.state.mode) {
 			case 'text':
-				var output = this.renderText(range);
+				var output = this.renderText();
 				break;
 			case 'range':
 			default:
-				var output = this.renderRange(range);
+				var output = this.renderRange();
 				break;
 		}
 		return output;
