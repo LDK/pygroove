@@ -355,6 +355,32 @@ div.contextMenu-wrapper:not(.open) select {
 .incrementer input[type="text"][disabled] {
 	background: var(--green-grey);
 }
+.incrementer .icon {
+	height: 1rem;
+	width: .75rem;
+	display: inline-block;
+	background-repeat: no-repeat;
+	background-size: contain;
+	margin: 0 .25rem;
+}
+.incrementer .icon.up-arrow {
+	background-image: url(img/up-arrow.svg);
+}
+.incrementer .icon.up-arrow-double {
+	background-image: url(img/up-arrow-double.svg);
+	position: relative;
+	top: -2px;
+}
+.incrementer .icon.down-arrow {
+	background-image: url(img/down-arrow.svg);
+	position: relative;
+	top: 2px;
+}
+.incrementer .icon.down-arrow-double {
+	background-image: url(img/down-arrow-double.svg);
+	position: relative;
+	top: 4px;
+}
 
 /* Hide the browser's default radio button */
 .optionIndicator ul li label input {

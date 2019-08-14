@@ -91,8 +91,8 @@ class Incrementer extends React.Component {
 		return (
 			<div className={"incrementer text-center" + ' ' + (this.props.className || '') }>
 				<label className="d-block">{this.state.label}</label>
-				<span className={(this.props.disabled ? ' disabled' : '')} onClick={() => this.increment(1)} >^</span>
-				<span className={(this.props.disabled ? ' disabled' : '')} onClick={() => this.increment(12)} >^^</span>
+				<span className={(this.props.disabled ? ' disabled' : '')+' icon up-arrow'} onClick={() => this.increment(1)} ></span>
+				<span className={(this.props.disabled ? ' disabled' : '')+' icon up-arrow-double'} onClick={() => this.increment(12)} ></span>
 				<div onClick={this.typeModeOn}>
 					<input type="text" onKeyDown={this.keyPress} tabIndex="-1" value={this.props.value} name={this.props.name} 
 						ref={elem => (this.textInput = elem)} 
@@ -102,8 +102,8 @@ class Incrementer extends React.Component {
 						onChange={this.handleChange} 
 					/>
 				</div>
-				<span className={(this.props.disabled ? ' disabled' : '')} onClick={() => this.increment(-1)}>v</span>
-				<span className={(this.props.disabled ? ' disabled' : '')} onClick={() => this.increment(-12)} >vv</span>
+				<span className={(this.props.disabled ? ' disabled' : '')+' icon down-arrow'} onClick={() => this.increment(-1)}></span>
+				<span className={(this.props.disabled ? ' disabled' : '')+' icon down-arrow-double'} onClick={() => this.increment(-12)} ></span>
 			</div>
 		)
 	}
