@@ -150,6 +150,8 @@ const songSlice = createSlice({
 
       const pattern = state.activePattern;
 
+      if (!pattern) return;
+
       if (step) {
         step.on = !step.on;
         const stepIndex = pattern?.steps.findIndex((stp) => stp === step);
@@ -163,7 +165,13 @@ const songSlice = createSlice({
           track: track,
         });
       }
-      console.log('yo',pattern?.steps);
+
+      let rootPattern = state.patterns.find((ptrn) => ptrn.position === pattern.position);
+
+      if (!rootPattern) return;
+
+      rootPattern = { ...rootPattern, steps: pattern.steps };
+      state.patterns.splice(patternIndex(state, pattern), 1, rootPattern);
     },
     setActivePattern: (state, action: PayloadAction<Pattern>) => {
       state.activePattern = action.payload;
@@ -203,8 +211,8 @@ export const trackIndex = (state: RootState, track: Track) => {
   return state.song.tracks.findIndex((trk) => trk === track);
 }
 
-export const patternIndex = (state: RootState, pattern: Pattern) => {
-  return state.song.patterns.findIndex((ptrn) => ptrn === pattern);
+export const patternIndex = (state: SongState, pattern: Pattern) => {
+  return state.patterns.findIndex((ptrn) => ptrn === pattern);
 }
 
 export const findPatternStepByBeat = (pattern: Pattern, bar: number, beat: number, track: Track) => {
