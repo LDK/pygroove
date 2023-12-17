@@ -1,0 +1,42 @@
+Box (app area)
+    Header
+        Register/Login
+        Song Selector
+    
+    Song Details Bar
+        Left (Meta):
+            Title
+            Author
+        Center Left (Song Structure):
+            BPM
+            Swing
+            Pattern Sequencer Link
+        Right (Pattern):
+            Pattern Selector
+            Pattern Actions
+                Add
+                Delete
+                Duplicate
+                Rename
+    
+    Step Sequencer
+        Tracks, for each:
+            On/Off
+            Sample
+            Pan
+            Volume
+            Steps, for each:
+                Step On/Off
+                Step Details Pop-up
+                    Velocity
+                    Pitch
+                    Pan
+                    Filter
+
+    Song Action Bar
+        Save
+        Render
+        New
+        Open...
+        Import (JSON)
+        Export (JSON)
