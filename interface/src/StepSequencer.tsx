@@ -1,9 +1,8 @@
 import { Box, Button, Grid, Slider, Typography } from "@mui/material";
 import { MoreHorizTwoTone } from "@mui/icons-material";
 import { useEffect, useState } from "react";
-import { Filter, Song, SongState, Step, Track, findPatternStepByBeat, getActivePattern, getActiveSong, getTrackSteps, toggleStep } from "./redux/songSlice";
+import { Step, Track, getActivePattern, getActiveSong, getTrackSteps, toggleStep } from "./redux/songSlice";
 import { useDispatch, useSelector } from "react-redux";
-import { RootState } from "./redux/store";
 
 // patternBars: How many bars are in a pattern
 // barDiv: How many beats are in a bar
@@ -115,10 +114,6 @@ const StepMarker = ({ step, track }:{ step:Step, track:Track }) => {
   const activePattern = useSelector(getActivePattern);
   const patternBars = activePattern?.bars || 2;
   
-  useEffect(() => {
-    if (!activePattern) return;
-  }, [activePattern]);
-
   return (
     <Box position="relative" mx="1px" display="inline-block" width={`calc(100% / ${patternBars * barDiv * beatStep} - 4px)`} height="52px" sx={{ border: '1px solid #ccc' }} bgcolor={bgColor}>
       <Box zIndex={2}
@@ -149,9 +144,8 @@ const SequencerTrack = ({ track }:{ track:Track }) => {
   useEffect(() => {
     if (!activePattern) return;
     const newSteps = getTrackSteps(activePattern, track);
-    console.log('newSteps', newSteps);
     setPatternSteps(newSteps);
-  }, [activePattern]);
+  }, [activePattern, track]);
 
   // const patternSteps:Step[] = [];
 

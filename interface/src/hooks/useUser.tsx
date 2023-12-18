@@ -1,6 +1,5 @@
 import { Menu, Typography, Divider, MenuItem, useTheme } from "@mui/material";
-import axios from "axios";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { clearUser, getActiveUser } from "../redux/userSlice";
 

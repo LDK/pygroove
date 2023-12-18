@@ -1,7 +1,7 @@
 import { PlayArrowTwoTone } from "@mui/icons-material";
 import { Box, Grid, Button } from "@mui/material";
 import { useSelector } from "react-redux";
-import { Filter, SongState, Track, Step, getActiveSong } from "../redux/songSlice";
+import { Filter, Track, Step, getActiveSong } from "../redux/songSlice";
 import axios from "axios";
 import { useEffect, useState } from "react";
 
@@ -46,7 +46,7 @@ const ActionButtons = () => {
     const { title, bpm, id, author, patternSequence, tracks, patterns } = song;
   
     const renderPayload:RenderPayload = {
-      title, bpm, id, author: author || '', patternSequence: [1, 1 ,1], tracks, patterns: [],
+      title, bpm, id, author: author || '', patternSequence, tracks, patterns: [],
     };
   
     // Iterate through the patterns and build the renderPayload.patterns array

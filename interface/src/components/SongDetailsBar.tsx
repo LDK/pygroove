@@ -3,7 +3,7 @@ import { useSelector } from "react-redux";
 import { getActiveSong } from "../redux/songSlice";
 
 const SongDetailsBar = () => {
-  const { title, author, bpm, swing, patternSequence } = useSelector(getActiveSong);
+  const { title, author, bpm, swing } = useSelector(getActiveSong);
 
   return (
     <Grid id="song-details-bar" container bgcolor="primary.light">
