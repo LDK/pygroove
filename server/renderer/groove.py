@@ -15,9 +15,9 @@ bpm = 102
 # Beats per bar
 beatDiv = 4
 # Ticks per beat
-tickDiv = 32
-# Pattern length in bars
-patternLength = 1
+tickDiv = 16
+# Song length in bars
+songBars = 0
 # List of patterns to play, in order
 songPatterns = []
 # Dict of patterns, keyed by position
@@ -37,6 +37,8 @@ channelDefaults = {'volume': -12.0, 'pan': 0}
 
 # channels begins as an empty dictionary, later to hold AudioSegments
 channels = {}
+
+current_offset_ms = 0  # Start at 0 ms
 
 # Pitch indexes
 pitchIndexes = {'C': 0, 'C#': 1, 'D': 2, 'D#': 3, 'E': 4, 'F': 5, 'F#': 6, 'G': 7, 'G#': 8, 'A': 9, 'A#': 10, 'B': 11}
@@ -73,10 +75,10 @@ def trim(sound, silence_threshold=-50.0, chunk_size=10):
 
 def newChannel(name = ''):
     global songPatterns
-    trackLength = 0
-    patternCount = len(songPatterns)
+
     # Length of the track is equal to number of bars times beats-per-bar times beat length times number of patterns
-    trackLength += (patternLength * beatDiv * patternCount) * beatLen()
+    trackLength = songBars * barLen()
+
     track = AudioSegment.silent(trackLength)
     if name:
         global channels
@@ -117,9 +119,10 @@ def addNote(trackName,sound,bar,beat,tick,options = {}):
     loc += beatLen() * (beat - 1)
     loc += barLen() * (bar - 1)
     loc = int(loc)
-    channel = channel.overlay(sound,int(loc),0)
+
+    # master = master.overlay(channels[trackName], position=current_offset_ms)
+    channel = channel.overlay(sound, position=int(loc) + current_offset_ms)
     channels[trackName] = channel
-    # print("Added sound at {loc}".format(loc=loc))
 
 def split(wavFile,pieces):
     soundLoc = '../audio/uploaded/'+wavFile
@@ -145,15 +148,6 @@ def getTrackSound(track):
     trackWav = '../audio/' + track['sample']
     trackSound = AudioSegment.from_wav(trackWav)
 
-    print(" ")
-    print("Rendering track {}".format(track['name']))
-    print(" ")
-    print("trackSound:")
-    print(trackSound)
-    print(" ")
-    print("trackWave:")
-    print(trackWav)
-
     if 'trim' in track:
         if (track['trim'] == True):
             trackSound = trim(trackSound)
@@ -175,6 +169,9 @@ def getTrackSound(track):
                 peak += float(amp['peak'])
             trackSound = trackSound.fade(from_gain=-120.0, to_gain = peak, start=0, duration=200)
 
+    return trackSound
+
+
 def renderStep(track, trackSound, step):
     trackName = track['name']
     loc = step['loc'].split('.')
@@ -183,8 +180,6 @@ def renderStep(track, trackSound, step):
     tick = int(loc[2])
     
     if trackSound == None:
-        print("No track sound for {}".format(trackName))
-        print(trackSound)
         return
 
     sound = copy.copy(trackSound)
@@ -195,7 +190,7 @@ def renderStep(track, trackSound, step):
     
     # Pitch
     if ('pitch' in step):
-        rootPitch = track['rootPitch'] if 'rootPitch' in track else 'C4'
+        rootPitch = track['rootPitch'] if 'rootPitch' in track else 'C3'
         sound = transpose(sound,pitch_diff(rootPitch,step['pitch']))
     
     # Apply the volume
@@ -210,17 +205,29 @@ def renderStep(track, trackSound, step):
     addNote(trackName,sound,bar,beat,tick)
 
 def renderJSON(data):
-    global channels, bpm, beatDiv, tickDiv, patternLength, swingAmount, swingUp, channelDefaults, songPatterns, patternIndex, trackIndex
+    global channels, bpm, beatDiv, tickDiv, songBars, swingAmount, swingUp, channelDefaults, songPatterns, patternIndex, trackIndex, current_offset_ms
+
+    current_offset_ms = 0
 
     bpm = int(data['bpm'])
     # beatDiv = int(data['beatDiv']), defaulting to 4 if beatDiv key is not present on data
-    beatDiv = int(data['beatDiv']) if 'beatDiv' in data else 4
-    tickDiv = int(data['tickDiv']) if 'tickDiv' in data else 32
-    patternLength = int(data['bars']) if 'bars' in data else 4
-    swingAmount = float(data['swing']) if 'swing' in data else 0
+    beatDiv = int(data['beatDiv']) if 'beatDiv' in data else beatDiv
+    tickDiv = int(data['tickDiv']) if 'tickDiv' in data else tickDiv
+    swingAmount = float(data['swing']) if 'swing' in data else swingAmount
     swingUp = False
 
     songPatterns = data['patternSequence'] if 'patternSequence' in data else []
+
+    # For each pattern in songPatterns, add it to patternIndex
+    for pattern in data['patterns']:
+        patternIndex[pattern['position']] = pattern
+
+    for patternPosition in songPatterns:
+        pattern = patternIndex[patternPosition]
+
+        if 'bars' in pattern:
+            songBars += int(pattern['bars'])
+
 
     title = data['title']
 
@@ -237,20 +244,9 @@ def renderJSON(data):
         # Add to track index
         trackIndex[trackName] = track
 
-    # For each pattern in songPatterns, add it to patternIndex
-    for pattern in data['patterns']:
-        patternIndex[pattern['position']] = pattern
-
     # For each pattern in songPatterns, for each track, add the notes, apply any filters, set the volume, set the pan and overlay onto master
     for position in songPatterns:
         pattern = patternIndex[position]
-
-        print("type of pattern['steps']:")
-        print(type(pattern['steps']))
-        print(" ")
-        print("pattern['steps']:")
-        print(pattern['steps'])
-        print(" ")
 
         for trackName, steps in pattern['steps'].items():
             track = trackIndex[trackName]
@@ -275,15 +271,17 @@ def renderJSON(data):
             if ('pan' in track):
                 trackPan = int(track['pan'])
                 channels[trackName] = channels[trackName].pan(trackPan/100)
-            # Overlay onto master
-            master = master.overlay(channels[trackName],0,0)
 
-    # renderFilename = pjoin("rendered","{}.mp3".format(title))
-    renderFilename = "{}.mp3".format(title)
 
-    print(" ")
-    print("Rendered to {}".format(renderFilename))
-    print(" ")
+        patternLength = int(pattern['bars']) if 'bars' in pattern else 2
+        # Calculate duration of one pattern in milliseconds
+        one_pattern_duration_ms = patternLength * beatDiv * (60000 / bpm)
+
+        # Move to the next pattern's start
+        current_offset_ms += one_pattern_duration_ms
+
+    for trackName, track in channels.items():
+        master = master.overlay(track, position=0)
 
     # Create an in-memory buffer
     buffer = io.BytesIO()
@@ -297,13 +295,10 @@ def renderJSON(data):
     buffer.close()
 
     # Write to file
-    out_f = open(renderFilename, 'wb')
-    out_f.write(mp3_data)
 
-    print(" ")
-    print("mp3_data:")
-    print(mp3_data)
-    print(" ")
+    # renderFilename = "{}.mp3".format(title)
 
+    # out_f = open(renderFilename, 'wb')
+    # out_f.write(mp3_data)
 
     return mp3_data

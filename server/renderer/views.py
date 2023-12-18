@@ -1,3 +1,4 @@
+import io
 from django import views
 from django.http import HttpResponse
 from django.shortcuts import render
@@ -12,6 +13,9 @@ from rest_framework import status, views, viewsets
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
+
+from django.http import FileResponse
+from rest_framework.views import APIView
 
 from .groove import renderJSON
 
@@ -76,25 +80,21 @@ class LoginView(views.APIView):
     
     return Response({'error': 'Invalid Credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
-class RenderView(views.APIView):
-  permission_classes = (AllowAny,)
+class RenderView(APIView):
+    permission_classes = (AllowAny,)
 
-  def post(self, request):
-    print(request.data)
+    def post(self, request):
+        print(request.data)
 
-    # Call renderJSON and get MP3 data as bytes
-    mp3_data = renderJSON(request.data)
+        # Call renderJSON and get MP3 data as bytes
+        mp3_data = renderJSON(request.data)
 
-    # Create an HttpResponse with MP3 data
-    response = HttpResponse(mp3_data, content_type='audio/mpeg')
+        # Create a FileResponse with MP3 data
+        response = FileResponse(io.BytesIO(mp3_data), as_attachment=True, filename='rendered_audio.mp3')
+        response['Content-Type'] = 'audio/mpeg'
 
-    # Set the Content-Disposition header to suggest a filename for the download
-    response['Content-Disposition'] = 'attachment; filename="rendered_audio.mp3"'
+        return response
 
-    print("Response:")
-    print(response)
-
-    return response
 
 def index(request):
   return render(request, 'renderer/index.html')

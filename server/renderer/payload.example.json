@@ -37,7 +37,7 @@
     },
     {
       "name": "Closed Hat",
-      "sample": "808-CH1.wav",
+      "sample": "808-ClosedHat1.wav",
       "volume": 100,
       "pan": 0,
       "disabled": false,
@@ -45,7 +45,7 @@
     },
     {
       "name": "Open Hat",
-      "sample": "808-OH1.wav",
+      "sample": "808-OpenHat1.wav",
       "volume": 100,
       "pan": 0,
       "disabled": false,
@@ -78,7 +78,8 @@
               "type": "lp",
               "frequency": 1000,
               "q": 1,
-              "on": true
+              "on": true,
+              "position": 1
             }
           },
           {
@@ -89,7 +90,8 @@
               "type": "lp",
               "frequency": 3200,
               "q": 1,
-              "on": true
+              "on": true,
+              "position": 1
             }
           }
         ],
@@ -115,28 +117,6 @@
       "position": 2,
       "steps": 
         {
-          "Kick": [
-            {
-              "loc": "1.1.1",
-              "pitch": "C4",
-              "velocity": 100
-            },
-            {
-              "loc": "2.1.1",
-              "pitch": "C4",
-              "velocity": 100
-            },
-            {
-              "loc": "3.1.1",
-              "pitch": "C4",
-              "velocity": 100
-            },
-            {
-              "loc": "4.1.1",
-              "pitch": "C4",
-              "velocity": 100
-            }
-          ],
           "Snare": [
             {
               "loc": "2.1.1",
