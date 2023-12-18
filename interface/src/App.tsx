@@ -1,9 +1,10 @@
 import './App.css';
-import { Box, Grid, ThemeProvider, Typography } from '@mui/material';
+import { Box, ThemeProvider } from '@mui/material';
 import Header from './Header';
 import SongDetailsBar from './components/SongDetailsBar';
 import StepSequencer from './StepSequencer';
 import { theme } from './theme/theme';
+import ActionButtons from './components/ActionButtons';
 
 function App() {
   // const bgTexture = `radial-gradient(circle, #fff 1px, transparent 1px), radial-gradient(circle, #fff 1px, transparent 1px);`;
@@ -11,13 +12,14 @@ function App() {
 
   return (
     <ThemeProvider theme={theme}>
-      <Box id="app" bgcolor="primary.main" borderRadius={16} my={2} mx="auto" p={2} width="96%" sx={{ 
+      <Box id="app" bgcolor="primary.main" position="relative" borderRadius={16} my={2} mx="auto" p={2} width="96%" sx={{ 
         borderColor: 'white',
         borderWidth: '1px',
         borderStyle: 'solid',
       }}>
         <Box id="groovebox"
           overflow={"hidden"}
+          position="relative"
           bgcolor="#f0f0f0"
           borderRadius={12}
           width="100%"
@@ -32,6 +34,8 @@ function App() {
           <Header />
           <SongDetailsBar />
           <StepSequencer />
+          <ActionButtons />
+
         </Box>
       </Box>
     </ThemeProvider>

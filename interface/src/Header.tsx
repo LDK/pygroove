@@ -15,10 +15,10 @@ const Header = () => {
   const dispatch = useDispatch();
 
   return (
-  <AppBar position="static" sx={{ pt: 2, pb: 3, px: 4, bgcolor: theme.palette.primary.dark }}>
+  <AppBar position="static" sx={{ pt: 1, pb: 2, px: 4, bgcolor: theme.palette.primary.dark }}>
     <Grid container>
       <Grid item xs={4}>
-        <Typography variant="h4" align="left" sx={{ color: theme.palette.primary.contrastText }}>
+        <Typography variant="h5" align="left" sx={{ color: theme.palette.primary.contrastText }}>
           pyGroove
         </Typography>
         <Button onClick={() => { dispatch(clearSong()); }} variant="contained" color="secondary" sx={{ mt: 2, textWrap: 'nowrap', width: '80px', overflowX: 'ellipsis' }}>

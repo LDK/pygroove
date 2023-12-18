@@ -21,7 +21,7 @@ export type Track = {
   sample?: string;
   volume: number;
   pan: number;
-  on: boolean;
+  disabled: boolean;
   transpose: number;
   filters?: Filter[];
 };
@@ -41,6 +41,7 @@ export type Pattern = {
   steps: Step[];
   bars: number;
   position: number;
+  id?: number;
 };
 
 export type Song = {
@@ -66,7 +67,7 @@ export const simpleTrack = ({ name: trackName, sample }:{ name:string, sample:st
     steps: [],
     volume: 0,
     pan: 0,
-    on: true,
+    disabled: false,
     transpose: 0,
     sample,
   } as Track
@@ -75,7 +76,7 @@ export const simpleTrack = ({ name: trackName, sample }:{ name:string, sample:st
 const initPattern = {
   name: 'Pattern 1',
   steps: [],
-  bars: 4,
+  bars: 2,
   position: 1,
 };
 
@@ -100,8 +101,6 @@ const songSlice = createSlice({
   reducers: {
     clearSong: (state) => {
       Object.assign(state, initialState);
-      console.log('new state', initialState);
-      console.log('new active pattern', state.activePattern);
     },
     setSong: (state, action: PayloadAction<Song>) => {
       state = action.payload;
@@ -145,7 +144,7 @@ const songSlice = createSlice({
       const { loc, track } = action.payload;
 
       const step = state.activePattern?.steps.find((step) => {
-        return step.loc.bar === loc.bar && step.loc.beat === loc.beat && step.track.name === track.name;
+        return step.loc.bar === loc.bar && step.loc.beat === loc.beat && step.loc.tick === loc.tick && step.track.name === track.name;
       });
 
       const pattern = state.activePattern;
@@ -154,7 +153,7 @@ const songSlice = createSlice({
 
       if (step) {
         step.on = !step.on;
-        const stepIndex = pattern?.steps.findIndex((stp) => stp === step);
+        const stepIndex = pattern?.steps.findIndex((stp) => stp.loc === step.loc && stp.track.name === track.name);
         pattern?.steps.splice(stepIndex!, 1, step);
       } else {
         pattern?.steps.push({
@@ -224,7 +223,7 @@ export const findPatternStepByBeat = (pattern: Pattern, bar: number, beat: numbe
 
 export const getTrackSteps = (pattern: Pattern, track: Track) => {
   const steps = pattern.steps.filter((step) => {
-    return step.track === track;
+    return step.track.name === track.name;
   });
   return steps;
 };
