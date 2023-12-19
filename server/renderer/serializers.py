@@ -11,14 +11,14 @@ class StepSerializer(serializers.ModelSerializer):
 class FilterSerializer(serializers.ModelSerializer):
   class Meta:
     model = Filter
-    fields = ['id', 'channel', 'filter_type', 'frequency', 'is_on']
+    fields = ['id', 'channel', 'filter_type', 'frequency', 'is_on', 'q', 'position']
 
 class TrackSerializer(serializers.ModelSerializer):
     filters = FilterSerializer(many=True)
 
     class Meta:
         model = Track
-        fields = ['id', 'name', 'pan', 'volume', 'sample', 'filters', 'disabled', 'transpose']
+        fields = ['id', 'name', 'pan', 'volume', 'sample', 'filters', 'disabled', 'transpose', 'position']
 
 class PatternSerializer(serializers.ModelSerializer):
     steps = StepSerializer(many=True)
