@@ -41,6 +41,7 @@ const baseThemeOptions:ExtendedThemeOptions = {
   palette: {
     primary: {
       main: '#1976FF',
+      light: '#85b6ff',
       contrastText: '#fff',
     },
     // something aquatic and greenish

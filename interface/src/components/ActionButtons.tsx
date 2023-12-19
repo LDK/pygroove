@@ -12,6 +12,7 @@ interface RenderPayload {
   author: string;
   patternSequence: number[];
   tracks: Track[];
+  swing?: number;
   patterns: {
     id?: number;
     position: number;
@@ -43,10 +44,10 @@ const ActionButtons = () => {
     // Take the songState and mutate it into RenderPayload format
     // Only include steps that are on
   
-    const { title, bpm, id, author, patternSequence, tracks, patterns } = song;
+    const { title, bpm, id: songId, author, patternSequence, tracks, patterns, swing } = song;
   
     const renderPayload:RenderPayload = {
-      title, bpm, id, author: author || '', patternSequence, tracks, patterns: [],
+      title, bpm, swing, id: songId, author: author || '', patternSequence, tracks, patterns: [],
     };
   
     // Iterate through the patterns and build the renderPayload.patterns array

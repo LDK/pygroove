@@ -2,3 +2,10 @@ body {
   background: rgb(0, 0, 64);
   overflow: hidden;
 }
+
+input[type=range][orient=vertical] {
+  appearance: slider-vertical;
+  width: 8px;
+  height: 175px;
+  padding: 0 5px;
+}

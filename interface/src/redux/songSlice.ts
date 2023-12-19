@@ -24,6 +24,7 @@ export type Track = {
   disabled: boolean;
   transpose: number;
   filters?: Filter[];
+  position: number;
 };
 
 export type Step = {
@@ -61,15 +62,16 @@ export type SongState = Song & {
   activePattern?: Pattern;
 };
 
-export const simpleTrack = ({ name: trackName, sample }:{ name:string, sample:string }) => {
+export const simpleTrack = ({ song, name: trackName, sample }:{ song: SongState, name:string, sample:string }) => {
   return {
     name: trackName,
     steps: [],
-    volume: 0,
+    volume: -6,
     pan: 0,
     disabled: false,
     transpose: 0,
     sample,
+    position: song.tracks.length + 1,
   } as Track
 };
 
@@ -87,13 +89,15 @@ const initialState:SongState = {
   swing: 0,
   patternSequence: [1],
   activePattern: initPattern,
-  tracks: [
-    simpleTrack({ name: 'Kick', sample: '808-Kick1.wav' }),
-    simpleTrack({ name: 'Snare', sample: '808-Snare1.wav' }),
-    simpleTrack({ name: 'Closed Hat', sample: '808-ClosedHat1.wav' }),
-    simpleTrack({ name: 'Open Hat', sample: '808-OpenHat1.wav' }),
-  ],
+  tracks: [],
 };
+
+initialState.tracks.push(simpleTrack({ song: initialState, name: 'Kick', sample: '808-Kick1.wav' }));
+initialState.tracks.push(simpleTrack({ song: initialState, name: 'Snare', sample: '808-Snare1.wav' }));
+initialState.tracks.push(simpleTrack({ song: initialState, name: 'Closed Hat', sample: '808-ClosedHat1.wav' }));
+initialState.tracks.push(simpleTrack({ song: initialState, name: 'Open Hat', sample: '808-OpenHat1.wav' }));
+
+console.log(initialState);
 
 const songSlice = createSlice({
   name: 'song',
@@ -104,6 +108,12 @@ const songSlice = createSlice({
     },
     setSong: (state, action: PayloadAction<Song>) => {
       state = action.payload;
+    },
+    setSongTitle: (state, action: PayloadAction<string>) => {
+      state.title = action.payload;
+    },
+    setAuthor: (state, action: PayloadAction<string>) => {
+      state.author = action.payload;
     },
     setBpm: (state, action: PayloadAction<number>) => {
       state.bpm = action.payload;
@@ -140,11 +150,21 @@ const songSlice = createSlice({
       const track = state.tracks[action.payload];
       state.tracks.push({ ...track, name: `${track.name} (copy)` });
     },
+    setTrackVolume: (state, action: PayloadAction<{position: number, volume: number}>) => {
+      const track = state.tracks.find((track) => track.position === action.payload.position);
+      if (!track) return;
+      track.volume = action.payload.volume;
+    },
+    setTrackPan: (state, action: PayloadAction<{position: number, pan: number}>) => {
+      const track = state.tracks.find((track) => track.position === action.payload.position);
+      if (!track) return;
+      track.pan = action.payload.pan;
+    },
     toggleStep: (state, action: PayloadAction<{loc: Loc, track: Track}>) => {
       const { loc, track } = action.payload;
 
       const step = state.activePattern?.steps.find((step) => {
-        return step.loc.bar === loc.bar && step.loc.beat === loc.beat && step.loc.tick === loc.tick && step.track.name === track.name;
+        return step.loc.bar === loc.bar && step.loc.beat === loc.beat && step.loc.tick === loc.tick && step.track.position === track.position;
       });
 
       const pattern = state.activePattern;
@@ -153,7 +173,7 @@ const songSlice = createSlice({
 
       if (step) {
         step.on = !step.on;
-        const stepIndex = pattern?.steps.findIndex((stp) => stp.loc === step.loc && stp.track.name === track.name);
+        const stepIndex = pattern?.steps.findIndex((stp) => stp.loc === step.loc && stp.track.position === track.position);
         pattern?.steps.splice(stepIndex!, 1, step);
       } else {
         pattern?.steps.push({
@@ -181,7 +201,6 @@ const songSlice = createSlice({
 export const {
   clearSong,
   setSong,
-  setBpm,
   setSwing,
   setPatternSequence,
   addPattern,
@@ -194,6 +213,11 @@ export const {
   duplicateTrack,
   setActivePattern,
   toggleStep,
+  setTrackVolume,
+  setTrackPan,
+  setSongTitle,
+  setAuthor,
+  setBpm
 } = songSlice.actions;
 
 // getActiveSong selector function
@@ -216,14 +240,14 @@ export const patternIndex = (state: SongState, pattern: Pattern) => {
 
 export const findPatternStepByBeat = (pattern: Pattern, bar: number, beat: number, track: Track) => {
   const step = pattern.steps.find((step) => {
-    return step.loc.bar === bar && step.loc.beat === beat && step.track.name === track.name;
+    return step.loc.bar === bar && step.loc.beat === beat && step.track.position === track.position;
   });
   return step;
 }
 
 export const getTrackSteps = (pattern: Pattern, track: Track) => {
   const steps = pattern.steps.filter((step) => {
-    return step.track.name === track.name;
+    return step.track.position === track.position;
   });
   return steps;
 };
