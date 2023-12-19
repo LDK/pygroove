@@ -8,12 +8,11 @@ class Song(models.Model):
     bpm = models.IntegerField(default=120)
     swing = models.FloatField(default=0)
     patternSequence = models.JSONField(default=list)
+    author = models.CharField(max_length=100, default='Anonymous')
 
 class Sample(models.Model):
     filename = models.CharField(max_length=100)
-    normalize = models.BooleanField(default=False)
-    reverse = models.BooleanField(default=False)
-    trim = models.BooleanField(default=False)
+    display = models.CharField(max_length=100, null=True)
 
 class Track(models.Model):
     song = models.ForeignKey(Song, on_delete=models.CASCADE, related_name='tracks')

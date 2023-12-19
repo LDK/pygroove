@@ -30,7 +30,7 @@ class PatternSerializer(serializers.ModelSerializer):
 class SampleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Sample
-        fields = ['id', 'filename', 'normalize', 'reverse', 'trim']
+        fields = ['id', 'filename', 'display']
 
 class SongSerializer(serializers.ModelSerializer):
     patterns = PatternSerializer(many=True)
