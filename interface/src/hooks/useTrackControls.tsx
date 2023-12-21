@@ -30,7 +30,7 @@ const useTrackControls = ({ track }:{ track?: Track }) => {
 
   // A horizontal slider for pan with L/R labels beneath
   const PanSlider = () => (
-    <Box pt={1} position="relative" height="100vh" display="block">
+    <Box pt={1} position="relative" display="block">
       <Range
         defaultValue={track?.pan || 0}
         callback={(value:number) => {
