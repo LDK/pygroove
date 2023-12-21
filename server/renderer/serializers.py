@@ -6,26 +6,27 @@ from django.contrib.auth.models import User
 class StepSerializer(serializers.ModelSerializer):
     class Meta:
         model = Step
-        fields = ['pitch', 'filter', 'loc', 'reverse', 'velocity', 'track']
+        fields = ['loc', 'track', 'filter', 'pitch', 'reverse', 'velocity', 'pan', 'on']
 
 class FilterSerializer(serializers.ModelSerializer):
-  class Meta:
-    model = Filter
-    fields = ['id', 'channel', 'filter_type', 'frequency', 'is_on', 'q', 'position']
+    class Meta:
+        model = Filter
+        fields = ['on', 'filter_type', 'frequency', 'q', 'position']
+
 
 class TrackSerializer(serializers.ModelSerializer):
-    filters = FilterSerializer(many=True)
+    filters = FilterSerializer(many=True, read_only=True)
 
     class Meta:
         model = Track
-        fields = ['id', 'name', 'pan', 'volume', 'sample', 'filters', 'disabled', 'transpose', 'position']
+        fields = ['name', 'pan', 'volume', 'sample', 'disabled', 'transpose', 'position', 'filters']
 
 class PatternSerializer(serializers.ModelSerializer):
-    steps = StepSerializer(many=True)
+    steps = StepSerializer(many=True, read_only=True)
 
     class Meta:
         model = Pattern
-        fields = ['id', 'name', 'bars', 'position', 'steps']
+        fields = ['name', 'bars', 'position', 'steps']
 
 class SampleSerializer(serializers.ModelSerializer):
     class Meta:
@@ -33,12 +34,12 @@ class SampleSerializer(serializers.ModelSerializer):
         fields = ['id', 'filename', 'display']
 
 class SongSerializer(serializers.ModelSerializer):
-    patterns = PatternSerializer(many=True)
-    tracks = TrackSerializer(many=True)
+    tracks = TrackSerializer(many=True, read_only=True)
+    patterns = PatternSerializer(many=True, read_only=True)
 
     class Meta:
         model = Song
-        fields = ['id', 'bpm', 'title', 'swing', 'author', 'tracks', 'patterns']
+        fields = ['id', 'title', 'author', 'bpm', 'swing', 'patternSequence', 'tracks', 'patterns']
 
 class UserSerializer(serializers.ModelSerializer):
   class Meta:
