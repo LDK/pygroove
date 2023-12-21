@@ -25,7 +25,7 @@ class Track(models.Model):
     position = models.IntegerField(default=1)
 
 class Pattern(models.Model):
-    song = models.ForeignKey(Song, on_delete=models.CASCADE)
+    song = models.ForeignKey(Song, on_delete=models.CASCADE, related_name='patterns')
     name = models.CharField(max_length=100)
     bars = models.IntegerField(default=2)
     position = models.IntegerField(default=1)
@@ -47,3 +47,4 @@ class Step(models.Model):
     reverse = models.BooleanField(default=False)
     velocity = models.IntegerField(default=100)
     pan = models.FloatField(default=0)
+    on = models.BooleanField(default=True)
