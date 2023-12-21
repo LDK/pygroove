@@ -1,13 +1,29 @@
 import { Menu, Typography, Divider, MenuItem, useTheme } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { clearUser, getActiveUser } from "../redux/userSlice";
+import { UserToken, clearUser, getActiveUser, setUser } from "../redux/userSlice";
+import { setAxiosTokenCallback, setAxiosRefreshExpiredCallback, updateAxiosToken } from "../axiosWithIntercept";
 
-export default function useUser () {
+const useUser = () => {
   const user = useSelector(getActiveUser);
   const dispatch = useDispatch();
   const theme = useTheme();
   const [anchorElUser, setAnchorElUser] = useState<HTMLElement | null>(null);
+  const [tokenExpired, setTokenExpired] = useState(false);
+
+  useEffect(() => {
+    // dispatch(setUser({ ...user, token }));
+    setAxiosTokenCallback((token:UserToken) => 
+      dispatch(setUser({ ...user, token }))
+    );
+
+    setAxiosRefreshExpiredCallback(() => {
+      setTokenExpired(true);
+    });
+
+    updateAxiosToken(user.token);
+
+  }, [user.token]);
 
   const handleOpenUserMenu = (event:React.MouseEvent) => {
     setAnchorElUser(event.currentTarget as HTMLElement);
@@ -20,6 +36,7 @@ export default function useUser () {
   const handleLogout = () => {
     dispatch(clearUser());
     handleCloseUserMenu();
+    setTokenExpired(false);
   }
 
   const UserMenu:React.FC<any> = () => {
@@ -29,8 +46,6 @@ export default function useUser () {
     }
   
     if (!user.id) return null;
-
-    console.log('user', user, anchorElUser);
 
     return (
       <Menu
@@ -62,6 +77,7 @@ export default function useUser () {
     )
   };
 
-  return { user, UserMenu, handleOpenUserMenu, handleCloseUserMenu, handleLogout };
+  return { user, UserMenu, handleOpenUserMenu, handleCloseUserMenu, handleLogout, tokenExpired, setTokenExpired };
 }
 
+export default useUser;

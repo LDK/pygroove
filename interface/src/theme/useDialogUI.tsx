@@ -35,7 +35,7 @@ export default function useDialogUI() {
   };
 
   const DialogActionButtons = ({ onCancel, onConfirm, padding, confirmDisabled, cancelLabel, confirmLabel, internal } : DialogActionButtonsProps) => (
-    <DialogActions sx={{ px: padding ? 3 : 0, pb: 2, pt:0, ...( internal ? { position: 'absolute', bottom: '.5rem', right: 0 } : {} ) }}>
+    <DialogActions sx={{ px: padding ? 3 : 0, pb: 0, pt:0, ...( internal ? { position: 'absolute', bottom: '.5rem', right: 0 } : {} ) }}>
       <CancelButton onClick={onCancel} mode={dark ? 'dark' : 'light'} label={cancelLabel} />
       <ConfirmButton onClick={onConfirm} mode={dark ? 'dark' : 'light'} {...{ disabled: confirmDisabled }} label={confirmLabel} />
     </DialogActions>

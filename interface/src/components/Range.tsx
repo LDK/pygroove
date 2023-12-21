@@ -19,9 +19,10 @@ interface RangeProps {
   callback?: (value:number) => void;
   labelVariant?: 'body1' | 'body2' | 'caption' | 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
   labelColor?: string;
+  onChange?: (e:React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-const Range = ({ min, max, step=1, labelVariant, labelColor, labelSuffix = '', labelPrefix = '', percentage, callback, defaultValue, height, width, updateState, label, orientation }: RangeProps) => {
+const Range = ({ min, max, onChange, step=1, labelVariant, labelColor, labelSuffix = '', labelPrefix = '', percentage, callback, defaultValue, height, width, updateState, label, orientation }: RangeProps) => {
   const [workingValue, setWorkingValue] = useState(defaultValue);
   const [editing, setEditing] = useState(false);
   const dispatch = useDispatch();
@@ -59,6 +60,7 @@ const Range = ({ min, max, step=1, labelVariant, labelColor, labelSuffix = '', l
 
         onChange={(e) => {
           setWorkingValue(parseFloat(e.target.value) || defaultValue);
+          onChange?.(e);
         }}
         onMouseDown={() => {
           setEditing(true);

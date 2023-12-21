@@ -8,8 +8,13 @@ export type AppUser = {
   email: string | null;
 };
 
+export type UserToken = {
+  access: string;
+  refresh: string;
+};
+
 export type UserState = AppUser & {
-  token: string | null;
+  token: UserToken | null;
 };
 
 const initialState: UserState = {

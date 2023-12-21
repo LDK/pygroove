@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Box, Dialog, DialogContent, DialogTitle, Divider, Grid, Tabs, Tab } from '@mui/material';
 import axios from 'axios';
 import { useDispatch } from 'react-redux';
-import { setUser } from '../redux/userSlice';
+import { UserState, setUser } from '../redux/userSlice';
 import RegistrationForm from './RegistrationForm';
 import LoginForm from './LoginForm';
 
@@ -46,7 +46,7 @@ const LoginRegisterDialog: React.FC<LoginRegisterDialogProps> = ({ open, onClose
           id: res.data.id,
           username: res.data.username,
           email: res.data.email,
-          token: res.data.token.access
+          token: res.data.token
         }));
         onClose();
       }
@@ -61,7 +61,7 @@ const LoginRegisterDialog: React.FC<LoginRegisterDialogProps> = ({ open, onClose
     setLoading(true);
     setRegisterData(data);
 
-    axios.post(`${apiUrl}/register/`, data).then(res => {
+    axios.post(`${apiUrl}/register/`, data).then((res:{ status: number, data: UserState }) => {
       setLoading(false);
 
       console.log('registered', res);
@@ -71,7 +71,7 @@ const LoginRegisterDialog: React.FC<LoginRegisterDialogProps> = ({ open, onClose
           id: res.data.id,
           username: res.data.username,
           email: res.data.email,
-          token: res.data.token.access
+          token: res.data.token
         }));
         onClose();
       }

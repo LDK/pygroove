@@ -138,7 +138,7 @@ const SongDetailsBar = () => {
         <Grid container>
           <Grid item xs={6}>
             <Typography display="inline-block" pr={1}>BPM: </Typography>
-            <input type="number" step={2} min={1} max={999} defaultValue={bpm} style={{ width: '3rem' }} onChange={(e) => {
+            <input type="number" step={1} min={1} max={999} defaultValue={bpm} style={{ width: '3rem' }} onChange={(e) => {
               setWorkingBpm(parseInt(e.target.value) || bpm);
             }} />
           </Grid>

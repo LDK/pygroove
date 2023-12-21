@@ -1,7 +1,10 @@
 import { MoreHorizTwoTone } from "@mui/icons-material";
-import { Box } from "@mui/material";
+import { Box, Checkbox, Dialog, DialogContent, Divider, Grid, Select, Typography } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
-import { Loc, Step, Track, getActivePattern, toggleStep, Pattern } from "../redux/songSlice";
+import { Loc, Step, Track, getActivePattern, toggleStep, Pattern, setTrackPan, setStep } from "../redux/songSlice";
+import { useEffect, useState } from "react";
+import Range from "../components/Range";
+import useDialogUI from "../theme/useDialogUI";
 
 export interface UseStepsProps {
   barDiv: number;
@@ -15,6 +18,9 @@ const useSteps = ({ barDiv, beatDiv, beatStep, defaultPitch, defaultVelocity }:U
   // barDiv: How many beats are in a bar
   // beatDiv: How many ticks are in a beat
   // beatStep: How many ticks we display per beat (equidistant)
+
+  const [editingStep, setEditingStep] = useState<Step | null>(null);
+  const dispatch = useDispatch();
 
   const ticks:number[] = [];
 
@@ -53,6 +59,215 @@ const useSteps = ({ barDiv, beatDiv, beatStep, defaultPitch, defaultVelocity }:U
     return ((loc.bar - 1) * barDiv * beatStep) + ((loc.beat - 1) * beatStep) + (ticks.indexOf(loc.tick) + 1);
   }
 
+  // A horizontal slider for pan with L/R labels beneath
+  const PanSlider = ({ callback, width }:{ callback:(val:number) => void, width?: string }) => {
+    const [workingValue, setWorkingValue] = useState(editingStep?.pan || 0);
+    
+    if (!editingStep) return null;
+
+    return (
+      <Box pt={1} position="relative" display="block">
+        <Range
+          defaultValue={editingStep.pan || 0}
+          callback={callback}
+          onChange={(e) => {
+            setWorkingValue(parseInt(e.target.value) || 0);
+          }}
+          height="1.75rem"
+          width={width || "100%"}
+          min={-100}
+          max={100}
+          step={1}
+        />
+
+        <Typography mx="auto" variant="caption" textAlign="center" component="p">{ `${workingValue || ''}${
+          workingValue ? (workingValue > 0 ? 'R' : 'L') : 'C'
+        }` }</Typography>
+      </Box>
+    );
+  };
+
+  const StepEditDialog = ({ step }:{ step:Step | null }) => {
+    const dispatch = useDispatch();
+
+    // Defaults to step.pitch reduced to only numeric characters through regex
+    const [octave, setOctave] = useState(step?.pitch ? parseInt(step.pitch.replace(/\D/g, '')) : 3);
+
+    // Defaults to step.pitch reduced to only non-numeric characters through regex
+    const [note, setNote] = useState(step?.pitch ? step.pitch.replace(/\d/g, '') : 'C');
+
+    // Pan and velocity are more straightforward, but remember they can be equal to 0
+    const [velocity, setVelocity] = useState(step?.velocity !== undefined ? step.velocity : 100);
+    const [pan, setPan] = useState(step?.pan || 0);
+
+    const [on, setOn] = useState(step?.on || false);
+
+    const resetDefaults = () => {
+      setOctave(3);
+      setNote('C');
+      setVelocity(100);
+      setPan(0);
+    }
+
+    const handleClose = () => {
+      setEditingStep(null);
+    }
+
+    useEffect(() => {
+      if (!step) {
+        resetDefaults();
+      }
+    }, [step]);
+
+    const { DialogActionButtons } = useDialogUI();
+    const activePattern = useSelector(getActivePattern);
+
+    if (!step) return null;
+    if (!activePattern) return null;
+
+    const { track } = step;
+
+    if (!track) return null;
+
+    return (
+      <Dialog open={true} onClose={handleClose} maxWidth="sm" fullWidth>
+        <DialogContent>
+          <Grid container py={0}>
+            <Grid item xs={4}>
+              <Typography fontWeight={600} component="span">Loc: </Typography>
+              <Typography fontWeight={400} component="span">{step.loc.bar}.{step.loc.beat}.{step.loc.tick}</Typography>
+              <Typography fontWeight={400} component="span"> on </Typography>
+              <Typography fontWeight={600} component="span">{step.track.name}</Typography>
+            </Grid>
+            <Grid item xs={4} sx={{ textAlign: 'center' }}>
+              <Typography fontWeight={600} component="span">Step: </Typography>
+              <Typography fontWeight={400} component="span">{getOverallStep(step.loc)} of {activePattern.bars * barDiv * beatStep}</Typography>
+            </Grid>
+            <Grid item xs={4} sx={{ textAlign: 'right' }}>
+              <Typography fontWeight={600} component="span">Active: </Typography>
+              <Checkbox sx={{ py: 0 }} defaultChecked={step.on} onChange={() => {
+                setOn(!on);
+              }} />
+            </Grid>
+
+            <Grid item xs={12}>
+              <Divider sx={{ mx: 'auto', my: 2 }} />
+            </Grid>
+
+            {/* Pitch Selector (Note and Octave selects) */}
+            <Grid item xs={12} md={4}>
+              <Typography fontWeight={600} variant="caption" component="p">Pitch:</Typography>
+              {/* Note */}
+              <Box display={"inline-block"} mr={1}>
+                <Select
+                  native
+                  // value is only the non-numeric portion of step.pitch, filtered out using regex
+                  value={note}
+                  onChange={(e) => {
+                    setNote(e.target.value);
+                  }}
+                  inputProps={{
+                    name: 'note',
+                    id: 'note',
+                  }}
+                >
+                  { ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A','A#', 'B'].map((pitch) => {
+                    return (
+                      <option key={pitch} value={pitch}>{pitch}</option>
+                    );
+                  })}                
+                </Select>
+              </Box>
+
+              {/* Octave */}
+              <Box display={"inline-block"} mr={1}>
+                <Select
+                  native
+                  // value is only the numeric portion of step.pitch, filtered out using regex
+                  value={octave}
+                  onChange={(e) => {
+                    setOctave(parseInt(`${e.target.value}`));
+                  }}
+                  inputProps={{
+                    name: 'octave',
+                    id: 'octave',
+                  }}
+                >
+                  { [-2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((oct) => {
+                    return (
+                      <option key={oct} value={oct}>{oct}</option>
+                    );
+                  })}
+                </Select>
+              </Box>
+            </Grid>
+
+            <Grid item xs={12} md={4}>
+
+              <Grid container spacing={0}>
+                <Grid item xs={12} sm={3}>
+                  <Typography fontWeight={600} variant="caption" component="p">Velocity:</Typography>
+
+                  <input type="number" step={1} min={0} max={127} defaultValue={velocity} style={{ width: '3rem', height: '3rem', padding: "2px" }} onChange={(e) => {
+                    setVelocity(parseInt(e.target.value) || velocity);
+                  }} />
+                </Grid>
+
+                <Grid item xs={12} sm={6} pl={4}>
+                  <Typography fontWeight={600} variant="caption" component="p">Pan:</Typography>
+
+                  <PanSlider callback={(val:number) => {
+                    setPan(val);
+                  }} width="90%" />
+                </Grid>
+              </Grid>
+
+            </Grid>
+
+            <Grid item xs={12} md={4}>
+              { track.filters?.length ? <>
+                  <Typography fontWeight={600} variant="caption" component="p">Filters:</Typography>
+                  {
+                    track.filters?.map((filter, i) => {
+                      return (
+                        <Typography key={i} fontWeight={400} variant="caption" component="p">
+                          {filter.type} {filter.frequency} {filter.q}
+                        </Typography>
+                      );
+                    })
+                  }
+                </> : 
+                <Typography fontWeight={400} variant="caption" component="p">No filters on track</Typography>
+              }
+            </Grid>
+          </Grid>
+
+          <Grid item xs={12}>
+              <Divider sx={{ mx: 'auto', my: 2 }} />
+            </Grid>
+
+          <DialogActionButtons
+            onCancel={handleClose}
+            onConfirm={() => {
+              if (editingStep) {
+                const newStep:Step = {
+                  ...editingStep,
+                  on: on,
+                  velocity,
+                  pan,
+                  pitch: `${note}${octave}`,
+                };
+                handleClose();
+                dispatch(setStep(newStep));
+              }
+
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   const StepMarker = ({ step, track }:{ step:Step, track:Track }) => {
     const { on } = step;
     const isDownbeat = step.loc.beat % beatDiv === 1 && step.loc.tick === 1;
@@ -61,11 +276,10 @@ const useSteps = ({ barDiv, beatDiv, beatStep, defaultPitch, defaultVelocity }:U
     const dispatch = useDispatch();
   
     const activePattern = useSelector(getActivePattern);
-    const patternBars = activePattern?.bars || 2;
     
     return (
-      <Box position="relative" mx="1px" display="inline-block" width={`calc(100% / ${patternBars * barDiv * beatStep} - 4px)`} height="52px" sx={{ border: '1px solid #ccc' }} bgcolor={bgColor}>
-        <Box zIndex={2}
+      <Box position="relative" overflow={"hidden"} mx="1px" display="inline-block" width={`calc(100% / 8 - 4px)`} height="52px" sx={{ border: '1px solid #ccc' }} bgcolor={bgColor}>
+        <Box zIndex={2} sx={{ cursor: 'crosshair' }}
           position="absolute" top="0" left="0" width="100%" textAlign={"center"} pt={0} m={0} className="indicator"
           onClick={() => {
             if (!activePattern) return;
@@ -75,10 +289,16 @@ const useSteps = ({ barDiv, beatDiv, beatStep, defaultPitch, defaultVelocity }:U
           <Box bgcolor={on ? 
             "warning.main" :
             'info.main'
-          } sx={{ height: '17px', width: '17px', mx: 'auto', mt: 1, border: '1px solid rgba(255,255,255,.5)' }}></Box>
+          } sx={{ height: '17px', width: '17px', maxWidth: '60%', mx: 'auto', mt: 1, border: '1px solid rgba(255,255,255,.5)' }}></Box>
         </Box>
-        <Box position="absolute" bottom="-.5rem" left="0" width="100%" textAlign={"center"} py={1} m={0}>
-          <MoreHorizTwoTone sx={{ color:'white', p:0, m:0 }} />
+        <Box position="absolute" bottom="0" left="0" width="100%" textAlign={"center"} pb={1} pt={0} m={0}>
+          <MoreHorizTwoTone
+          onClick={() => {
+            console.log('step', step);
+            setEditingStep(step);
+          }}
+            sx={{ color:'white', p:0, m:0, maxWidth: '100%', position: 'relative', top: '.75rem', cursor: "context-menu" }} 
+          />
         </Box>
       </Box>
     );
@@ -149,7 +369,7 @@ const useSteps = ({ barDiv, beatDiv, beatStep, defaultPitch, defaultVelocity }:U
     return steps;
   }
 
-  return { getLoc, getOverallStep, StepMarker, getPatternStepMarkers };
+  return { getLoc, getOverallStep, StepMarker, StepEditDialog, editingStep, getPatternStepMarkers };
 }
 
 export default useSteps;

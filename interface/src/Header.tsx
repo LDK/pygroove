@@ -9,8 +9,8 @@ import { useDispatch } from 'react-redux';
 
 const Header = () => {
   const [loginOpen, setLoginOpen] = useState(false);
-  const { user, UserMenu, handleOpenUserMenu } = useUser();
-  
+  const { user, UserMenu, handleOpenUserMenu, setTokenExpired, tokenExpired } = useUser();
+
   const theme = useTheme();
   const dispatch = useDispatch();
 
@@ -38,7 +38,7 @@ const Header = () => {
       </Grid>
     </Grid>
     <UserMenu />
-    {!user.id && <LoginRegisterDialog open={loginOpen} onClose={() => setLoginOpen(false)} />}
+    {(!user.id || tokenExpired) && <LoginRegisterDialog open={loginOpen || tokenExpired} onClose={() => { setLoginOpen(false); setTokenExpired(false); }} />}
 
   </AppBar>);
 };

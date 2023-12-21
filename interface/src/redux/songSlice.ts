@@ -45,7 +45,7 @@ export type Pattern = {
   id?: number;
 };
 
-export type Song = {
+export interface Song {
   title: string;
   author?: string;
   tracks: Track[];
@@ -56,7 +56,7 @@ export type Song = {
   id?: number;
 };
 
-export type SongState = Song & {
+export interface SongState extends Song {
   loading?: boolean;
   error?: string;
   activePattern?: Pattern;
@@ -108,6 +108,50 @@ const songSlice = createSlice({
     },
     setSong: (state, action: PayloadAction<Song>) => {
       state = action.payload;
+    },
+    setStep: (state, action: PayloadAction<Step>) => {
+      const { loc, track } = action.payload;
+
+      if (!track) return;
+
+      const step = state.activePattern?.steps.find((step) => {
+        return step.loc.bar === loc.bar && step.loc.beat === loc.beat && step.loc.tick === loc.tick && step.track.position === track.position;
+      });
+
+      const pattern = state.activePattern;
+
+      if (!pattern) return;
+
+      if (step) {
+        step.on = (action.payload.on || action.payload.on === false ? action.payload.on : step.on) || false;
+        step.velocity = (action.payload.velocity || action.payload.velocity === 0 ? action.payload.velocity : (step.velocity || step.velocity === 0 ? step.velocity : 100));
+        step.pan = (action.payload.pan || action.payload.pan === 0 ? action.payload.pan : step.pan || 0);
+        step.pitch = action.payload.pitch || step.pitch || 'C3';
+        step.filters = action.payload.filters || step.filters || [];
+
+        const stepIndex = pattern?.steps.findIndex((stp) => stp.loc === step.loc && stp.track.position === track.position);
+        pattern?.steps.splice(stepIndex!, 1, step);
+      } else {
+        pattern?.steps.push({
+          on: action.payload.on || false,
+          velocity: action.payload.velocity || 100,
+          pitch: action.payload.pitch || 'C3',
+          pan: action.payload.pan || 0,
+          filters: action.payload.filters || [],
+          loc: loc,
+          track: track,
+        });
+      }
+
+      let rootPattern = state.patterns.find((ptrn) => ptrn.position === pattern.position);
+
+      if (!rootPattern) return;
+
+      rootPattern = { ...rootPattern, steps: pattern.steps };
+      state.patterns.splice(patternIndex(state, pattern), 1, rootPattern);
+    },
+    setSongId: (state, action: PayloadAction<number>) => {
+      state.id = action.payload;
     },
     setSongTitle: (state, action: PayloadAction<string>) => {
       state.title = action.payload;
@@ -217,7 +261,9 @@ export const {
   setTrackPan,
   setSongTitle,
   setAuthor,
-  setBpm
+  setBpm,
+  setSongId,
+  setStep,
 } = songSlice.actions;
 
 // getActiveSong selector function

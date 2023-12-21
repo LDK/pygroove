@@ -1,9 +1,12 @@
 import { PlayArrowTwoTone } from "@mui/icons-material";
 import { Box, Grid, Button } from "@mui/material";
-import { useSelector } from "react-redux";
-import { Filter, Track, Step, getActiveSong } from "../redux/songSlice";
-import axios from "axios";
+import { useDispatch, useSelector } from "react-redux";
+import { Filter, Track, Step, getActiveSong, setSongId } from "../redux/songSlice";
+import axios, { AxiosResponse } from "axios";
 import { useEffect, useState } from "react";
+import { Song } from "../redux/songSlice";
+import useUser from "../hooks/useUser";
+import useApi, { ApiCallProps } from "../hooks/useApi";
 
 interface RenderPayload {
   title: string;
@@ -30,15 +33,16 @@ interface RenderPayload {
   }[];
 };
 
-
 const ActionButtons = () => {
   const activeSong = useSelector(getActiveSong);
   const [song, setSong] = useState(activeSong);
-  const apiUrl = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
     setSong(activeSong);
   }, [activeSong]);
+
+  const dispatch = useDispatch();
+  const { apiCall, user } = useApi();
 
   const prepareRenderPayload = () => {
     // Take the songState and mutate it into RenderPayload format
@@ -88,12 +92,34 @@ const ActionButtons = () => {
     return renderPayload;
   };
 
+  const handleSave = () => {
+    if (!user?.token) {
+      return;
+    }
+    const {activePattern: ap, loading: songLoading, error: songError, ...songData } = { ...song };
+
+    apiCall({
+      uri: `/song/${songData.id ? songData.id + '/' : ''}`,
+      method: songData.id ? 'put' : 'post',
+      payload: {...songData} as Song,
+      onSuccess: (res:AxiosResponse) => {
+        if (res.data?.id) {
+          dispatch(setSongId(res.data.id));
+        }
+      },
+      onError: (error:any) => {
+        console.error('Error during save:', error);
+      },
+    });
+  };
+
   const handleRender = () => {
+    const apiUrl = process.env.REACT_APP_API_URL;
     const payload = prepareRenderPayload();
-  
+    const postUrl = `${apiUrl}/render/`;
     console.log('payload', payload);
   
-    axios.post(`${apiUrl}/render/`, payload, { responseType: 'blob' }) // Set responseType to 'blob'
+    axios.post(postUrl, payload, { responseType: 'blob' }) // Set responseType to 'blob'
       .then(res => {
         console.log('res', res);
         // Create a URL for the blob
@@ -112,21 +138,30 @@ const ActionButtons = () => {
   };
   
   return (
-    <Box textAlign="center" position="absolute" bottom={0} left={0} right={0} bgcolor="primary.dark" color="primary.contrastText" p={0}>
+    <Box textAlign="center" position="absolute" bottom={0} zIndex={2} left={0} right={0} bgcolor="primary.dark" color="primary.contrastText" p={0}>
       <Grid container>
-        <Grid item xs={6}>
+        <Grid item xs={4}>
           <Button variant="contained" color="primary" sx={{ float: 'right', my: 1, mr: 1 }}>
             <PlayArrowTwoTone sx={{ mr: 1 }} />
             Play
           </Button>
         </Grid>
 
-        <Grid item xs={6}>
+        <Grid item xs={4}>
           <Button onClick={handleRender} variant="contained" color="primary" sx={{ float: 'left', my: 1, ml: 1 }}>
             Render to MP3
           </Button>
         </Grid>
+
+        { Boolean(user?.token) &&
+          <Grid item xs={4}>
+            <Button onClick={handleSave} variant="contained" color="primary" sx={{ float: 'right', my: 1, mr: 1 }}>
+              Save Song
+            </Button>
+          </Grid>
+        }
       </Grid>
+      
     </Box>
   );
 }
