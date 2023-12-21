@@ -1,37 +1,43 @@
-import io
-from django import views
-from django.http import HttpResponse
-from django.shortcuts import render
-from .models import Song, Pattern, Sample
-from .serializers import SongSerializer, PatternSerializer, SampleSerializer
+
 from rest_framework.permissions import AllowAny
-from .serializers import UserSerializer
-from django.contrib.auth.models import User
+
+from renderer.serializers import UserSerializer
 from django.contrib.auth import authenticate
-
-from rest_framework import status, views, viewsets
+from django.contrib.auth.models import User
+from rest_framework import status
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
-
-from django.http import FileResponse
 from rest_framework.views import APIView
+from rest_framework_simplejwt.views import TokenRefreshView
 
-from .groove import renderJSON
+from renderer.models import Song
 
-class SongViewSet(viewsets.ModelViewSet):
-    queryset = Song.objects.all()
-    serializer_class = SongSerializer
+class UserView(APIView):
+    def get(self, request):
+        return Response({
+          'username': request.user.username,
+          'id': request.user.id,
+          'email': request.user.email,
+        })
 
-class PatternViewSet(viewsets.ModelViewSet):
-    queryset = Pattern.objects.all()
-    serializer_class = PatternSerializer
+class UserSongsView(APIView):
+    def get(self, request):
+        if not request.user.is_authenticated:
+          return Response({'error': 'Not authenticated'}, status=status.HTTP_401_UNAUTHORIZED)
 
-class SampleViewSet(viewsets.ModelViewSet):
-    queryset = Sample.objects.all()
-    serializer_class = SampleSerializer
+        songs = Song.objects.filter(user=request.user)
 
-class CreateUserView(views.APIView):
+        return Response([{
+          'id': song.id,
+          'title': song.title,
+          'author': song.author,
+          'bpm': song.bpm,
+        } for song in songs])
+
+class RefreshTokenView(TokenRefreshView):
+    permission_classes = (AllowAny,)
+
+class CreateUserView(APIView):
     permission_classes = (AllowAny,)
 
     def post(self, request, *args, **kwargs):
@@ -58,7 +64,7 @@ class CreateUserView(views.APIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class LoginView(views.APIView):
+class LoginView(APIView):
   permission_classes = (AllowAny,)
 
   def post(self, request):
@@ -80,21 +86,3 @@ class LoginView(views.APIView):
     
     return Response({'error': 'Invalid Credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
-class RenderView(APIView):
-    permission_classes = (AllowAny,)
-
-    def post(self, request):
-        print(request.data)
-
-        # Call renderJSON and get MP3 data as bytes
-        mp3_data = renderJSON(request.data)
-
-        # Create a FileResponse with MP3 data
-        response = FileResponse(io.BytesIO(mp3_data), as_attachment=True, filename='rendered_audio.mp3')
-        response['Content-Type'] = 'audio/mpeg'
-
-        return response
-
-
-def index(request):
-  return render(request, 'renderer/index.html')
