@@ -125,14 +125,14 @@ def addNote(trackName,sound,bar,beat,tick,options = {}):
     channels[trackName] = channel
 
 def split(wavFile,pieces):
-    soundLoc = '../audio/uploaded/'+wavFile
+    soundLoc = './audio/uploaded/'+wavFile
     sound = AudioSegment.from_wav(soundLoc)
     slices = []
     sliceLen = int(len(sound) / pieces)
     for i, chunk in enumerate(sound[::sliceLen]):
         if (i >= pieces):
             break;
-        sliceName = "../audio/uploaded/split/{fileName}-{num}.wav".format(fileName=wavFile.replace('.wav',''),num=i+1)
+        sliceName = "./audio/uploaded/split/{fileName}-{num}.wav".format(fileName=wavFile.replace('.wav',''),num=i+1)
         sliceInfo = {'filename': sliceName, 'parent': soundLoc, 'start': i*sliceLen, 'end': (i+1)*sliceLen, 'len': len(chunk)}
         with open(sliceName, "wb") as f:
             chunk.export(f, format="wav")
@@ -145,7 +145,7 @@ def transpose(sound,st):
     return sound._spawn(sound.raw_data, overrides={'frame_rate': new_sample_rate})
 
 def getTrackSound(track):
-    trackWav = '../audio/' + track['sample']
+    trackWav = './audio/' + track['sample']
     trackSound = AudioSegment.from_wav(trackWav)
 
     if 'trim' in track:
