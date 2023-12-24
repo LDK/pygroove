@@ -11,7 +11,7 @@
 import { AxiosError, AxiosRequestConfig, AxiosResponse } from "axios";
 import useUser from "./useUser";
 import axios from "../axiosWithIntercept";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { UserToken } from "../redux/userSlice";
 
 export type ApiMethodCallProps = {
@@ -31,23 +31,7 @@ const useApi = () => {
   const { user, UserMenu, handleOpenUserMenu, setTokenExpired, tokenExpired } = useUser();
   const [token, setToken] = useState<UserToken | null>(null);
 
-  useEffect(() => {
-    if (user?.token && user.token.access !== token?.access) {
-      setToken(user?.token);
-
-      apiGet({
-        uri: '/user/songs',
-        onSuccess: (res) => {
-          console.log('Songs:', res.data);
-        },
-        onError: (err) => {
-          console.error('Error getting user data:', err);
-        }
-      });
-    }
-  }, [user.token]);
-
-  const apiCall = async ({ uri, method, payload, config, onSuccess, onError, sendAuth = true }:ApiCallProps) => {
+  const apiCall = useCallback(async ({ uri, method, payload, config, onSuccess, onError, sendAuth = true }:ApiCallProps) => {
     let callFunction: typeof axios.post | typeof axios.get;
 
     if (sendAuth && !user?.token) {
@@ -100,23 +84,40 @@ const useApi = () => {
 
           break;
     }
-  }
+  }, [user?.token]);
 
-  const apiGet = async ({ uri, config, onSuccess, onError, sendAuth = true }:ApiMethodCallProps) => {
+  const apiGet = useCallback(async ({ uri, config, onSuccess, onError, sendAuth = true }:ApiMethodCallProps) => {
     await apiCall({ uri, method: 'get', config, onSuccess, onError, sendAuth });
-  }
+  }, [apiCall]);
   
-  const apiDelete = async ({ uri, config, onSuccess, onError, sendAuth = true }:ApiMethodCallProps) => {
+  const apiDelete = useCallback(async ({ uri, config, onSuccess, onError, sendAuth = true }:ApiMethodCallProps) => {
     await apiCall({ uri, method: 'delete', config, onSuccess, onError, sendAuth });
-  }
+  }, [apiCall]);
 
-  const apiPost = async ({ uri, payload, onSuccess, onError, sendAuth = true }:ApiMethodCallProps) => {
+  const apiPost = useCallback(async ({ uri, payload, onSuccess, onError, sendAuth = true }:ApiMethodCallProps) => {
     await apiCall({ uri, method: 'post', payload, onSuccess, onError, sendAuth });
-  }
+  }, [apiCall]);
 
-  const apiPut = async ({ uri, payload, onSuccess, onError, sendAuth = true }:ApiMethodCallProps) => {
+  const apiPut = useCallback(async ({ uri, payload, onSuccess, onError, sendAuth = true }:ApiMethodCallProps) => {
     await apiCall({ uri, method: 'put', payload, onSuccess, onError, sendAuth });
-  }
+  }, [apiCall]);
+
+  // When user logs in, set the token and fetch user song data
+  useEffect(() => {
+    if (user?.token && user.token.access !== token?.access) {
+      setToken(user?.token);
+
+      apiGet({
+        uri: '/user/songs',
+        onSuccess: (res) => {
+          console.log('Songs:', res.data);
+        },
+        onError: (err) => {
+          console.error('Error getting user data:', err);
+        }
+      });
+    }
+  }, [user.token, token?.access, apiGet]);
 
   return { apiCall, apiGet, apiPost, apiPut, apiDelete, user, UserMenu, handleOpenUserMenu, setTokenExpired, tokenExpired };
 };
