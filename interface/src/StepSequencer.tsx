@@ -5,6 +5,7 @@ import { Step, Track, getActivePattern, getActiveSong, getTrackSteps } from "./r
 import { useSelector } from "react-redux";
 import useTrackControls from "./hooks/useTrackControls";
 import useSteps from "./hooks/useSteps";
+import TrackEditDialog from "./components/TrackEditDialog";
 
 const stepSettings = {
   barDiv: 4,
@@ -21,7 +22,7 @@ const arraysEqual = (a:any[], b:any[]) => {
 
 const StepSequencer = () => {
   const { tracks } = useSelector(getActiveSong);
-  const { StepEditDialog, editingStep, getPatternStepMarkers } = useSteps(stepSettings);
+  const { StepEditDialog, editingStep, getPatternStepMarkers, editingTrack, setEditingTrack } = useSteps(stepSettings);
 
   const SequencerTrack = ({ track }:{ track:Track }) => {
     const [ on, setOn ] = useState(!track.disabled);
@@ -30,11 +31,11 @@ const StepSequencer = () => {
     const [patternSteps, setPatternSteps] = useState<Step[]>(activePattern ? getTrackSteps(activePattern, track) : []);
   
     useEffect(() => {
-      console.log('activePattern useEffect', activePattern);
       if (!activePattern) return;
       const newSteps = getTrackSteps(activePattern, track);
   
       if (!arraysEqual(newSteps, patternSteps)) {
+        console.log('activePattern useEffect', activePattern);
         setPatternSteps(newSteps);
       }
     }, [activePattern, track, patternSteps]);
@@ -84,8 +85,11 @@ const StepSequencer = () => {
         <Grid item xs={3}>
           <Grid container>
             <Grid item xs={3}>
-              <Button sx={{ mt: 2, textWrap: 'nowrap', width: '80px', overflowX: 'ellipsis' }} variant="contained" color="primary">
-                
+              <Button
+                onClick={() => setEditingTrack(track)}
+                sx={{ mt: 2, textWrap: 'nowrap', width: '80px', overflowX: 'ellipsis' }}
+                variant="contained" color="primary"
+              >
                 <Typography fontWeight={600} variant="caption" component="div" color="priamry.contrast" width="64px" textAlign="center">
                   {/* Show up to 6 characters of track name and then ellipsis as needed */}
                   {track.name.length > 7 ? `${track.name.substring(0, 7)}…` : track.name}
@@ -131,16 +135,13 @@ const StepSequencer = () => {
     );
   };
     
-  useEffect(() => {
-    console.log('editingStep useEffect', editingStep);
-  }, [editingStep]);
-
   console.log('render sequencer', tracks);
 
   return (
     <Box px={{ xs: 2, lg: 1, xl: 0 }} m={0} sx={{ overflowY: 'scroll', overflowX: 'hidden' }} maxHeight="400px">
       {tracks.map((track, i) => <SequencerTrack key={i} track={track} />)}
       <StepEditDialog step={editingStep} />
+      <TrackEditDialog track={editingTrack} setEditingTrack={setEditingTrack} />
     </Box>
   );
 };

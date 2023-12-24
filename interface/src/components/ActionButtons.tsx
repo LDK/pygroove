@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { Song } from "../redux/songSlice";
 import useUser from "../hooks/useUser";
 import useApi, { ApiCallProps } from "../hooks/useApi";
+import { UserState } from "../redux/userSlice";
 
 interface RenderPayload {
   title: string;
@@ -33,7 +34,12 @@ interface RenderPayload {
   }[];
 };
 
-const ActionButtons = () => {
+interface ActionButtonsProps {
+  user: UserState;
+  apiCall: (props:ApiCallProps) => Promise<any>;
+}
+
+const ActionButtons = ({ user, apiCall }:ActionButtonsProps) => {
   const activeSong = useSelector(getActiveSong);
   const [song, setSong] = useState(activeSong);
 
@@ -42,7 +48,6 @@ const ActionButtons = () => {
   }, [activeSong]);
 
   const dispatch = useDispatch();
-  const { apiCall, user } = useApi();
 
   const prepareRenderPayload = () => {
     // Take the songState and mutate it into RenderPayload format
@@ -92,13 +97,13 @@ const ActionButtons = () => {
     return renderPayload;
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!user?.token) {
       return;
     }
     const {activePattern: ap, loading: songLoading, error: songError, ...songData } = { ...song };
 
-    apiCall({
+    await apiCall({
       uri: `/song/${songData.id ? songData.id + '/' : ''}`,
       method: songData.id ? 'put' : 'post',
       payload: {...songData} as Song,

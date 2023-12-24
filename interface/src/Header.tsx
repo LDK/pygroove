@@ -1,18 +1,34 @@
 import LoginIcon from '@mui/icons-material/AccountCircleOutlined';
 import ProfileIcon from '@mui/icons-material/AccountCircle';
 import { AppBar, Grid, Typography, Box, useTheme, Button } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import LoginRegisterDialog from "./components/LoginRegisterDialog";
-import useUser from "./hooks/useUser";
 import { clearSong } from './redux/songSlice';
 import { useDispatch } from 'react-redux';
+import { UserState, clearUser } from './redux/userSlice';
 
-const Header = () => {
+interface HeaderProps {
+  user: UserState,
+  UserMenu: React.FC<any>,
+  tokenExpired: boolean,
+  setTokenExpired: (arg:boolean) => void,
+  handleOpenUserMenu: (event:React.MouseEvent) => void,
+};
+
+const Header = ({ user, tokenExpired, setTokenExpired, handleOpenUserMenu, UserMenu }:HeaderProps) => {
   const [loginOpen, setLoginOpen] = useState(false);
-  const { user, UserMenu, handleOpenUserMenu, setTokenExpired, tokenExpired } = useUser();
 
   const theme = useTheme();
   const dispatch = useDispatch();
+
+  useEffect(() => {
+    if (tokenExpired) {
+      console.log('tokenExpired useEffect 2');
+      setLoginOpen(true);
+      dispatch(clearUser());
+      setTokenExpired(false);
+    }
+  }, [tokenExpired]);
 
   return (
   <AppBar position="static" sx={{ pt: 1, pb: 2, px: 4, bgcolor: theme.palette.primary.dark }}>

@@ -18,6 +18,7 @@ const useUser = () => {
     );
 
     setAxiosRefreshExpiredCallback(() => {
+      console.log('AxiosRefreshExpiredCallback');
       setTokenExpired(true);
     });
 

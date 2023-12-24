@@ -11,7 +11,8 @@
 import { AxiosError, AxiosRequestConfig, AxiosResponse } from "axios";
 import useUser from "./useUser";
 import axios from "../axiosWithIntercept";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { UserToken } from "../redux/userSlice";
 
 export type ApiMethodCallProps = {
   uri: string;
@@ -27,25 +28,30 @@ export type ApiCallProps = {
 } & ApiMethodCallProps;
 
 const useApi = () => {
-  const { user } = useUser();
+  const { user, UserMenu, handleOpenUserMenu, setTokenExpired, tokenExpired } = useUser();
+  const [token, setToken] = useState<UserToken | null>(null);
 
   useEffect(() => {
-    apiGet({
-      uri: '/user/songs',
-      onSuccess: (res) => {
-        console.log('Songs:', res.data);
-      },
-      onError: (err) => {
-        console.error('Error getting user data:', err);
-      }
-    });
+    if (user?.token && user.token.access !== token?.access) {
+      setToken(user?.token);
+
+      apiGet({
+        uri: '/user/songs',
+        onSuccess: (res) => {
+          console.log('Songs:', res.data);
+        },
+        onError: (err) => {
+          console.error('Error getting user data:', err);
+        }
+      });
+    }
   }, [user.token]);
 
-  const apiCall = ({ uri, method, payload, config, onSuccess, onError, sendAuth = true }:ApiCallProps) => {
+  const apiCall = async ({ uri, method, payload, config, onSuccess, onError, sendAuth = true }:ApiCallProps) => {
     let callFunction: typeof axios.post | typeof axios.get;
 
     if (sendAuth && !user?.token) {
-      console.error(`Token is required for ${method.toUpperCase()} ${uri}`);
+      // console.error(`Token is required for ${method.toUpperCase()} ${uri}`);
       return;
     }
     switch (method) {
@@ -96,23 +102,23 @@ const useApi = () => {
     }
   }
 
-  const apiGet = ({ uri, config, onSuccess, onError, sendAuth = true }:ApiMethodCallProps) => {
-    apiCall({ uri, method: 'get', config, onSuccess, onError, sendAuth });
+  const apiGet = async ({ uri, config, onSuccess, onError, sendAuth = true }:ApiMethodCallProps) => {
+    await apiCall({ uri, method: 'get', config, onSuccess, onError, sendAuth });
   }
   
-  const apiDelete = ({ uri, config, onSuccess, onError, sendAuth = true }:ApiMethodCallProps) => {
-    apiCall({ uri, method: 'delete', config, onSuccess, onError, sendAuth });
+  const apiDelete = async ({ uri, config, onSuccess, onError, sendAuth = true }:ApiMethodCallProps) => {
+    await apiCall({ uri, method: 'delete', config, onSuccess, onError, sendAuth });
   }
 
-  const apiPost = ({ uri, payload, onSuccess, onError, sendAuth = true }:ApiMethodCallProps) => {
-    apiCall({ uri, method: 'post', payload, onSuccess, onError, sendAuth });
+  const apiPost = async ({ uri, payload, onSuccess, onError, sendAuth = true }:ApiMethodCallProps) => {
+    await apiCall({ uri, method: 'post', payload, onSuccess, onError, sendAuth });
   }
 
-  const apiPut = ({ uri, payload, onSuccess, onError, sendAuth = true }:ApiMethodCallProps) => {
-    apiCall({ uri, method: 'put', payload, onSuccess, onError, sendAuth });
+  const apiPut = async ({ uri, payload, onSuccess, onError, sendAuth = true }:ApiMethodCallProps) => {
+    await apiCall({ uri, method: 'put', payload, onSuccess, onError, sendAuth });
   }
 
-  return { apiCall, apiGet, apiPost, apiPut, apiDelete, user };
+  return { apiCall, apiGet, apiPost, apiPut, apiDelete, user, UserMenu, handleOpenUserMenu, setTokenExpired, tokenExpired };
 };
 
 export default useApi;

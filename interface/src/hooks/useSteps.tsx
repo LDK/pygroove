@@ -1,10 +1,11 @@
 import { MoreHorizTwoTone } from "@mui/icons-material";
 import { Box, Checkbox, Dialog, DialogContent, Divider, Grid, Select, Typography } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
-import { Loc, Step, Track, getActivePattern, toggleStep, Pattern, setTrackPan, setStep } from "../redux/songSlice";
+import { Loc, Step, Track, getActivePattern, toggleStep, Pattern, setStep } from "../redux/songSlice";
 import { useEffect, useState } from "react";
 import Range from "../components/Range";
 import useDialogUI from "../theme/useDialogUI";
+import PanSlider from "../components/PanSlider";
 
 export interface UseStepsProps {
   barDiv: number;
@@ -20,7 +21,9 @@ const useSteps = ({ barDiv, beatDiv, beatStep, defaultPitch, defaultVelocity }:U
   // beatStep: How many ticks we display per beat (equidistant)
 
   const [editingStep, setEditingStep] = useState<Step | null>(null);
-  const dispatch = useDispatch();
+  const [editingTrack, setEditingTrack] = useState<Track | null>(null);
+
+  const { DialogActionButtons } = useDialogUI();
 
   const ticks:number[] = [];
 
@@ -59,30 +62,29 @@ const useSteps = ({ barDiv, beatDiv, beatStep, defaultPitch, defaultVelocity }:U
     return ((loc.bar - 1) * barDiv * beatStep) + ((loc.beat - 1) * beatStep) + (ticks.indexOf(loc.tick) + 1);
   }
 
-  // A horizontal slider for pan with L/R labels beneath
-  const PanSlider = ({ callback, width }:{ callback:(val:number) => void, width?: string }) => {
-    const [workingValue, setWorkingValue] = useState(editingStep?.pan || 0);
+  // A vertical slider for volume with db labels beneath
+  const VolumeSlider = ({ callback, width }:{ callback:(val:number) => void, width?: string }) => {
+    const [workingValue, setWorkingValue] = useState(editingTrack?.volume || -6);
     
-    if (!editingStep) return null;
+    if (!editingTrack) return null;
 
     return (
-      <Box pt={1} position="relative" display="block">
+      <Box pt={0} px={0} position="relative">
         <Range
-          defaultValue={editingStep.pan || 0}
+          orientation="vertical"
+          defaultValue={editingTrack.volume || -6}
           callback={callback}
           onChange={(e) => {
-            setWorkingValue(parseInt(e.target.value) || 0);
+            setWorkingValue(parseInt(e.target.value) || -6);
           }}
-          height="1.75rem"
-          width={width || "100%"}
-          min={-100}
-          max={100}
-          step={1}
+          height="3rem"
+          width={width || "auto"}
+          min={-36}
+          max={12}
+          step={.1}
         />
 
-        <Typography mx="auto" variant="caption" textAlign="center" component="p">{ `${workingValue || ''}${
-          workingValue ? (workingValue > 0 ? 'R' : 'L') : 'C'
-        }` }</Typography>
+        <Typography mx="auto" variant="caption" textAlign="left" component="p">{ `${workingValue || ''}dB` }</Typography>
       </Box>
     );
   };
@@ -119,7 +121,6 @@ const useSteps = ({ barDiv, beatDiv, beatStep, defaultPitch, defaultVelocity }:U
       }
     }, [step]);
 
-    const { DialogActionButtons } = useDialogUI();
     const activePattern = useSelector(getActivePattern);
 
     if (!step) return null;
@@ -216,7 +217,8 @@ const useSteps = ({ barDiv, beatDiv, beatStep, defaultPitch, defaultVelocity }:U
                 <Grid item xs={12} sm={6} pl={4}>
                   <Typography fontWeight={600} variant="caption" component="p">Pan:</Typography>
 
-                  <PanSlider callback={(val:number) => {
+                  <PanSlider target={step} defaultValue={pan}
+                    callback={(val:number) => {
                     setPan(val);
                   }} width="90%" />
                 </Grid>
@@ -241,10 +243,6 @@ const useSteps = ({ barDiv, beatDiv, beatStep, defaultPitch, defaultVelocity }:U
               }
             </Grid>
           </Grid>
-
-          <Grid item xs={12}>
-              <Divider sx={{ mx: 'auto', my: 2 }} />
-            </Grid>
 
           <DialogActionButtons
             onCancel={handleClose}
@@ -369,7 +367,7 @@ const useSteps = ({ barDiv, beatDiv, beatStep, defaultPitch, defaultVelocity }:U
     return steps;
   }
 
-  return { getLoc, getOverallStep, StepMarker, StepEditDialog, editingStep, getPatternStepMarkers };
+  return { getLoc, getOverallStep, StepMarker, StepEditDialog, editingStep, getPatternStepMarkers, editingTrack, setEditingTrack };
 }
 
 export default useSteps;

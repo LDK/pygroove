@@ -41,10 +41,13 @@ const userSlice = createSlice({
       state.username = null;
       state.token = null;
     },
+    setToken: (state, action: PayloadAction<UserToken | null>) => {
+      state.token = action.payload;
+    }
   },
 });
 
-export const { setUser, clearUser } = userSlice.actions;
+export const { setUser, clearUser, setToken } = userSlice.actions;
 
 // getUser selector function
 export const getActiveUser = (state: RootState) => {

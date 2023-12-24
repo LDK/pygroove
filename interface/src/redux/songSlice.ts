@@ -25,6 +25,10 @@ export type Track = {
   transpose: number;
   filters?: Filter[];
   position: number;
+  rootPitch?: string;
+  pitchShift?: number;
+  reverse?: boolean;
+  normalizeSample?: boolean;
 };
 
 export type Step = {
