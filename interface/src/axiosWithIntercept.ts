@@ -1,20 +1,19 @@
-// axios.ts
-import axios from "axios";
+// axiosWithIntercept.ts
+import axios, { AxiosError } from "axios";
 import { UserToken } from "./redux/userSlice";
-import exp from "constants";
 
 const axiosWithIntercept = axios.create({
   baseURL: process.env.REACT_APP_API_URL || '',
 });
 
-let userToken:(UserToken | null) = null;
-let tokenCallback:((token:UserToken) => void) | null = null;
-let expiredCallback:(() => void) | null = null;
-let refreshCallback:(() => void) | null = null;
+let userToken: (UserToken | null) = null;
+let tokenCallback: ((token: UserToken) => void) | null = null;
+let expiredCallback: (() => void) | null = null;
+let refreshCallback: (() => void) | null = null;
 
-export const updateAxiosToken = (token:(UserToken | null)) => {
+export const updateAxiosToken = (token: (UserToken | null)) => {
   userToken = token;
-
+  
   if (!token) {
     delete axiosWithIntercept.defaults.headers.common['Authorization'];
     return;
@@ -23,43 +22,54 @@ export const updateAxiosToken = (token:(UserToken | null)) => {
   axiosWithIntercept.defaults.headers.common['Authorization'] = `Bearer ${token.access}`;
 }
 
-export const setAxiosTokenCallback = (callback:(token:UserToken) => void) => {
+export const setAxiosTokenCallback = (callback: (token: UserToken) => void) => {
   tokenCallback = callback;
 }
 
-export const setAxiosRefreshExpiredCallback = (callback:() => void) => {
+export const setAxiosRefreshExpiredCallback = (callback: () => void) => {
   expiredCallback = callback;
 }
 
-export const setAxiosRefreshCallback = (callback:() => void) => {
+export const setAxiosRefreshCallback = (callback: () => void) => {
   refreshCallback = callback;
 }
+
+let isRefreshingToken = false;
 
 axiosWithIntercept.interceptors.response.use(
   response => response,
   async error => {
     const originalRequest = error.config;
-    if (error.response.status === 401 && error.response.data.code === 'token_not_valid' && !originalRequest._retry) {
-      originalRequest._retry = true;
+    if (error?.response?.status === 401 && error.response.data.code === 'token_not_valid' && !isRefreshingToken) {
+      isRefreshingToken = true;
+
       try {
         if (!userToken) { 
+          expiredCallback?.();
+          isRefreshingToken = false;
           return Promise.reject(error);
         }
 
-        const res = await axiosWithIntercept.post(`/token/refresh/`, { ...userToken });
+        const res = await axiosWithIntercept.post(`/token/refresh/`, { refresh: userToken.refresh });
+
         if (res.status === 200) {
           updateAxiosToken({ refresh: userToken.refresh, access: res.data.access } as UserToken);
           tokenCallback?.({ refresh: userToken.refresh, access: res.data.access } as UserToken);
           refreshCallback?.();
+
           axiosWithIntercept.defaults.headers.common['Authorization'] = 'Bearer ' + res.data.access;
-          const retryRequest = { ...originalRequest, headers: {...originalRequest.headers, 'Authorization': 'Bearer ' + res.data.access } };
-          return axiosWithIntercept(retryRequest);
+          originalRequest.headers['Authorization'] = 'Bearer ' + res.data.access;
+          isRefreshingToken = false;
+          return axiosWithIntercept(originalRequest);
         }
       } catch (refreshError) {
-        console.error('Refresh token expired or invalid', refreshError);
-        // Handle logout or token refresh failure
+        expiredCallback?.();
+        isRefreshingToken = false;
+        return Promise.reject(refreshError);
       }
     }
+
+    isRefreshingToken = false;
     return Promise.reject(error);
   }
 );
