@@ -28,7 +28,7 @@ const Header = ({ user, tokenExpired, setTokenExpired, handleOpenUserMenu, UserM
       dispatch(clearUser());
       setTokenExpired(false);
     }
-  }, [tokenExpired]);
+  }, [tokenExpired, dispatch, setTokenExpired]);
 
   return (
   <AppBar position="static" sx={{ pt: 1, pb: 2, px: 4, bgcolor: theme.palette.primary.dark }}>

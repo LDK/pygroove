@@ -1,23 +1,20 @@
 import { Dialog, DialogContent, Grid, Typography, Checkbox, Divider, Select, Box } from "@mui/material";
 import { FolderTwoTone as BrowseIcon } from "@mui/icons-material";
-import { useState, useEffect } from "react";
-import { useDispatch } from "react-redux";
+import { useState, useEffect, useCallback } from "react";
 import { Track } from "../redux/songSlice";
 import Range from "./Range";
 import PanSlider from "./PanSlider";
 
 const TrackEditDialog = ({ track, setEditingTrack }:{ track:Track | null, setEditingTrack: (arg:Track | null) => void }) => {
-  const dispatch = useDispatch();
-
-  const [volume, setVolume] = useState(track?.volume || -6);
-  const [pan, setPan] = useState(track?.pan || 0);
+  const [/*volume*/, setVolume] = useState(track?.volume || -6);
+  const [/*pan*/, setPan] = useState(track?.pan || 0);
   const [disabled, setDisabled] = useState((track?.disabled || track?.disabled === false) ? track.disabled : false);
   const [rootNote, setRootNote] = useState(track?.rootPitch?.replace(/\d/g, '') || 'C');
   const [rootOctave, setRootOctave] = useState(track?.rootPitch?.replace(/\D/g, '') || 3);
   const [pitchShift, setPitchShift] = useState(track?.pitchShift || 0);
   const [transpose, setTranspose] = useState(track?.transpose || 0);
 
-  const [view, setView] = useState<'settings' | 'samples'>('settings');
+  // const [view, setView] = useState<'settings' | 'samples'>('settings');
 
   // A vertical slider for volume with db labels beneath
   const VolumeSlider = ({ callback, width }:{ callback:(val:number) => void, width?: string }) => {
@@ -46,10 +43,11 @@ const TrackEditDialog = ({ track, setEditingTrack }:{ track:Track | null, setEdi
     );
   };
 
-  const resetDefaults = () => {
+  const resetDefaults = useCallback(() => {
     setVolume(track?.volume || -6);
     setPan(track?.pan || 0);
-  };
+  }, [track]);
+  
   const handleClose = () => {
     setEditingTrack(null);
   }
@@ -58,7 +56,7 @@ const TrackEditDialog = ({ track, setEditingTrack }:{ track:Track | null, setEdi
     if (!track) {
       resetDefaults();
     }
-  }, [track]);
+  }, [track, resetDefaults]);
 
   if (!track) return null;
 

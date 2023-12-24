@@ -1,5 +1,5 @@
 // axiosWithIntercept.ts
-import axios, { AxiosError } from "axios";
+import axios from "axios";
 import { UserToken } from "./redux/userSlice";
 
 const axiosWithIntercept = axios.create({

@@ -24,7 +24,7 @@ const useUser = () => {
 
     updateAxiosToken(user.token);
 
-  }, [user.token]);
+  }, [user.token, dispatch, user]);
 
   const handleOpenUserMenu = (event:React.MouseEvent) => {
     setAnchorElUser(event.currentTarget as HTMLElement);

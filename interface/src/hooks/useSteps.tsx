@@ -3,7 +3,6 @@ import { Box, Checkbox, Dialog, DialogContent, Divider, Grid, Select, Typography
 import { useDispatch, useSelector } from "react-redux";
 import { Loc, Step, Track, getActivePattern, toggleStep, Pattern, setStep } from "../redux/songSlice";
 import { useEffect, useState } from "react";
-import Range from "../components/Range";
 import useDialogUI from "../theme/useDialogUI";
 import PanSlider from "../components/PanSlider";
 
@@ -61,33 +60,6 @@ const useSteps = ({ barDiv, beatDiv, beatStep, defaultPitch, defaultVelocity }:U
   const getOverallStep = (loc:Loc) => {
     return ((loc.bar - 1) * barDiv * beatStep) + ((loc.beat - 1) * beatStep) + (ticks.indexOf(loc.tick) + 1);
   }
-
-  // A vertical slider for volume with db labels beneath
-  const VolumeSlider = ({ callback, width }:{ callback:(val:number) => void, width?: string }) => {
-    const [workingValue, setWorkingValue] = useState(editingTrack?.volume || -6);
-    
-    if (!editingTrack) return null;
-
-    return (
-      <Box pt={0} px={0} position="relative">
-        <Range
-          orientation="vertical"
-          defaultValue={editingTrack.volume || -6}
-          callback={callback}
-          onChange={(e) => {
-            setWorkingValue(parseInt(e.target.value) || -6);
-          }}
-          height="3rem"
-          width={width || "auto"}
-          min={-36}
-          max={12}
-          step={.1}
-        />
-
-        <Typography mx="auto" variant="caption" textAlign="left" component="p">{ `${workingValue || ''}dB` }</Typography>
-      </Box>
-    );
-  };
 
   const StepEditDialog = ({ step }:{ step:Step | null }) => {
     const dispatch = useDispatch();

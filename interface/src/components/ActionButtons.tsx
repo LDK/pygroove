@@ -5,8 +5,7 @@ import { Filter, Track, Step, getActiveSong, setSongId } from "../redux/songSlic
 import axios, { AxiosResponse } from "axios";
 import { useEffect, useState } from "react";
 import { Song } from "../redux/songSlice";
-import useUser from "../hooks/useUser";
-import useApi, { ApiCallProps } from "../hooks/useApi";
+import { ApiCallProps } from "../hooks/useApi";
 import { UserState } from "../redux/userSlice";
 
 interface RenderPayload {
