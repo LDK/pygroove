@@ -13,6 +13,7 @@ class Song(models.Model):
 class Sample(models.Model):
     filename = models.CharField(max_length=100)
     display = models.CharField(max_length=100, null=True)
+    waveform = models.ImageField(upload_to='waveforms', null=True)
 
 class Track(models.Model):
     song = models.ForeignKey(Song, on_delete=models.CASCADE, related_name='tracks')
@@ -23,6 +24,10 @@ class Track(models.Model):
     disabled = models.BooleanField(default=False)
     transpose = models.IntegerField(default=0)
     position = models.IntegerField(default=1)
+    rootPitch = models.CharField(max_length=5, default='C3')
+    pitchShift = models.IntegerField(default=0)
+    reverse = models.BooleanField(default=False)
+    normalizeSample = models.BooleanField(default=False)
 
 class Pattern(models.Model):
     song = models.ForeignKey(Song, on_delete=models.CASCADE, related_name='patterns')
@@ -43,7 +48,7 @@ class Step(models.Model):
     track = models.ForeignKey(Track, on_delete=models.CASCADE)
     loc = models.CharField(max_length=12, default='1.1.1')
     filter = models.JSONField(default=dict)
-    pitch = models.CharField(max_length=5, default='C4')
+    pitch = models.CharField(max_length=5, default='C3')
     reverse = models.BooleanField(default=False)
     velocity = models.IntegerField(default=100)
     pan = models.FloatField(default=0)
