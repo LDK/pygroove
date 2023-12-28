@@ -3,9 +3,9 @@ import { MoreHorizTwoTone } from "@mui/icons-material";
 import { useEffect, useState } from "react";
 import { Step, Track, getActivePattern, getActiveSong, getTrackSteps } from "./redux/songSlice";
 import { useSelector } from "react-redux";
-import useTrackControls from "./hooks/useTrackControls";
 import useSteps from "./hooks/useSteps";
 import TrackEditDialog from "./components/TrackEditDialog";
+import useControls from "./hooks/useControls";
 
 const stepSettings = {
   barDiv: 4,
@@ -21,13 +21,17 @@ const arraysEqual = (a:any[], b:any[]) => {
 };
 
 const StepSequencer = () => {
-  const { tracks } = useSelector(getActiveSong);
+  const activeSong = useSelector(getActiveSong);
+  const activePattern = useSelector(getActivePattern);
+
+  const { tracks } = activeSong || { tracks: [] };
+  
   const { StepEditDialog, editingStep, getPatternStepMarkers, editingTrack, setEditingTrack } = useSteps(stepSettings);
+
+  const { VolumeSlider, PanSlider, onSliderSave } = useControls();
 
   const SequencerTrack = ({ track }:{ track:Track }) => {
     const [ on, setOn ] = useState(!track.disabled);
-    const { VolumeSlider, PanSlider } = useTrackControls({ track });
-    const activePattern = useSelector(getActivePattern);
     const [patternSteps, setPatternSteps] = useState<Step[]>(activePattern ? getTrackSteps(activePattern, track) : []);
   
     useEffect(() => {
@@ -35,10 +39,9 @@ const StepSequencer = () => {
       const newSteps = getTrackSteps(activePattern, track);
   
       if (!arraysEqual(newSteps, patternSteps)) {
-        console.log('activePattern useEffect', activePattern);
         setPatternSteps(newSteps);
       }
-    }, [activePattern, track, patternSteps]);
+    }, [track, patternSteps]);
   
     if (!activePattern) return null;
   
@@ -90,22 +93,36 @@ const StepSequencer = () => {
                 sx={{ mt: 2, textWrap: 'nowrap', width: '80px', overflowX: 'ellipsis' }}
                 variant="contained" color="primary"
               >
-                <Typography fontWeight={600} variant="caption" component="div" color="priamry.contrast" width="64px" textAlign="center">
+                <Typography fontWeight={600} variant="caption" component="div" color="primary.contrast" width="64px" textAlign="center">
                   {/* Show up to 6 characters of track name and then ellipsis as needed */}
                   {track.name.length > 7 ? `${track.name.substring(0, 7)}…` : track.name}
                 </Typography>
               </Button>
             </Grid>
-  
+
             <Grid item xs={3}>
               <Box width="100%" textAlign={"center"} maxHeight={"64px"} mx="auto">
-                <VolumeSlider />
+                <VolumeSlider
+                  target={track}
+                  model="Track"
+                  useLabel
+                  onBlur={(e:React.FocusEvent<HTMLInputElement>) => {
+                    onSliderSave({ model: 'Track', target: track, facet: 'volume', value: parseFloat(e.target.value) });
+                  }}
+                />
               </Box>
             </Grid>
   
             <Grid item xs={3}>
               <Box width="100%" textAlign={"center"} maxHeight={"64px"} maxWidth="64px" mx="auto">
-                <PanSlider />
+                <PanSlider
+                  target={track}
+                  model="Track"
+                  useLabel
+                  onBlur={(e:React.FocusEvent<HTMLInputElement>) => {
+                    onSliderSave({ model: 'Track', target: track, facet: 'pan', value: parseFloat(e.target.value) });
+                  }}
+                />
               </Box>
             </Grid>
   
@@ -134,8 +151,6 @@ const StepSequencer = () => {
       </Grid>
     );
   };
-    
-  console.log('render sequencer', tracks);
 
   return (
     <Box px={{ xs: 2, lg: 1, xl: 0 }} m={0} sx={{ overflowY: 'scroll', overflowX: 'hidden' }} maxHeight="400px">

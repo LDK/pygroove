@@ -1,13 +1,12 @@
-import { Dialog, DialogContent, Grid, Typography, Checkbox, Divider, Select, Box } from "@mui/material";
+import { Dialog, DialogContent, Grid, Typography, Checkbox, Divider, Select } from "@mui/material";
 import { FolderTwoTone as BrowseIcon } from "@mui/icons-material";
 import { useState, useEffect, useCallback } from "react";
 import { Track } from "../redux/songSlice";
-import Range from "./Range";
-import PanSlider from "./PanSlider";
+import useControls from "../hooks/useControls";
 
 const TrackEditDialog = ({ track, setEditingTrack }:{ track:Track | null, setEditingTrack: (arg:Track | null) => void }) => {
-  const [/*volume*/, setVolume] = useState(track?.volume || -6);
-  const [/*pan*/, setPan] = useState(track?.pan || 0);
+  const [volume, setVolume] = useState(track?.volume || -6);
+  const [pan, setPan] = useState(track?.pan || 0);
   const [disabled, setDisabled] = useState((track?.disabled || track?.disabled === false) ? track.disabled : false);
   const [rootNote, setRootNote] = useState(track?.rootPitch?.replace(/\d/g, '') || 'C');
   const [rootOctave, setRootOctave] = useState(track?.rootPitch?.replace(/\D/g, '') || 3);
@@ -15,33 +14,6 @@ const TrackEditDialog = ({ track, setEditingTrack }:{ track:Track | null, setEdi
   const [transpose, setTranspose] = useState(track?.transpose || 0);
 
   // const [view, setView] = useState<'settings' | 'samples'>('settings');
-
-  // A vertical slider for volume with db labels beneath
-  const VolumeSlider = ({ callback, width }:{ callback:(val:number) => void, width?: string }) => {
-    const [workingValue, setWorkingValue] = useState(track?.volume || -6);
-    
-    if (!track) return null;
-
-    return (
-      <Box pt={0} px={0} position="relative">
-        <Range
-          orientation="vertical"
-          defaultValue={track.volume || -6}
-          callback={callback}
-          onChange={(e) => {
-            setWorkingValue(parseInt(e.target.value) || -6);
-          }}
-          height="3rem"
-          width={width || "auto"}
-          min={-36}
-          max={12}
-          step={.1}
-        />
-
-        <Typography mx="auto" variant="caption" textAlign="left" component="p">{ `${workingValue || ''}dB` }</Typography>
-      </Box>
-    );
-  };
 
   const resetDefaults = useCallback(() => {
     setVolume(track?.volume || -6);
@@ -51,6 +23,8 @@ const TrackEditDialog = ({ track, setEditingTrack }:{ track:Track | null, setEdi
   const handleClose = () => {
     setEditingTrack(null);
   }
+
+  const { VolumeSlider, PanSlider } = useControls();
 
   useEffect(() => {
     if (!track) {
@@ -84,12 +58,25 @@ const TrackEditDialog = ({ track, setEditingTrack }:{ track:Track | null, setEdi
 
           <Grid item xs={12} md={2}>
             <Typography fontWeight={600} variant="caption" component="p">Volume:</Typography>
-            <VolumeSlider callback={(val:number) => { setVolume(val); }} width="1rem" />
+            <VolumeSlider 
+              callback={(val:number) => { setVolume(val); }}
+              target={track}
+              model="Track"
+              useLabel
+              defaultValue={volume || -6}
+            />
           </Grid>
 
           <Grid item xs={12} md={2} pr={3}>
             <Typography fontWeight={600} variant="caption" component="p">Pan:</Typography>
-            <PanSlider width="100%" callback={(val:number) => { setPan(val); }} target={track} defaultValue={track.pan || 0} />
+            <PanSlider
+              width="100%"
+              callback={(val:number) => { setPan(val); }}
+              target={track}
+              model="Track" 
+              useLabel
+              defaultValue={pan || 0}
+            />
           </Grid>
 
           <Grid item xs={12} md={4}>

@@ -198,15 +198,16 @@ const songSlice = createSlice({
       const track = state.tracks[action.payload];
       state.tracks.push({ ...track, name: `${track.name} (copy)` });
     },
-    setTrackVolume: (state, action: PayloadAction<{position: number, volume: number}>) => {
+    setTrackVolume: (state, action: PayloadAction<{position: number, value: number}>) => {
       const track = state.tracks.find((track) => track.position === action.payload.position);
+      console.log('setTrackVolume', track, action.payload);
       if (!track) return;
-      track.volume = action.payload.volume;
+      track.volume = action.payload.value;
     },
-    setTrackPan: (state, action: PayloadAction<{position: number, pan: number}>) => {
+    setTrackPan: (state, action: PayloadAction<{position: number, value: number}>) => {
       const track = state.tracks.find((track) => track.position === action.payload.position);
       if (!track) return;
-      track.pan = action.payload.pan;
+      track.pan = action.payload.value;
     },
     toggleStep: (state, action: PayloadAction<{loc: Loc, track: Track}>) => {
       const { loc, track } = action.payload;

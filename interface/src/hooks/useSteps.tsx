@@ -264,7 +264,6 @@ const useSteps = ({ barDiv, beatDiv, beatStep, defaultPitch, defaultVelocity }:U
         <Box position="absolute" bottom="0" left="0" width="100%" textAlign={"center"} pb={1} pt={0} m={0}>
           <MoreHorizTwoTone
           onClick={() => {
-            console.log('step', step);
             setEditingStep(step);
           }}
             sx={{ color:'white', p:0, m:0, maxWidth: '100%', position: 'relative', top: '.75rem', cursor: "context-menu" }} 
@@ -275,7 +274,6 @@ const useSteps = ({ barDiv, beatDiv, beatStep, defaultPitch, defaultVelocity }:U
   };
 
   const getPatternStepMarkers = (pattern:Pattern, track:Track) => {
-    console.log('getPatternStepMarkers', pattern, track);
     let stepIndex:{
       [key:number]:Step;
     } = {};

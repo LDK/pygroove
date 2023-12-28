@@ -2,7 +2,7 @@ import { PlayArrowTwoTone } from "@mui/icons-material";
 import { Box, Grid, Button } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { Filter, Track, Step, getActiveSong, setSongId } from "../redux/songSlice";
-import axios, { AxiosResponse } from "axios";
+import { AxiosResponse } from "axios";
 import { useEffect, useState } from "react";
 import { Song } from "../redux/songSlice";
 import { ApiCallProps } from "../hooks/useApi";
@@ -117,14 +117,18 @@ const ActionButtons = ({ user, apiCall }:ActionButtonsProps) => {
     });
   };
 
-  const handleRender = () => {
-    const apiUrl = process.env.REACT_APP_API_URL;
+  const handleRender = async () => {
+    if (!user?.token) {
+      return;
+    }
+
     const payload = prepareRenderPayload();
-    const postUrl = `${apiUrl}/render/`;
-    console.log('payload', payload);
-  
-    axios.post(postUrl, payload, { responseType: 'blob' }) // Set responseType to 'blob'
-      .then(res => {
+
+    await apiCall({
+      uri: '/render/',
+      method: 'post',
+      payload,
+      onSuccess: (res:AxiosResponse) => {
         console.log('res', res);
         // Create a URL for the blob
         const url = window.URL.createObjectURL(new Blob([res.data], { type: 'audio/mpeg' }));
@@ -135,10 +139,11 @@ const ActionButtons = ({ user, apiCall }:ActionButtonsProps) => {
         link.click();
         link.remove(); // Clean up
         window.URL.revokeObjectURL(url); // Release memory
-      })
-      .catch(error => {
+      },
+      onError: (error:any) => {
         console.error('Error during render:', error);
-      });
+      },
+    });
   };
   
   return (

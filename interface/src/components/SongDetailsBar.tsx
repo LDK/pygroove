@@ -143,7 +143,17 @@ const SongDetailsBar = () => {
             }} />
           </Grid>
           <Grid item xs={6}>
-            <Range defaultValue={swing} updateState={setSwing} step={0.01} min={0} max={1} label="Swing" percentage />
+            <Range
+              defaultValue={swing || 0}
+              onBlur={(e) => {
+                dispatch(setSwing(parseFloat(e.target.value)));
+              }}
+              step={0.01}
+              min={0}
+              max={1}
+              label="Swing" 
+              percentage 
+            />
           </Grid>
           <Grid item xs={12}>
             <Typography>Pattern Sequence</Typography>

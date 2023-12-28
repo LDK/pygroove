@@ -12,6 +12,8 @@ function App() {
 
   const { user, UserMenu, handleOpenUserMenu, setTokenExpired, tokenExpired, apiCall } = useApi();
   
+  console.log('App render');
+
   return (
     <ThemeProvider theme={theme}>
       <Box id="app" maxHeight={'660px'} bgcolor="primary.main" position="relative" borderRadius={16} my={2} mx="auto" p={2} width="96%" sx={{ 
