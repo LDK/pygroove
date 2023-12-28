@@ -128,6 +128,7 @@ const ActionButtons = ({ user, apiCall }:ActionButtonsProps) => {
       uri: '/render/',
       method: 'post',
       payload,
+      config: { responseType: 'blob' }, // Set responseType to 'blob'
       onSuccess: (res:AxiosResponse) => {
         console.log('res', res);
         // Create a URL for the blob
