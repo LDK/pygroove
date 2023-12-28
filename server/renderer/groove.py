@@ -217,6 +217,7 @@ def renderJSON(data):
     swingUp = False
 
     songPatterns = data['patternSequence'] if 'patternSequence' in data else []
+    songBars = 0
 
     # For each pattern in songPatterns, add it to patternIndex
     for pattern in data['patterns']:
