@@ -151,7 +151,7 @@ const SongDetailsBar = () => {
               step={0.01}
               min={0}
               max={1}
-              label="Swing" 
+              labelPrefix="Swing: "
               percentage 
             />
           </Grid>

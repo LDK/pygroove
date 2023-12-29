@@ -48,15 +48,15 @@ const Range = ({ min, max, panDisplay, onChange, step=1, labelVariant, labelColo
 
   const inputStyle = orientation === 'vertical' ? verticalStyle : horizontalStyle;
 
-  let labelText = '';
+  let labelText = label;
 
-  if (label) {
+  if (label || labelPrefix) {
     if (percentage) {
       labelText = `${Math.round(workingValue * 100)}%`;
     } else if (panDisplay) {
       labelText = workingValue > 0 ? `${workingValue}% R` : workingValue < 0 ? `${workingValue * -1}% L` : 'C';
     } else {
-      labelText = `${workingValue}`;
+      labelText = `${workingValue}${labelSuffix}`;
     }
   }
 
@@ -91,7 +91,7 @@ const Range = ({ min, max, panDisplay, onChange, step=1, labelVariant, labelColo
           setEditing(false);
         }}
       />
-      {label && 
+      {labelText && 
         <Typography variant={labelVariant} color={labelColor} display="block">
           {labelPrefix}
           {labelText}
