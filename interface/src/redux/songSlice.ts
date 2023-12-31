@@ -243,6 +243,11 @@ const songSlice = createSlice({
     },
     setActivePattern: (state, action: PayloadAction<Pattern>) => {
       state.activePattern = action.payload;
+    },
+    updateTrack: (state, action: PayloadAction<Track>) => {
+      const track = state.tracks.find((trk) => trk.position === action.payload.position);
+      if (!track) return;
+      Object.assign(track, action.payload);
     }
   },
 });
@@ -269,6 +274,7 @@ export const {
   setBpm,
   setSongId,
   setStep,
+  updateTrack
 } = songSlice.actions;
 
 // getActiveSong selector function

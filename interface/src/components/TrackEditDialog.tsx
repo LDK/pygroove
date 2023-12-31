@@ -1,8 +1,10 @@
 import { Dialog, DialogContent, Grid, Typography, Checkbox, Divider, Select } from "@mui/material";
 import { FolderTwoTone as BrowseIcon } from "@mui/icons-material";
 import { useState, useEffect, useCallback } from "react";
-import { Track } from "../redux/songSlice";
+import { Track, updateTrack } from "../redux/songSlice";
 import useControls from "../hooks/useControls";
+import useDialogUI from '../theme/useDialogUI';
+import { useDispatch } from "react-redux";
 
 const TrackEditDialog = ({ track, setEditingTrack }:{ track:Track | null, setEditingTrack: (arg:Track | null) => void }) => {
   const [volume, setVolume] = useState(track?.volume || -6);
@@ -15,21 +17,35 @@ const TrackEditDialog = ({ track, setEditingTrack }:{ track:Track | null, setEdi
 
   // const [view, setView] = useState<'settings' | 'samples'>('settings');
 
+  const dispatch = useDispatch();
+
+  const { DialogActionButtons } = useDialogUI();
+
   const resetDefaults = useCallback(() => {
     setVolume(track?.volume || -6);
     setPan(track?.pan || 0);
+    setDisabled((track?.disabled || track?.disabled === false) ? track.disabled : false);
+    setRootNote(track?.rootPitch?.replace(/\d/g, '') || 'C');
+    setRootOctave(track?.rootPitch?.replace(/\D/g, '') || 3);
+    setPitchShift(track?.pitchShift || 0);
+    setTranspose(track?.transpose || 0);
   }, [track]);
   
   const handleClose = () => {
     setEditingTrack(null);
   }
 
+  const handleConfirm = () => {
+    dispatch(updateTrack({...track as Track, volume, pan, disabled, rootPitch: `${rootNote}${rootOctave}`, pitchShift, transpose}));
+    handleClose();
+  };
+
   const { VolumeSlider, PanSlider } = useControls();
 
   useEffect(() => {
-    if (!track) {
+    // if (!track) {
       resetDefaults();
-    }
+    // }
   }, [track, resetDefaults]);
 
   if (!track) return null;
@@ -47,7 +63,7 @@ const TrackEditDialog = ({ track, setEditingTrack }:{ track:Track | null, setEdi
           </Grid>
           <Grid item xs={4} sx={{ textAlign: 'right' }}>
             <Typography fontWeight={600} component="span">Active: </Typography>
-            <Checkbox sx={{ py: 0 }} defaultChecked={track.disabled} onChange={() => {
+            <Checkbox sx={{ py: 0 }} defaultChecked={!track.disabled} onChange={() => {
               setDisabled(!disabled);
             }} />
           </Grid>
@@ -151,7 +167,21 @@ const TrackEditDialog = ({ track, setEditingTrack }:{ track:Track | null, setEdi
             </Grid>
           </Grid>
 
+          {/* This divider provides space beneath, for the action buttons */}
+
+          <Grid item xs={12}>
+            <Divider sx={{ mx: 'auto', mt: 2, mb: 4 }} />
+          </Grid>
+
         </Grid>
+
+        <DialogActionButtons
+            internal
+            padding
+            onCancel={handleClose}
+            onConfirm={handleConfirm}
+          />
+
       </DialogContent>
     </Dialog>
   );
