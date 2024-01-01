@@ -13,6 +13,8 @@ from rest_framework.views import APIView
 from rest_framework import status, viewsets
 from os.path import join as pjoin
 
+from django.conf import settings
+
 class SampleViewSet(viewsets.ModelViewSet):
     permission_classes = (AllowAny,)
 
@@ -27,6 +29,35 @@ class SampleListSet(viewsets.ModelViewSet):
     permission_classes = (AllowAny,)
     queryset = Sample.objects.all()
     serializer_class = SampleSerializer
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        output = []
+
+        for sample in queryset:
+            serializer = self.get_serializer(sample)
+            waveform_image = sample.waveform
+
+            sample_output = {
+                'id': serializer.data['id'],
+                'filename': serializer.data['filename'],
+                'display': serializer.data['display'],
+                'waveform': None,
+            }
+
+            if waveform_image.name:  # Check if the image field has a file associated with it
+                try:
+                    # Construct the URL for the waveform image
+                    waveform_url = (request.build_absolute_uri(settings.STATIC_URL) + waveform_image.name).replace('/./waveform', '')
+                    sample_output['waveform'] = waveform_url
+                except IOError:
+                    # Handle the case where the image file does not exist or cannot be opened
+                    print("Error opening waveform image for sample id:", sample.id)
+                    sample_output['waveform'] = None
+
+            output.append(sample_output)
+
+        return Response(output)
 
 def saveSampleImage(data):
     fName = data['filename']
