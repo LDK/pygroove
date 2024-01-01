@@ -16,6 +16,14 @@ export type Loc = {
   tick: number;
 };
 
+export type SampleData = {
+  display?: string;
+  name?: string;
+  filename: string;
+  url?: string;
+  waveform?: string;
+};
+
 export type Track = {
   name: string;
   sample?: string;
@@ -28,7 +36,8 @@ export type Track = {
   rootPitch?: string;
   pitchShift?: number;
   reverse?: boolean;
-  normalizeSample?: boolean;
+  normalize?: boolean;
+  trim?: boolean;
 };
 
 export type Step = {
@@ -204,6 +213,12 @@ const songSlice = createSlice({
       if (!track) return;
       track.volume = action.payload.value;
     },
+    setTrackSample: (state, action: PayloadAction<{position: number, sample: string}>) => {
+      console.log('setTrackSample', action.payload);
+      const track = state.tracks.find((track) => track.position === action.payload.position);
+      if (!track) return;
+      track.sample = action.payload.sample;
+    },
     setTrackPan: (state, action: PayloadAction<{position: number, value: number}>) => {
       const track = state.tracks.find((track) => track.position === action.payload.position);
       if (!track) return;
@@ -269,6 +284,7 @@ export const {
   toggleStep,
   setTrackVolume,
   setTrackPan,
+  setTrackSample,
   setSongTitle,
   setAuthor,
   setBpm,
