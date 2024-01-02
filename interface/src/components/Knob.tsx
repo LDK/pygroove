@@ -18,7 +18,7 @@ const Knob = ({ onBlur, initValue }:{ initValue: number; onBlur: (val:number) =>
         // use transform to flip the text upside-down
         style={{ pointerEvents: "none", fontWeight: "600", fontSize: '.7rem', letterSpacing: '.1px' }}
       >
-        {Math.round(value * 100)}
+        {Math.round(value * 127)}
       </text>
     );
   }
@@ -31,9 +31,11 @@ const Knob = ({ onBlur, initValue }:{ initValue: number; onBlur: (val:number) =>
     onBlur(value);
   };
 
+  console.log('Knob render', 'initValue:', initValue, 'value:', value);
+
   return (
     <Box textAlign={"left"} ml={2}>
-      <CircularInput value={value} radius={15} onChange={setValue} onChangeEnd={handleBlur}>
+      <CircularInput value={value} max={1} min={0} radius={15} onChange={setValue} onChangeEnd={handleBlur}>
         <CircularProgress
           strokeWidth={10}
           stroke={theme.palette.success.light}

@@ -122,6 +122,10 @@ const useTrackSettings = ({track}:{track?: Track}) => {
 
               {!sample ? <></> : 
                 <Grid container spacing={1} pl={2}>
+                  <Grid item xs={12}>
+                    <Divider sx={{ mx: 'auto', my: 1, bgcolor: 'white' }} />
+                  </Grid>
+
                   <Grid item xs={12} sx={{ textAlign: 'left' }}>
                     <Typography color="white" variant="caption" fontWeight={600} component="span">Reverse</Typography>
 
@@ -144,10 +148,6 @@ const useTrackSettings = ({track}:{track?: Track}) => {
                     <Checkbox sx={{ py: 0 }} defaultChecked={trim} onChange={() => {
                       setTrim(!trim);
                     }} />
-                  </Grid>
-
-                  <Grid item xs={12}>
-                    <Divider sx={{ mx: 'auto', my: 1, bgcolor: 'white' }} />
                   </Grid>
 
                 </Grid>

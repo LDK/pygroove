@@ -12,17 +12,17 @@ const useFilters = ({ track }: useFiltersProps) => {
   const [filter1On, setFilter1On] = useState(track?.filters?.length ? track.filters[0].on : false);
   const [filter1Type, setFilter1Type] = useState(track?.filters?.length ? track.filters[0].filter_type : 'lp');
   const [filter1Q, setFilter1Q] = useState(track?.filters?.length ? track.filters[0].q : 0);
-  const [filter1Freq, setFilter1Freq] = useState<number>(track?.filters?.length ? track.filters[0].frequency : 1);
+  const [filter1Freq, setFilter1Freq] = useState<number>(track?.filters?.length ? track.filters[0].frequency : 0);
 
   const [filter2On, setFilter2On] = useState((track?.filters?.length && track.filters.length > 1) ? track.filters[1].on : false);
   const [filter2Type, setFilter2Type] = useState((track?.filters?.length && track.filters.length > 1) ? track.filters[1].filter_type : 'lp');
   const [filter2Q, setFilter2Q] = useState((track?.filters?.length && track.filters.length > 1) ? track.filters[1].q : 0);
-  const [filter2Freq, setFilter2Freq] = useState((track?.filters?.length && track.filters.length > 1) ? track.filters[1].frequency : 1);
+  const [filter2Freq, setFilter2Freq] = useState((track?.filters?.length && track.filters.length > 1) ? track.filters[1].frequency : 0);
 
   const TrackFilters = () => (
-    <Grid container spacing={0}>
+    <Grid container spacing={0} sx={{ height: '314px' }}>
       {[1, 2].map((filterIdx) => (
-        <Grid key={`filter-${filterIdx}`} item xs={12} p={0} m={0} mb={2}>
+        <Grid key={`filter-${filterIdx}`} item xs={12} p={0} m={0} mb={1}>
           <Box borderRadius={1} borderColor="primary.dark" p={1} m={0} sx={{
             borderStyle: 'solid',
             borderWidth: '1px',
@@ -38,9 +38,9 @@ const useFilters = ({ track }: useFiltersProps) => {
               Filter {filterIdx}
             </Typography>
 
-            <Grid container spacing={0} my={2}>
+            <Grid container spacing={0} my={1}>
               <Grid item xs={4} pt={0}>
-                <Typography variant="caption" component="p" mt={0}>
+                <Typography variant="caption" component="p" mt={0} mb={2}>
                   Filter Type
                 </Typography>
 
@@ -68,6 +68,10 @@ const useFilters = ({ track }: useFiltersProps) => {
               </Grid>
 
               <Grid item xs={4}>
+                <Typography variant="caption" component="p" mt={0} mb={2}>
+                  Cutoff Freq.
+                </Typography>
+
                 <Knob initValue={filterIdx === 1 ? filter1Freq : filter2Freq} onBlur={(val:number) => {
                   if (filterIdx === 1) {
                     setFilter1Freq(val);
@@ -75,9 +79,17 @@ const useFilters = ({ track }: useFiltersProps) => {
                     setFilter2Freq(val);
                   }
                 }} />
+
+                <Typography variant="caption">
+                  {Math.round((filterIdx === 1 ? filter1Freq : filter2Freq) * 22000)} Hz
+                </Typography>
               </Grid>
 
               <Grid item xs={4}>
+                <Typography variant="caption" component="p" mt={0} mb={2}>
+                  Resonance
+                </Typography>
+
                 <Knob initValue={filterIdx === 1 ? filter1Q : filter2Q} onBlur={(val:number) => {
                   if (filterIdx === 1) {
                     setFilter1Q(val);
@@ -85,6 +97,10 @@ const useFilters = ({ track }: useFiltersProps) => {
                     setFilter2Q(val);
                   }
                 }} />
+
+                <Typography variant="caption">
+                  {Math.round((filterIdx === 1 ? filter1Q : filter2Q) * 1000) / 10}%
+                </Typography>
               </Grid>
             </Grid>
           </Box>
