@@ -3,7 +3,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { RootState } from './store';
 
 export type Filter = {
-  type: string;
+  filter_type: string;
   frequency: number;
   q: number;
   on: boolean;
@@ -22,11 +22,12 @@ export type SampleData = {
   filename: string;
   url?: string;
   waveform?: string;
+  id?: number;
 };
 
 export type Track = {
   name: string;
-  sample?: string;
+  sample?: SampleData;
   volume: number;
   pan: number;
   disabled: boolean;
@@ -83,7 +84,7 @@ export const simpleTrack = ({ song, name: trackName, sample }:{ song: SongState,
     pan: 0,
     disabled: false,
     transpose: 0,
-    sample,
+    sample: { filename: sample },
     position: song.tracks.length + 1,
   } as Track
 };
@@ -213,7 +214,7 @@ const songSlice = createSlice({
       if (!track) return;
       track.volume = action.payload.value;
     },
-    setTrackSample: (state, action: PayloadAction<{position: number, sample: string}>) => {
+    setTrackSample: (state, action: PayloadAction<{position: number, sample: SampleData}>) => {
       console.log('setTrackSample', action.payload);
       const track = state.tracks.find((track) => track.position === action.payload.position);
       if (!track) return;

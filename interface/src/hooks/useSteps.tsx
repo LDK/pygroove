@@ -205,7 +205,7 @@ const useSteps = ({ barDiv, beatDiv, beatStep, defaultPitch, defaultVelocity }:U
                     track.filters?.map((filter, i) => {
                       return (
                         <Typography key={i} fontWeight={400} variant="caption" component="p">
-                          {filter.type} {filter.frequency} {filter.q}
+                          {filter.filter_type} {filter.frequency} {filter.q}
                         </Typography>
                       );
                     })
