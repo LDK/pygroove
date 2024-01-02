@@ -1,12 +1,14 @@
 
 import base64
+from io import BytesIO
 from os import curdir, rename
+from django.http import HttpResponse
 from rest_framework.permissions import AllowAny
 
 from renderer.waveform import Waveform
-from renderer.serializers import SampleSerializer
+from renderer.serializers import SampleSerializer, TrackSerializer
 from django.contrib.auth import authenticate
-from renderer.models import Sample
+from renderer.models import Sample, Track
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -122,3 +124,42 @@ class SampleView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class SampleImageView(APIView):
+    permission_classes = (AllowAny,)
+    queryset = Track.objects.all()
+    serializer_class = SampleSerializer
+
+    def get(self, request, pk=None):
+        sample = Sample.objects.get(pk=pk)
+        serializer = SampleSerializer(sample)
+        fLoc = pjoin("./audio", sample.filename)
+
+        reverse:bool = (request.GET.get('reverse', False) in ['true', 'True', True])
+        trim:bool = (request.GET.get('trim', False) in ['true', 'True', True])
+        normalize:bool = (request.GET.get('normalize', False) in ['true', 'True', True])
+
+        waveform_image = Waveform(fLoc, {
+            'normalize': normalize,
+            'trim': trim,
+            'reverse': reverse,
+        }).image()
+
+        if waveform_image:
+            try:
+                # Create a buffer to hold the image data
+                buffer = BytesIO()
+                # Save the image to the buffer
+                waveform_image.save(buffer, format='PNG')
+                buffer.seek(0)
+
+                # Create a HttpResponse with the PNG data
+                response = HttpResponse(buffer, content_type='image/png')
+                return response
+
+            except IOError:
+                # Handle the case where the image file does not exist or cannot be opened
+                print("Error opening waveform image for sample id:", pk)
+                return Response(None, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
