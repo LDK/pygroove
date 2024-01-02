@@ -1,157 +1,221 @@
-import { Dialog, DialogContent, Grid, Typography, Checkbox, Divider, Select } from "@mui/material";
-import { FolderTwoTone as BrowseIcon } from "@mui/icons-material";
+import { Dialog, DialogContent, Grid, Typography, Checkbox, Divider, Tabs, Tab } from "@mui/material";
 import { useState, useEffect, useCallback } from "react";
-import { Track } from "../redux/songSlice";
-import useControls from "../hooks/useControls";
+import { SampleData, Track, updateTrack } from "../redux/songSlice";
+import useDialogUI from '../theme/useDialogUI';
+import { useDispatch } from "react-redux";
 
-const TrackEditDialog = ({ track, setEditingTrack }:{ track:Track | null, setEditingTrack: (arg:Track | null) => void }) => {
-  const [volume, setVolume] = useState(track?.volume || -6);
-  const [pan, setPan] = useState(track?.pan || 0);
+import TabPanel from "./TabPanel";
+import useFilters from "../hooks/useFilters";
+import useSamples from "../hooks/useSamples";
+import useTrackSettings from "../hooks/useTrackSettings";
+
+const SETTINGS = 0;
+const SAMPLES = 1;
+const FILTERS = 2;
+
+const TrackEditDialog = ({ track, setEditingTrack }:{ track?:Track, setEditingTrack: (arg?:Track) => void }) => {
   const [disabled, setDisabled] = useState((track?.disabled || track?.disabled === false) ? track.disabled : false);
-  const [rootNote, setRootNote] = useState(track?.rootPitch?.replace(/\d/g, '') || 'C');
-  const [rootOctave, setRootOctave] = useState(track?.rootPitch?.replace(/\D/g, '') || 3);
-  const [pitchShift, setPitchShift] = useState(track?.pitchShift || 0);
-  const [transpose, setTranspose] = useState(track?.transpose || 0);
 
-  // const [view, setView] = useState<'settings' | 'samples'>('settings');
+  const [tab, setTab] = useState<number>(SETTINGS);
+
+  const dispatch = useDispatch();
+
+  const { DialogActionButtons } = useDialogUI();
+
+  const { 
+    filter1On, setFilter1On, filter1Type, setFilter1Type,
+    filter1Q, setFilter1Q, filter1Freq, setFilter1Freq,
+    filter2On, setFilter2On, filter2Type, setFilter2Type,
+    filter2Q, setFilter2Q, filter2Freq, setFilter2Freq,
+    TrackFilters
+  } = useFilters({ track });
+
+  const {
+    volume, setVolume,
+    pan, setPan,
+    rootNote, setRootNote,
+    rootOctave, setRootOctave,
+    pitchShift, setPitchShift,
+    transpose, setTranspose,
+    sample, setSample,
+    reverse, setReverse,
+    trim, setTrim,
+    normalize, setNormalize,
+    TrackSettings
+  } = useTrackSettings({ track });
+
+  const { SampleBrowser, fetchSamples } = useSamples();
 
   const resetDefaults = useCallback(() => {
     setVolume(track?.volume || -6);
     setPan(track?.pan || 0);
-  }, [track]);
+    setDisabled((track?.disabled || track?.disabled === false) ? track.disabled : false);
+    setRootNote(track?.rootPitch?.replace(/\d/g, '') || 'C');
+    setRootOctave(track?.rootPitch?.replace(/\D/g, '') || 3);
+    setPitchShift(track?.pitchShift || 0);
+    setTranspose(track?.transpose || 0);
+    setSample(track?.sample || null);
+
+    // Sample controls
+    setReverse(track?.reverse || false);
+    setTrim(track?.trim || false);
+    setNormalize(track?.normalize || false);
+
+    // Filter controls
+    setFilter1Type(track?.filters?.length ? track.filters[0].filter_type : 'lp');
+    setFilter1Q(track?.filters?.length ? track.filters[0].q : 0);
+    setFilter1Freq(track?.filters?.length ? track.filters[0].frequency : .80);
+    setFilter1On(track?.filters?.length ? track.filters[0].on : false);
+
+    setFilter2Type((track?.filters?.length && track.filters.length > 1) ? track.filters[1].filter_type : 'lp');
+    setFilter2Q((track?.filters?.length && track.filters.length > 1) ? track.filters[1].q : 0);
+    setFilter2Freq((track?.filters?.length && track.filters.length > 1) ? track.filters[1].frequency : 100);
+    setFilter2On((track?.filters?.length && track.filters.length > 1) ? track.filters[1].on : false);
+
+    setTab(SETTINGS);
+  }, [track, setVolume, setPan, setDisabled, setRootNote, setRootOctave, setPitchShift, setTranspose, setSample, setReverse, setTrim, setNormalize, setFilter1Type, setFilter1Q, setFilter1Freq, setFilter1On, setFilter2Type, setFilter2Q, setFilter2Freq, setFilter2On]);
   
   const handleClose = () => {
-    setEditingTrack(null);
+    setEditingTrack(undefined);
   }
 
-  const { VolumeSlider, PanSlider } = useControls();
+  useEffect(() => {
+    if (tab === SAMPLES) {
+      fetchSamples();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab]);
+
+  const handleConfirm = () => {
+    if (!track) {
+      handleClose();
+      return;
+    }
+
+    let newTrack = {...track as Track, 
+      volume, pan, disabled, rootPitch: `${rootNote}${rootOctave}`, 
+      pitchShift, transpose, sample: sample || track.sample,
+      reverse, trim, normalize,
+    };
+
+    newTrack.filters = [];
+
+    newTrack.filters.push({
+      on: filter1On,
+      filter_type: filter1Type,
+      q: filter1Q,
+      frequency: filter1Freq,
+      position: 1
+    });
+
+    newTrack.filters.push({
+      on: filter2On,
+      filter_type: filter2Type,
+      q: filter2Q,
+      frequency: filter2Freq,
+      position: 2
+    });
+
+    dispatch(updateTrack(newTrack));
+    handleClose();
+  };
 
   useEffect(() => {
-    if (!track) {
-      resetDefaults();
+    resetDefaults();
+    if (track) {
+      fetchSamples();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [track, resetDefaults]);
 
   if (!track) return null;
 
+  function a11yProps(index: number) {
+    return {
+      id: `simple-tab-${index}`,
+      'aria-controls': `simple-tabpanel-${index}`,
+    };
+  }
+
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setTab(newValue);
+  };
+  
   return (
     <Dialog open={true} onClose={handleClose} maxWidth="sm" fullWidth>
       <DialogContent>
         <Grid container py={0}>
+
+          {/* Track Edit Header: allows enabling/disabling/renaming track */}
+
           <Grid item xs={4}>
             <Typography fontWeight={600} component="span">Track: </Typography>
             <Typography fontWeight={400} component="span">{track.name}</Typography>
           </Grid>
+
           <Grid item xs={4} sx={{ textAlign: 'center' }}>
 
           </Grid>
+
           <Grid item xs={4} sx={{ textAlign: 'right' }}>
             <Typography fontWeight={600} component="span">Active: </Typography>
-            <Checkbox sx={{ py: 0 }} defaultChecked={track.disabled} onChange={() => {
+            <Checkbox sx={{ py: 0 }} defaultChecked={!track.disabled} onChange={() => {
               setDisabled(!disabled);
             }} />
           </Grid>
 
-          <Grid item xs={12}>
+          {/* Tab Selector */}
+
+          <Grid item xs={12} mb={2}>
             <Divider sx={{ mx: 'auto', my: 2 }} />
+
+            <Tabs value={tab} onChange={handleTabChange} aria-label="basic tabs example">
+              <Tab label="Settings" {...a11yProps(SETTINGS)} />
+              <Tab label="Browse Samples" {...a11yProps(SAMPLES)} />
+              <Tab label="Filters" {...a11yProps(FILTERS)} />
+            </Tabs>
           </Grid>
 
-          <Grid item xs={12} md={2}>
-            <Typography fontWeight={600} variant="caption" component="p">Volume:</Typography>
-            <VolumeSlider 
-              callback={(val:number) => { setVolume(val); }}
-              target={track}
-              model="Track"
-              useLabel
-              defaultValue={volume || -6}
-            />
-          </Grid>
+          {/* Settings Tab */}
 
-          <Grid item xs={12} md={2} pr={3}>
-            <Typography fontWeight={600} variant="caption" component="p">Pan:</Typography>
-            <PanSlider
-              width="100%"
-              callback={(val:number) => { setPan(val); }}
-              target={track}
-              model="Track" 
-              useLabel
-              defaultValue={pan || 0}
-            />
-          </Grid>
+          <TabPanel value={tab} index={SETTINGS}>
+            <TrackSettings browseCallback={() => { setTab(SAMPLES) }} />
+          </TabPanel>
 
-          <Grid item xs={12} md={4}>
-            <Typography fontWeight={600} pb={1} variant="caption" component="p">Root Pitch:</Typography>
-            <Select
-              native
-              value={rootNote}
-              onChange={(e) => {
-                setRootNote(e.target.value);
-              }}
-              inputProps={{
-                name: 'rootPitch',
-                id: 'rootPitch',
-              }}
-            >
-              {['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A','A#', 'B'].map((pitch) => {
-                return (
-                  <option key={pitch} value={pitch}>{pitch}</option>
-                );
-              })
-              }
-            </Select>
+          {/* Sample Tab */}
 
-            <Select
-              native
-              value={rootOctave}
-              onChange={(e) => {
-                setRootOctave(parseInt(`${e.target.value}`));
-              }}
-              inputProps={{
-                name: 'rootOctave',
-                id: 'rootOctave',
-              }}
-            >
-              {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((oct) => {
-                return (
-                  <option key={oct} value={oct}>{oct}</option>
-                );
-              })}
-            </Select>
-          </Grid>
-
-          <Grid item xs={12} md={2} lg={2}>
-            <Typography fontWeight={600} pb={1} variant="caption" component="p">Transpose:</Typography>
-            <input type="number" step={1} min={-12} max={12} defaultValue={transpose} style={{ width: '3rem', height: '3rem', padding: "2px" }} onChange={(e) => {
-              setTranspose(parseInt(e.target.value) || transpose);
+          <TabPanel value={tab} index={SAMPLES}>
+            <SampleBrowser openCallback={(sample:SampleData) => {
+              setSample(sample);
+              setTab(SETTINGS);
             }} />
-          </Grid>
+          </TabPanel>
 
-          <Grid item xs={12} md={2} lg={2}>
-            <Typography fontWeight={600} pb={1} variant="caption" component="p">Pitch Shift:</Typography>
-            <input type="number" step={1} min={-200} max={200} defaultValue={pitchShift} style={{ width: '3rem', height: '3rem', padding: "2px" }} onChange={(e) => {
-              setPitchShift(parseInt(e.target.value) || pitchShift);
-            }} />
-          </Grid>
+          {/* Filters Tab */}
 
+          <TabPanel value={tab} index={FILTERS}>
+            <TrackFilters />
+          </TabPanel>
+
+          {/* This divider provides space beneath, for the action buttons */}
           <Grid item xs={12}>
-            <Divider sx={{ mx: 'auto', my: 2 }} />
-          </Grid>
-
-          <Grid item xs={12}>
-            <Grid container spacing={0} bgcolor="primary.dark" px={1} pt={2} pb={1}>
-              <Grid item xs={12} md={8} position={"relative"}>
-                { Boolean(track.sample)
-                  ? <img src={`${process.env.PUBLIC_URL}/img/waveform/default/${track.sample?.replace('.wav','')}.png`} alt={track.name} style={{ height: '10rem', width: '100%' }} /> 
-                  : null
-                }
-                <BrowseIcon 
-                  sx={{ position: 'absolute', bottom: '.25rem', right: '.25rem', color: 'primary', fontSize: '2rem', cursor: 'pointer' }} 
-                />
-              </Grid>
-            </Grid>
+            <Divider sx={{ mx: 'auto', mt: 2, mb: 4 }} />
           </Grid>
 
         </Grid>
+
+        {/* 
+          Cancel: Close window, revert changes
+          Confirm: Close window, update Track in redux
+         */}
+
+        <DialogActionButtons
+            internal
+            padding
+            onCancel={handleClose}
+            onConfirm={handleConfirm}
+          />
+
       </DialogContent>
     </Dialog>
   );

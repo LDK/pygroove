@@ -27,7 +27,12 @@ class Track(models.Model):
     rootPitch = models.CharField(max_length=5, default='C3')
     pitchShift = models.IntegerField(default=0)
     reverse = models.BooleanField(default=False)
-    normalizeSample = models.BooleanField(default=False)
+    normalize = models.BooleanField(default=False)
+    trim = models.BooleanField(default=False)
+    fadeIn = models.PositiveSmallIntegerField(default=0)
+    fadeOut = models.PositiveSmallIntegerField(default=0)
+    startOffset = models.PositiveIntegerField(default=0)
+    endOffset = models.PositiveIntegerField(default=0)
 
 class Pattern(models.Model):
     song = models.ForeignKey(Song, on_delete=models.CASCADE, related_name='patterns')

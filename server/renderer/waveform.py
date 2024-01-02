@@ -6,6 +6,7 @@
 import sys
 
 from pydub import AudioSegment
+from pydub.silence import detect_leading_silence
 from PIL import Image, ImageDraw
 
 class Waveform(object):
@@ -13,11 +14,23 @@ class Waveform(object):
     bar_count = 107
     db_ceiling = 60
 
-    def __init__(self, filename):
+    def __init__(self, filename: str, options: dict = None):
         self.filename = filename
 
         audio_file = AudioSegment.from_file(
             self.filename, self.filename.split('.')[-1])
+        
+        trim_leading_silence = lambda x: x[detect_leading_silence(x) :]
+        trim_trailing_silence = lambda x: trim_leading_silence(x.reverse()).reverse()
+        strip_silence = lambda x: trim_trailing_silence(trim_leading_silence(x))
+        
+        if options:
+            if options['normalize']:
+                audio_file = audio_file.normalize()
+            if options['trim']:
+                audio_file = strip_silence(audio_file)
+            if options['reverse']:
+                audio_file = audio_file.reverse()
 
         self.peaks = self._calculate_peaks(audio_file)
 
@@ -61,12 +74,21 @@ class Waveform(object):
         return im
 
     def save(self):
+        print("waveform.save")
         """ Save the waveform as an image """
         png_filename = self.filename.replace(
             self.filename.split('.')[-1], 'png')
         with open(png_filename, 'wb') as imfile:
             self._generate_waveform_image().save(imfile, 'PNG')
         return png_filename
+    
+    def bytes(self):
+        """ Returns the raw waveform data  """
+        return self._generate_waveform_image().tobytes()
+    
+    def image(self):
+        """ Returns the waveform image """
+        return self._generate_waveform_image()
 
 if __name__ == '__main__':
     filename = sys.argv[1]

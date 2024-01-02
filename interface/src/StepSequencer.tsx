@@ -15,7 +15,7 @@ const stepSettings = {
   defaultVelocity: 100,
 };
 
-const arraysEqual = (a:any[], b:any[]) => {
+export const arraysEqual = (a:any[], b:any[]) => {
   if (a.length !== b.length) return false;
   return a.every((val, i) => val === b[i]);
 };

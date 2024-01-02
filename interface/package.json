@@ -20,9 +20,11 @@
     "@types/react-dom": "^18.2.18",
     "axios": "^1.6.2",
     "react": "^18.2.0",
+    "react-circular-input": "^0.2.4",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.49.2",
     "react-redux": "^9.0.4",
+    "react-rotary-knob": "^3.0.3",
     "react-scripts": "5.0.1",
     "redux-persist": "^6.0.0",
     "typescript": "^4.9.5",
@@ -34,7 +36,7 @@
     "postcss": "https://registry.npmjs.org/postcss/-/postcss-8.4.31.tgz"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "start": "react-scripts start GENERATE_SOURCEMAP=false",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"

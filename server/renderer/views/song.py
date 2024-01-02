@@ -84,11 +84,20 @@ class SongView(APIView):
                 # Update that row with Track data, and use the updated DB row to update trackIndex
                 trackToUpdate = Track.objects.get(song=song, position=track['position'])
                 trackToUpdate.name = track['name']
-                trackToUpdate.pan = track['pan']
-                trackToUpdate.volume = track['volume']
-                trackToUpdate.sample = Sample.objects.get(filename=track['sample'])
-                trackToUpdate.disabled = track['disabled']
-                trackToUpdate.transpose = track['transpose']
+                trackToUpdate.pan = track['pan'] if 'pan' in track else 0
+                trackToUpdate.volume = track['volume'] if 'volume' in track else -6
+                trackToUpdate.sample = Sample.objects.get(id=track['sample']['id'])
+                trackToUpdate.disabled = track['disabled'] if 'disabled' in track else False
+                trackToUpdate.transpose = track['transpose'] if 'transpose' in track else 0
+                trackToUpdate.rootPitch = track['rootPitch'] if 'rootPitch' in track else 'C3'
+                trackToUpdate.pitchShift = track['pitchShift'] if 'pitchShift' in track else 0
+                trackToUpdate.reverse = track['reverse'] if 'reverse' in track else False
+                trackToUpdate.startOffset = track['startOffset'] if 'startOffset' in track else 0
+                trackToUpdate.endOffset = track['endOffset'] if 'endOffset' in track else 0
+                trackToUpdate.fadeIn = track['fadeIn'] if 'fadeIn' in track else 0
+                trackToUpdate.fadeOut = track['fadeOut'] if 'fadeOut' in track else 0
+                trackToUpdate.normalize = track['normalize'] if 'normalize' in track else False
+                trackToUpdate.trim = track['trim'] if 'trim' in track else False
                 trackToUpdate.save()
                 trackIndex[track['position']] = trackToUpdate
             else:
@@ -195,8 +204,6 @@ class SongView(APIView):
         # return response
         return Response({'id': song.id}, status=status.HTTP_200_OK)
 
-
-
 class PatternViewSet(viewsets.ModelViewSet):
     queryset = Pattern.objects.all()
     serializer_class = PatternSerializer
@@ -239,12 +246,22 @@ class CreateSongView(APIView):
             newTrack = Track.objects.create(
                 song=song,
                 name=track['name'],
-                pan=track['pan'],
-                volume=track['volume'],
-                sample=Sample.objects.get(filename=track['sample']),
-                disabled=track['disabled'],
-                transpose=track['transpose'],
-                position=track['position']
+                pan=track['pan'] if 'pan' in track else 0,
+                volume=track['volume'] if 'volume' in track else -6,
+                sample=Sample.objects.get(id=track['sample']['id']) if 'sample' in track else None,
+                disabled=track['disabled'] if 'disabled' in track else False,
+                transpose=track['transpose'] if 'transpose' in track else 0,
+                position=track['position'] if 'position' in track else 0,
+                rootPitch=track['rootPitch'] if 'rootPitch' in track else 'C3',
+                pitchShift=track['pitchShift'] if 'pitchShift' in track else 0,
+                reverse=track['reverse'] if 'reverse' in track else False,
+                startOffset = track['startOffset'] if 'startOffset' in track else 0,
+                endOffset = track['endOffset'] if 'endOffset' in track else 0,
+                fadeIn = track['fadeIn'] if 'fadeIn' in track else 0,
+                fadeOut = track['fadeOut'] if 'fadeOut' in track else 0,
+                normalize = track['normalize'] if 'normalize' in track else False,
+                trim = track['trim'] if 'trim' in track else False
+                
             )
             newTrack.save()
 

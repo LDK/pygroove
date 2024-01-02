@@ -3,7 +3,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { RootState } from './store';
 
 export type Filter = {
-  type: string;
+  filter_type: string;
   frequency: number;
   q: number;
   on: boolean;
@@ -16,9 +16,18 @@ export type Loc = {
   tick: number;
 };
 
+export type SampleData = {
+  display?: string;
+  name?: string;
+  filename: string;
+  url?: string;
+  waveform?: string;
+  id?: number;
+};
+
 export type Track = {
   name: string;
-  sample?: string;
+  sample?: SampleData;
   volume: number;
   pan: number;
   disabled: boolean;
@@ -28,7 +37,8 @@ export type Track = {
   rootPitch?: string;
   pitchShift?: number;
   reverse?: boolean;
-  normalizeSample?: boolean;
+  normalize?: boolean;
+  trim?: boolean;
 };
 
 export type Step = {
@@ -74,7 +84,7 @@ export const simpleTrack = ({ song, name: trackName, sample }:{ song: SongState,
     pan: 0,
     disabled: false,
     transpose: 0,
-    sample,
+    sample: { filename: sample },
     position: song.tracks.length + 1,
   } as Track
 };
@@ -204,6 +214,12 @@ const songSlice = createSlice({
       if (!track) return;
       track.volume = action.payload.value;
     },
+    setTrackSample: (state, action: PayloadAction<{position: number, sample: SampleData}>) => {
+      console.log('setTrackSample', action.payload);
+      const track = state.tracks.find((track) => track.position === action.payload.position);
+      if (!track) return;
+      track.sample = action.payload.sample;
+    },
     setTrackPan: (state, action: PayloadAction<{position: number, value: number}>) => {
       const track = state.tracks.find((track) => track.position === action.payload.position);
       if (!track) return;
@@ -243,6 +259,11 @@ const songSlice = createSlice({
     },
     setActivePattern: (state, action: PayloadAction<Pattern>) => {
       state.activePattern = action.payload;
+    },
+    updateTrack: (state, action: PayloadAction<Track>) => {
+      const track = state.tracks.find((trk) => trk.position === action.payload.position);
+      if (!track) return;
+      Object.assign(track, action.payload);
     }
   },
 });
@@ -264,11 +285,13 @@ export const {
   toggleStep,
   setTrackVolume,
   setTrackPan,
+  setTrackSample,
   setSongTitle,
   setAuthor,
   setBpm,
   setSongId,
   setStep,
+  updateTrack
 } = songSlice.actions;
 
 // getActiveSong selector function
