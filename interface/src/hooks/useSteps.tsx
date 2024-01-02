@@ -20,7 +20,7 @@ const useSteps = ({ barDiv, beatDiv, beatStep, defaultPitch, defaultVelocity }:U
   // beatStep: How many ticks we display per beat (equidistant)
 
   const [editingStep, setEditingStep] = useState<Step | null>(null);
-  const [editingTrack, setEditingTrack] = useState<Track | null>(null);
+  const [editingTrack, setEditingTrack] = useState<Track | undefined>(undefined);
 
   const { DialogActionButtons } = useDialogUI();
 
