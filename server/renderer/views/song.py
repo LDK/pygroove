@@ -86,7 +86,7 @@ class SongView(APIView):
                 trackToUpdate.name = track['name']
                 trackToUpdate.pan = track['pan'] if 'pan' in track else 0
                 trackToUpdate.volume = track['volume'] if 'volume' in track else -6
-                trackToUpdate.sample = Sample.objects.get(filename=track['sample'])
+                trackToUpdate.sample = Sample.objects.get(id=track['sample']['id'])
                 trackToUpdate.disabled = track['disabled'] if 'disabled' in track else False
                 trackToUpdate.transpose = track['transpose'] if 'transpose' in track else 0
                 trackToUpdate.rootPitch = track['rootPitch'] if 'rootPitch' in track else 'C3'
@@ -248,7 +248,7 @@ class CreateSongView(APIView):
                 name=track['name'],
                 pan=track['pan'] if 'pan' in track else 0,
                 volume=track['volume'] if 'volume' in track else -6,
-                sample=Sample.objects.get(filename=track['sample']) if 'sample' in track else None,
+                sample=Sample.objects.get(id=track['sample']['id']) if 'sample' in track else None,
                 disabled=track['disabled'] if 'disabled' in track else False,
                 transpose=track['transpose'] if 'transpose' in track else 0,
                 position=track['position'] if 'position' in track else 0,
