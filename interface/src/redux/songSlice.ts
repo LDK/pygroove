@@ -120,6 +120,11 @@ const songSlice = createSlice({
     clearSong: (state) => {
       Object.assign(state, initialState);
     },
+    toggleTrack: (state, action: PayloadAction<number>) => {
+      const track = state.tracks.find((trk) => trk.position === action.payload);
+      if (!track) return;
+      track.disabled = !track.disabled;
+    },
     setSong: (state, action: PayloadAction<Song>) => {
       state = action.payload;
     },
@@ -212,6 +217,7 @@ const songSlice = createSlice({
       const track = state.tracks.find((track) => track.position === action.payload.position);
       console.log('setTrackVolume', track, action.payload);
       if (!track) return;
+
       track.volume = action.payload.value;
     },
     setTrackSample: (state, action: PayloadAction<{position: number, sample: SampleData}>) => {
@@ -291,7 +297,8 @@ export const {
   setBpm,
   setSongId,
   setStep,
-  updateTrack
+  updateTrack,
+  toggleTrack
 } = songSlice.actions;
 
 // getActiveSong selector function
