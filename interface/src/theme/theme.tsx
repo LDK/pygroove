@@ -56,7 +56,7 @@ const baseThemeOptions:ExtendedThemeOptions = {
       contrastText: '#fff',
     },
     tray: {
-      main: '#AABAEA',
+      main: "rgb(170 186 234 / 67%)",
     },
     // more yellow-orange than red-orange
     warning: {

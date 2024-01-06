@@ -1,8 +1,8 @@
 import { Box, Button, Grid, Typography } from "@mui/material";
 import { MoreHorizTwoTone } from "@mui/icons-material";
 import { useEffect, useState } from "react";
-import { Step, Track, getActivePattern, getActiveSong, getTrackSteps } from "./redux/songSlice";
-import { useSelector } from "react-redux";
+import { Step, Track, getActivePattern, getActiveSong, getTrackSteps, toggleTrack } from "./redux/songSlice";
+import { useDispatch, useSelector } from "react-redux";
 import useSteps from "./hooks/useSteps";
 import TrackEditDialog from "./components/TrackEditDialog";
 import useControls from "./hooks/useControls";
@@ -30,10 +30,17 @@ const StepSequencer = () => {
 
   const { VolumeSlider, PanSlider, onSliderSave } = useControls();
 
+  const dispatch = useDispatch();
+
   const SequencerTrack = ({ track }:{ track:Track }) => {
     const [ on, setOn ] = useState(!track.disabled);
     const [patternSteps, setPatternSteps] = useState<Step[]>(activePattern ? getTrackSteps(activePattern, track) : []);
-  
+
+    const handleTrackToggle = () => {
+      console.log('handleTrackToggle', track);
+      dispatch(toggleTrack(track.position));
+    }
+
     useEffect(() => {
       if (!activePattern) return;
       const newSteps = getTrackSteps(activePattern, track);
@@ -131,7 +138,10 @@ const StepSequencer = () => {
                 <Box borderRadius="50%" bgcolor={
                   on ? 'rgba(225,0,0,.9)' : 'info.dark'
                 } height="16px" width="16px" mx="auto"
-                  onClick={() => setOn(!on)}
+                  onClick={() => {
+                    setOn(!on)
+                    handleTrackToggle();
+                  }}
                 >
   
                 </Box>

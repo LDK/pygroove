@@ -1,8 +1,13 @@
 # GOAL: Create a simple groovebox using pydub to render JSON sequences created via web
 import copy
+import datetime
 import io
+import librosa
+import soundfile as sf
+
+import numpy as np
 from pydub import AudioSegment
-# import pydub.scipy_effects
+from .custom_effects import *
 import cgitb
 from os import curdir, rename
 from os.path import join as pjoin
@@ -22,8 +27,10 @@ songBars = 0
 songPatterns = []
 # Dict of patterns, keyed by position
 patternIndex = {}
-# Dict of tracks, keyed by name
-trackIndex = {}
+# # Dict of tracks, keyed by name
+# trackIndex = {}
+
+filterMaxFreq = 22000
 
 # Amount of swing to apply to patterns
 # Starts getting crazy above 1, reasonably groovy at like .25.  Default to none.
@@ -36,7 +43,7 @@ swingUp = False
 channelDefaults = {'volume': -12.0, 'pan': 0}
 
 # channels begins as an empty dictionary, later to hold AudioSegments
-channels = {}
+# channels = {}
 
 current_offset_ms = 0  # Start at 0 ms
 
@@ -57,6 +64,34 @@ def pitch_diff(fromPitch, toPitch):
     fromDiff = fromDiff + (pitchIndexes[toNote] - pitchIndexes[fromNote])
     return fromDiff
     
+# Takes a librosa-formatted (float32) audiofile and returns a pydub (int16) AudioSegment
+# Adapted from https://stackoverflow.com/posts/68151661/revisions
+def librosaToPydub(audiofile):
+    y, sr = audiofile
+    
+    # convert from float to uint16
+    y = np.array(y * (1<<15), dtype=np.int16)
+    audio_segment = AudioSegment(
+        y.tobytes(), 
+        frame_rate=sr,
+        sample_width=y.dtype.itemsize, 
+        channels=1
+    )
+    return audio_segment
+
+# Takes a pydub (int16) AudioSegment and returns a librosa-formatted (float32) audiofile
+# Adapted from https://stackoverflow.com/posts/68151661/revisions
+
+def pydubToLibrosa(audio_segment:AudioSegment):
+    samples = audio_segment.get_array_of_samples()
+    y = np.array(samples).astype(np.float32)/32768 # 16 bit 
+    y = librosa.core.resample(y, audio_segment.frame_rate, 44100, res_type='kaiser_best')
+    sr = audio_segment.frame_rate
+    
+    # y = np.frombuffer(audio_segment._data, dtype=np.int16)
+    # y = y.astype(np.float32) / (1<<15)
+    return y, sr
+
 def detect_leading_silence(sound, silence_threshold=-50.0, chunk_size=10):
     trim_ms = 0 # ms
 
@@ -121,7 +156,11 @@ def addNote(trackName,sound,bar,beat,tick,options = {}):
     loc = int(loc)
 
     # master = master.overlay(channels[trackName], position=current_offset_ms)
-    channel = channel.overlay(sound, position=int(loc) + current_offset_ms)
+    soundLoc = float(int(loc) + int(current_offset_ms))
+    channel = channel.overlay(sound, position=soundLoc, gain_during_overlay=-12.0)
+
+    # print ("Adding note to track {} at {}".format(trackName,soundLoc))
+
     channels[trackName] = channel
 
 def split(wavFile,pieces):
@@ -139,14 +178,20 @@ def split(wavFile,pieces):
             slices.append(sliceInfo)
     return slices
 
-def transpose(sound,st):
-    octaves = float(st) / 12
-    new_sample_rate = int(sound.frame_rate * (2.0 ** octaves))
-    return sound._spawn(sound.raw_data, overrides={'frame_rate': new_sample_rate})
-
 def getTrackSound(track):
-    trackWav = './audio/' + track['sample']
-    trackSound = AudioSegment.from_wav(trackWav)
+    trackWav = './audio/' + track['sample']['filename']
+    trackSound = AudioSegment.from_wav(trackWav) - 12
+
+    if 'transpose' in track:
+        transpose = int(track['transpose'])
+        y, sr = sf.read(trackWav)
+        y_pitch = librosa.effects.pitch_shift(y, sr=sr, n_steps=transpose)
+
+        trackSound = librosaToPydub((y_pitch, sr))
+
+    if 'normalize' in track:
+        if (track['normalize'] == True):
+            trackSound = trackSound.normalize()
 
     if 'trim' in track:
         if (track['trim'] == True):
@@ -156,21 +201,92 @@ def getTrackSound(track):
         if (track['reverse'] == True):
             trackSound = trackSound.reverse()
 
-    # Handle transposition.  trackTranspose is the transposition value in semitones
-    if 'transpose' in track:
-        trackSound = transpose(trackSound,track['transpose'])
+    if 'pan' in track:
+        # print ("Panning track {} to {}".format(track['name'],track['pan'] / 100))
+        trackSound = trackSound.pan(track['pan']/100)
 
-    if 'amp' in track:
-        amp = track['amp']            
+    # Apply the volume
+    if 'volume' in track:
+        trackVol = float(track['volume'])
+        trackSound += trackVol
+        # print ("Applying volume of {} to track {}".format(trackVol,track['name']))
 
-        if 'attack' in amp:
-            peak = 0.0
-            if 'peak' in amp:
-                peak += float(amp['peak'])
-            trackSound = trackSound.fade(from_gain=-120.0, to_gain = peak, start=0, duration=200)
+    if 'filters' in track:
+        for filter in track['filters']:
+            if filter['on'] == True:
+                if filter['filter_type'] == 'hp':
+                    trackSound = trackSound.resonant_high_pass_filter(cutoff_freq=int(filter['frequency'] * filterMaxFreq), order=3)
+                if filter['filter_type'] == 'lp':
+                    trackSound = trackSound.resonant_low_pass_filter(cutoff_freq=int(filter['frequency'] * filterMaxFreq), order=5, q=filter['q'])
+                # if filter['filter_type'] == 'bp':
+                #     trackSound = trackSound.band_pass_filter(low_cutoff_freq=int(filter['frequency']), high_cutoff_freq=int(filter['frequency2']), order=3)
+
+    # if 'amp' in track:
+    #     amp = track['amp']            
+
+    #     if 'attack' in amp:
+    #         peak = 0.0
+    #         if 'peak' in amp:
+    #             peak += float(amp['peak'])
+    #         trackSound = trackSound.fade(from_gain=-120.0, to_gain = peak, start=0, duration=200)
 
     return trackSound
 
+def getStepSound(step, track):
+    trackWav = './audio/' + track['sample']['filename']
+    stepSound = AudioSegment.from_wav(trackWav) - 12
+
+    shiftSteps = 0
+    transposeSteps = 0
+
+    if 'pitch' in step:
+        transposeSteps += pitch_diff(track['rootPitch'],step['pitch'])
+        shiftSteps = transposeSteps * 100
+    if 'transpose' in track:
+        transposeSteps += int(track['transpose'])
+        shiftSteps = transposeSteps * 100
+    if 'pitchShift' in track:
+        shiftSteps += int(track['pitchShift'])
+
+    if shiftSteps != 0:
+        y, sr = sf.read(trackWav)
+        y_pitch = librosa.effects.pitch_shift(y, sr=sr, n_steps=shiftSteps, bins_per_octave=1200)
+
+        stepSound = librosaToPydub((y_pitch, sr))
+
+    if 'normalize' in track:
+        if (track['normalize'] == True):
+            stepSound = stepSound.normalize()
+
+    if 'trim' in track:
+        if (track['trim'] == True):
+            stepSound = trim(stepSound)
+
+    if 'reverse' in track:
+        if (track['reverse'] == True):
+            stepSound = stepSound.reverse()
+
+    if 'pan' in track:
+        # print ("Panning track {} to {}".format(track['name'],track['pan'] / 100))
+        stepSound = stepSound.pan(track['pan']/100)
+
+    # Apply the volume
+    if 'volume' in track:
+        trackVol = float(track['volume'])
+        stepSound += trackVol
+        # print ("Applying volume of {} to track {}".format(trackVol,track['name']))
+
+    if 'filters' in track:
+        for filter in track['filters']:
+            if filter['on'] == True:
+                if filter['filter_type'] == 'hp':
+                    stepSound = stepSound.high_pass_filter(cutoff_freq=int(filter['frequency'] * filterMaxFreq), order=3)
+                if filter['filter_type'] == 'lp':
+                    stepSound = stepSound.resonant_low_pass_filter(cutoff_freq=int(filter['frequency'] * filterMaxFreq), order=5, q=filter['q'])
+                # if filter['filter_type'] == 'bp':
+                #     trackSound = trackSound.band_pass_filter(low_cutoff_freq=int(filter['frequency']), high_cutoff_freq=int(filter['frequency2']), order=3)
+
+    return stepSound
 
 def renderStep(track, trackSound, step):
     trackName = track['name']
@@ -183,19 +299,19 @@ def renderStep(track, trackSound, step):
         return
 
     sound = copy.copy(trackSound)
-
-    # Transpose
-    if ('transpose' in step):
-        sound = transpose(sound,int(step['transpose']))
-    
-    # Pitch
-    if ('pitch' in step):
-        rootPitch = track['rootPitch'] if 'rootPitch' in track else 'C3'
-        sound = transpose(sound,pitch_diff(rootPitch,step['pitch']))
     
     # Apply the volume
-    if ('volume' in step):
-        sound = sound + int(step['volume'])
+    if ('velocity' in step):
+        velocityOffset = float((step['velocity'] - 80) / 127)
+        volumeDiff = velocityOffset * abs(track['volume']) if 'volume' in track else velocityOffset
+
+        if volumeDiff:
+            # print ("Applying velocity of {} to track {}".format(step['velocity'],track['name']))
+            # print ("Velocity offset is {}".format(velocityOffset))
+            # print ("Track volume is {}".format(track['volume']))
+            # print ("Volume diff is {}".format(volumeDiff))
+
+            sound = sound + volumeDiff
     
     # Apply the pan
     if ('pan' in step):
@@ -207,6 +323,10 @@ def renderStep(track, trackSound, step):
 def renderJSON(data):
     global channels, bpm, beatDiv, tickDiv, songBars, swingAmount, swingUp, channelDefaults, songPatterns, patternIndex, trackIndex, current_offset_ms
 
+    # Reset all the globals
+    trackIndex = {}
+    channels = {}
+
     current_offset_ms = 0
 
     bpm = int(data['bpm'])
@@ -217,6 +337,7 @@ def renderJSON(data):
     swingUp = False
 
     songPatterns = data['patternSequence'] if 'patternSequence' in data else []
+    songPatterns = [1,1,1]
     songBars = 0
 
     # For each pattern in songPatterns, add it to patternIndex
@@ -237,7 +358,16 @@ def renderJSON(data):
 
     # For each track in the json data, add a channel
     for track in data['tracks']:
+        if 'disabled' in track and track['disabled'] == True:
+            if track['name'] in trackIndex:
+                # print ("Removing track {}".format(track['name']))
+                del trackIndex[track['name']]
+                del channels[track['name']]
+            continue
+
         trackName = track['name']
+
+        # print ("Adding track {}".format(trackName))
 
         # Add a channel
         newChannel(trackName)
@@ -250,28 +380,24 @@ def renderJSON(data):
         pattern = patternIndex[position]
 
         for trackName, steps in pattern['steps'].items():
-            track = trackIndex[trackName]
-            trackSound = getTrackSound(track)
+            if trackName in trackIndex:
+                track = trackIndex[trackName]
+                # print ("Rendering pattern {} track {}".format(position,trackName))
+            else:
+                continue
 
             for step in steps:
-                renderStep(track, trackSound, step)
+                stepSound = getStepSound(step, track)
+                renderStep(track, stepSound, step)
 
-            # Apply filter1
-            if ('filterOn' in track and track['filterOn'] == True):
-                if (track['filter']['type'] == 'hp' and track['filter']['frequency']):
-                    channels[trackName] = channels[trackName].high_pass_filter(cutoff_freq=int(track['filter']['frequency']), order=3)
-                if (track['filter']['type'] == 'lp' and track['filter']['frequency']):
-                    channels[trackName] = channels[trackName].low_pass_filter(cutoff_freq=int(track['filter']['frequency']), order=3)
-                if (track['filter']['type'] == 'bp' and track['filter']['frequency'] and track['filter']['frequency2']):
-                    channels[trackName] = channels[trackName].band_pass_filter(low_cutoff_freq=int(track['filter']['frequency']), high_cutoff_freq=int(['filter']['frequency2']), order=3)
-            # Apply the volume
-            if 'amp' in track and 'volume' in track['amp']:
-                trackVol = float(track['amp']['volume'])
-                channels[trackName] += trackVol
+            # # Apply the volume
+            # if 'volume' in track:
+            #     trackVol = float(track['volume'])
+            #     channels[trackName] += trackVol
             # Apply the pan
-            if ('pan' in track):
-                trackPan = int(track['pan'])
-                channels[trackName] = channels[trackName].pan(trackPan/100)
+            # if ('pan' in track):
+            #     trackPan = int(track['pan'])
+            #     channels[trackName] = channels[trackName].pan(trackPan/100)
 
 
         patternLength = int(pattern['bars']) if 'bars' in pattern else 2
@@ -282,24 +408,41 @@ def renderJSON(data):
         current_offset_ms += one_pattern_duration_ms
 
     for trackName, track in channels.items():
-        master = master.overlay(track, position=0)
+        master = master.overlay(track, position=0, gain_during_overlay=-6)
+        # print ("Overlaying track {}".format(trackName))
 
     # Create an in-memory buffer
     buffer = io.BytesIO()
 
-    master.normalize().export(buffer, format='mp3')
+    master.normalize().export(buffer, format='mp3', bitrate="320k")
 
     # Get the MP3 data from the buffer
     mp3_data = buffer.getvalue()
 
-    # Close the buffer
-    buffer.close()
 
     # Write to file
 
-    # renderFilename = "{}.mp3".format(title)
+    # get date string formatted like 20231231235959
+    datestring = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+    renderFilename = "{}".format(title)
 
-    # out_f = open(renderFilename, 'wb')
-    # out_f.write(mp3_data)
+    out_f = open("{}.mp3".format(renderFilename), 'wb')
+    out_f.write(mp3_data)
+
+    master.normalize().export(buffer, format='mp3', bitrate="320k")
+
+    # Load the new mp3 with librosa
+    audiofile = librosa.load(buffer, mono=False, sr=44100)
+    testSegment = librosaToPydub(audiofile)
+
+    # Write the testSegment to file
+    testSegment.normalize().export("{}-2.mp3".format(renderFilename), format="mp3")
+
+    out_f = open("{}-3.mp3".format(renderFilename), 'wb')
+    out_f.write(mp3_data)
+
+    # Close the buffer
+    buffer.close()
+
 
     return mp3_data
