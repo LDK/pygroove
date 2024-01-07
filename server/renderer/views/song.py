@@ -19,61 +19,8 @@ class SongViewSet(viewsets.ModelViewSet):
 class SongView(APIView):
     permission_classes = (AllowAny,)
 
-    def get(self, request, pk=None):
-        # Check authentication
-        # if not request.user.is_authenticated:
-        #     return Response({'error': 'Not authenticated'}, status=status.HTTP_401_UNAUTHORIZED)
-
-        # Get song from database         
-        try:
-            song = Song.objects.get(pk=pk)
-        except Song.DoesNotExist:
-            return Response({'error': 'Song not found'}, status=status.HTTP_404_NOT_FOUND)
-
-        # Check to see if the current user is the author of the song
-        # if song.user != request.user:
-        #     return Response({'error': 'Not authorized'}, status=status.HTTP_401_UNAUTHORIZED)
-
-        serializer = SongSerializer(song)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-    
-    # updating an existing song
-    def put(self, request, pk=None):
-        # Check authentication
-        if not request.user.is_authenticated:
-            return Response({'error': 'Not authenticated'}, status=status.HTTP_401_UNAUTHORIZED)
-
-        # Get song from database         
-        try:
-            song = Song.objects.get(pk=pk)
-        except Song.DoesNotExist:
-            return Response({'error': 'Song not found'}, status=status.HTTP_404_NOT_FOUND)
-
-        # Check to see if the current user is the author of the song
-        if song.user != request.user:
-            return Response({'error': 'Not authorized'}, status=status.HTTP_401_UNAUTHORIZED)
-    
-        # Save song to database
-        song.title = request.data['title']
-        song.author = request.data['author']
-        song.bpm = request.data['bpm']
-        song.swing = request.data['swing']
-        song.patternSequence = request.data['patternSequence']
-        song.save()
-
-        # Decode post/put json data for Tracks and Patterns and store as variables
-        tracks = request.data['tracks']
-        patterns = request.data['patterns']
-
-        # Create dict trackIndex of Tracks keyed by `position`
+    def saveTracks(self, song, tracks):
         trackIndex = {}
-        for track in tracks:
-            trackIndex[track['position']] = track
-
-        # Create dict patternIndex of Patterns keyed by `position`
-        patternIndex = {}
-        for pattern in patterns:
-            patternIndex[pattern['position']] = pattern
 
         # For each Track:
         for track in tracks:
@@ -107,7 +54,7 @@ class SongView(APIView):
                     name=track['name'],
                     pan=track['pan'],
                     volume=track['volume'],
-                    sample=Sample.objects.get(filename=track['sample']),
+                    sample=Sample.objects.get(id=track['sample']['id']),
                     disabled=track['disabled'],
                     transpose=track['transpose'],
                     position=track['position']
@@ -139,9 +86,14 @@ class SongView(APIView):
                         position=filter['position']
                     )
                     newFilter.save()
-        
-        # Delete any Tracks in the DB keyed to the current song whose `position` field is a value not found in any row of trackIndex
-        Track.objects.filter(song=song).exclude(position__in=trackIndex.keys()).delete()
+
+        return trackIndex
+
+    def savePatterns(self, song, patterns, trackIndex):
+        # Create dict patternIndex of Patterns keyed by `position`
+        patternIndex = {}
+        for pattern in patterns:
+            patternIndex[pattern['position']] = pattern
 
         # For each Pattern:
         for pattern in patterns:
@@ -171,11 +123,11 @@ class SongView(APIView):
                 # Check to see if there is an existing Step in the database keyed to the current Pattern, at the same `loc` and `track_` values
                 # If there is, update the existing Step with the new data
                 # If there is not, create a new Step with the new data
-                if Step.objects.filter(pattern=patternIndex[pattern['position']], loc=step['loc']).exists():
+                loc = '.'.join([str(step['loc']['bar']), str(step['loc']['beat']), str(step['loc']['tick'])])    
+
+                if Step.objects.filter(pattern=patternIndex[pattern['position']], track=trackIndex[step['track']['position']], loc=loc).exists():
                     # Update that row with Step data
-                    stepToUpdate = Step.objects.get(pattern=patternIndex[pattern['position']], loc=step['loc'])
-                    stepToUpdate.track = trackIndex[step['track']['position']]
-                    stepToUpdate.filter = step['filter'] if 'filter' in step else {}
+                    stepToUpdate = Step.objects.get(pattern=patternIndex[pattern['position']], track=trackIndex[step['track']['position']], loc=loc)
                     stepToUpdate.pitch = step['pitch'] if 'pitch' in step else 'C3'
                     stepToUpdate.reverse = step['reverse'] if 'reverse' in step else False
                     stepToUpdate.velocity = step['velocity'] if 'velocity' in step else 100
@@ -183,13 +135,14 @@ class SongView(APIView):
                     stepToUpdate.on = step['on'] if 'on' in step else False
                     stepToUpdate.save()
                 else:
+                    patternToUpdate = Pattern.objects.get(song=song, position=pattern['position'])
+                    
                     # Create new Step row in the DB, pointing to current Pattern
                     newStep = Step.objects.create(
                         pattern=patternToUpdate,
                         track=trackIndex[step['track']['position']],
                         # need to convert loc.bar, loc.beat, loc.tick to a string as they will be numbers in the JSON
-                        loc='.'.join([str(step['loc']['bar']), str(step['loc']['beat']), str(step['loc']['tick'])]),
-                        filter=step['filter'] if 'filter' in step else {},
+                        loc=loc,
                         pitch=step['pitch'] if 'pitch' in step else 'C3',
                         reverse=step['reverse'] if 'reverse' in step else False,
                         velocity=step['velocity'] if 'velocity' in step else 100,
@@ -197,6 +150,87 @@ class SongView(APIView):
                         on=step['on'] if 'on' in step else False
                     )
                     newStep.save()
+
+                if 'filters' in step:
+                    dbStep = Step.objects.get(pattern=patternIndex[pattern['position']], loc=loc, track=trackIndex[step['track']['position']])
+
+                    # For each Filter override on the current Step:
+                    for filter in step['filters']:
+                        if Filter.objects.filter(step=dbStep, position=filter['position']).exists():
+                            filterToUpdate = Filter.objects.get(step=dbStep, position=filter['position'])
+                            filterToUpdate.on = filter['on']
+                            filterToUpdate.filter_type = filter['filter_type']
+                            filterToUpdate.frequency = filter['frequency']
+                            filterToUpdate.q = filter['q']
+                            filterToUpdate.save()
+                        else :
+                            # Create new Filter row in the DB, pointing to current Track
+                            newFilter = Filter.objects.create(
+                                step=dbStep,
+                                on=filter['on'],
+                                filter_type=filter['filter_type'],
+                                frequency=filter['frequency'],
+                                q=filter['q'],
+                                position=filter['position']
+                            )
+                            newFilter.save()
+        
+        return patternIndex
+
+    def get(self, request, pk=None):
+        # Check authentication
+        # if not request.user.is_authenticated:
+        #     return Response({'error': 'Not authenticated'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # Get song from database         
+        try:
+            song = Song.objects.get(pk=pk)
+        except Song.DoesNotExist:
+            return Response({'error': 'Song not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Check to see if the current user is the author of the song
+        # if song.user != request.user:
+        #     return Response({'error': 'Not authorized'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        serializer = SongSerializer(song)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    # updating an existing song
+    def put(self, request, pk=None):
+        # Check authentication
+        if not request.user.is_authenticated:
+            return Response({'error': 'Not authenticated'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # Get song from database         
+        try:
+            song = Song.objects.get(pk=pk)
+        except Song.DoesNotExist:
+            return Response({'error': 'Song not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Check to see if the current user is the author of the song
+        if song.user != request.user:
+            return Response({'error': 'Not authorized'}, status=status.HTTP_401_UNAUTHORIZED)
+    
+        # Save song to database
+        song.title = request.data['title']
+        song.author = request.data['author']
+        song.bpm = request.data['bpm']
+        song.swing = request.data['swing']
+        song.patternSequence = request.data['patternSequence']
+        song.save()
+
+        # Decode post/put json data for Tracks and Patterns and store as variables
+        tracks = request.data['tracks']
+        patterns = request.data['patterns']
+
+        # Create dict trackIndex of Tracks keyed by `position`
+        trackIndex = self.saveTracks(song, tracks)
+
+        # Delete any Tracks in the DB keyed to the current song whose `position` field is a value not found in any row of trackIndex
+        Track.objects.filter(song=song).exclude(position__in=trackIndex.keys()).delete()
+
+        # Create dict patternIndex of Patterns keyed by `position`
+        patternIndex = self.savePatterns(song, patterns, trackIndex)
 
         # Delete any Patterns in the DB keyed to the current song whose `position` field is a value not found in any row of patternIndex
         Pattern.objects.filter(song=song).exclude(position__in=patternIndex.keys()).delete()
@@ -212,8 +246,6 @@ class RenderView(APIView):
     permission_classes = (AllowAny,)
 
     def post(self, request):
-        print(request.data)
-
         # Call renderJSON and get MP3 data as bytes
         mp3_data = renderJSON(request.data)
 
@@ -229,7 +261,6 @@ class CreateSongView(APIView):
         if not request.user.is_authenticated:
             return Response({'error': 'Not authenticated'}, status=status.HTTP_401_UNAUTHORIZED)
 
-        print(request.data)
         # Save song to database
         song = Song.objects.create(
             title=request.data['title'],
@@ -240,43 +271,11 @@ class CreateSongView(APIView):
             patternSequence=request.data['patternSequence']
         )
 
-        # For each Track:
-        for track in request.data['tracks']:
-            # Create new Track row in the DB, pointing to current Song
-            newTrack = Track.objects.create(
-                song=song,
-                name=track['name'],
-                pan=track['pan'] if 'pan' in track else 0,
-                volume=track['volume'] if 'volume' in track else -6,
-                sample=Sample.objects.get(id=track['sample']['id']) if 'sample' in track else None,
-                disabled=track['disabled'] if 'disabled' in track else False,
-                transpose=track['transpose'] if 'transpose' in track else 0,
-                position=track['position'] if 'position' in track else 0,
-                rootPitch=track['rootPitch'] if 'rootPitch' in track else 'C3',
-                pitchShift=track['pitchShift'] if 'pitchShift' in track else 0,
-                reverse=track['reverse'] if 'reverse' in track else False,
-                startOffset = track['startOffset'] if 'startOffset' in track else 0,
-                endOffset = track['endOffset'] if 'endOffset' in track else 0,
-                fadeIn = track['fadeIn'] if 'fadeIn' in track else 0,
-                fadeOut = track['fadeOut'] if 'fadeOut' in track else 0,
-                normalize = track['normalize'] if 'normalize' in track else False,
-                trim = track['trim'] if 'trim' in track else False
-                
-            )
-            newTrack.save()
+        # Create dict trackIndex of Tracks keyed by `position`
+        trackIndex = self.saveTracks(song, request.data['tracks'])
 
-            # For each Filter in the current Track:
-            for filter in track['filters'] if 'filters' in track else []:
-                # Create new Filter row in the DB, pointing to current Track
-                newFilter = Filter.objects.create(
-                    track=newTrack,
-                    on=filter['on'],
-                    filter_type=filter['filter_type'],
-                    frequency=filter['frequency'],
-                    q=filter['q'],
-                    position=filter['position']
-                )
-                newFilter.save()
+        # Create dict patternIndex of Patterns keyed by `position`
+        self.savePatterns(song, request.data['patterns'], trackIndex)
 
         # return response
         return Response({'id': song.id}, status=status.HTTP_201_CREATED)

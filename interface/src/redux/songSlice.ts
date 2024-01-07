@@ -131,6 +131,8 @@ const songSlice = createSlice({
     setStep: (state, action: PayloadAction<Step>) => {
       const { loc, track } = action.payload;
 
+      console.log('setStep', action.payload);
+
       if (!track) return;
 
       const step = state.activePattern?.steps.find((step) => {
@@ -324,6 +326,14 @@ export const findPatternStepByBeat = (pattern: Pattern, bar: number, beat: numbe
     return step.loc.bar === bar && step.loc.beat === beat && step.track.position === track.position;
   });
   return step;
+}
+
+export const findTrackByPosition = (state: SongState, position: number) => {
+  console.log('findTrackByPosition', position);
+  const track = state.tracks.find((track) => {
+    return track.position === position;
+  });
+  return track;
 }
 
 export const getTrackSteps = (pattern: Pattern, track: Track) => {

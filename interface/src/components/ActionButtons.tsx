@@ -26,7 +26,7 @@ interface RenderPayload {
       loc: string;
       pitch: string;
       velocity: number;
-      filter?: Filter;
+      filters?: Filter[];
       pan?: number;
      }[]; 
     };
@@ -84,7 +84,7 @@ const ActionButtons = ({ user, apiCall }:ActionButtonsProps) => {
           loc: `${loc.bar}.${loc.beat}.${loc.tick}`,
           pitch,
           velocity,
-          filter: filters ? filters[0] : undefined,
+          filters,
           pan,
         });
       });
