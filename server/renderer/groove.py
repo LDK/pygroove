@@ -359,23 +359,13 @@ def renderJSON(data):
     # Write to file
 
     # get date string formatted like 20231231235959
-    datestring = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-    renderFilename = "{}".format(title)
+    # datestring = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+    # renderFilename = "{}".format(title)
 
-    out_f = open("{}.mp3".format(renderFilename), 'wb')
-    out_f.write(mp3_data)
+    # out_f = open("{}.mp3".format(renderFilename), 'wb')
+    # out_f.write(mp3_data)
 
     master.normalize().export(buffer, format='mp3', bitrate="320k")
-
-    # Load the new mp3 with librosa
-    audiofile = librosa.load(buffer, mono=False, sr=44100)
-    testSegment = librosaToPydub(audiofile)
-
-    # Write the testSegment to file
-    testSegment.normalize().export("{}-2.mp3".format(renderFilename), format="mp3")
-
-    out_f = open("{}-3.mp3".format(renderFilename), 'wb')
-    out_f.write(mp3_data)
 
     # Close the buffer
     buffer.close()
