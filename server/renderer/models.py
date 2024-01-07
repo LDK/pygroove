@@ -40,21 +40,21 @@ class Pattern(models.Model):
     bars = models.IntegerField(default=2)
     position = models.IntegerField(default=1)
 
-class Filter(models.Model):
-    position = models.IntegerField(default=1)
-    track = models.ForeignKey(Track, on_delete=models.CASCADE, related_name='filters')
-    on = models.BooleanField(default=False)
-    filter_type = models.CharField(max_length=8, default='lp')
-    frequency = models.FloatField(default=2500)
-    q = models.FloatField(default=.5)
-
 class Step(models.Model):
     pattern = models.ForeignKey(Pattern, related_name='steps', on_delete=models.CASCADE)
     track = models.ForeignKey(Track, on_delete=models.CASCADE)
     loc = models.CharField(max_length=12, default='1.1.1')
-    filter = models.JSONField(default=dict)
     pitch = models.CharField(max_length=5, default='C3')
     reverse = models.BooleanField(default=False)
     velocity = models.IntegerField(default=100)
     pan = models.FloatField(default=0)
     on = models.BooleanField(default=True)
+
+class Filter(models.Model):
+    position = models.IntegerField(default=1)
+    track = models.ForeignKey(Track, on_delete=models.CASCADE, related_name='filters', null=True)
+    step = models.ForeignKey(Step, on_delete=models.CASCADE, related_name='filters', null=True)
+    on = models.BooleanField(default=False)
+    filter_type = models.CharField(max_length=8, default='lp')
+    frequency = models.FloatField(default=2500)
+    q = models.FloatField(default=.5)

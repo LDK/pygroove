@@ -107,7 +107,7 @@ class SongView(APIView):
                     name=track['name'],
                     pan=track['pan'],
                     volume=track['volume'],
-                    sample=Sample.objects.get(filename=track['sample']),
+                    sample=Sample.objects.get(id=track['sample']['id']),
                     disabled=track['disabled'],
                     transpose=track['transpose'],
                     position=track['position']
@@ -171,11 +171,11 @@ class SongView(APIView):
                 # Check to see if there is an existing Step in the database keyed to the current Pattern, at the same `loc` and `track_` values
                 # If there is, update the existing Step with the new data
                 # If there is not, create a new Step with the new data
-                if Step.objects.filter(pattern=patternIndex[pattern['position']], loc=step['loc']).exists():
+                loc = '.'.join([str(step['loc']['bar']), str(step['loc']['beat']), str(step['loc']['tick'])])    
+
+                if Step.objects.filter(pattern=patternIndex[pattern['position']], track=trackIndex[step['track']['position']], loc=loc).exists():
                     # Update that row with Step data
-                    stepToUpdate = Step.objects.get(pattern=patternIndex[pattern['position']], loc=step['loc'])
-                    stepToUpdate.track = trackIndex[step['track']['position']]
-                    stepToUpdate.filter = step['filter'] if 'filter' in step else {}
+                    stepToUpdate = Step.objects.get(pattern=patternIndex[pattern['position']], track=trackIndex[step['track']['position']], loc=loc)
                     stepToUpdate.pitch = step['pitch'] if 'pitch' in step else 'C3'
                     stepToUpdate.reverse = step['reverse'] if 'reverse' in step else False
                     stepToUpdate.velocity = step['velocity'] if 'velocity' in step else 100
@@ -183,13 +183,14 @@ class SongView(APIView):
                     stepToUpdate.on = step['on'] if 'on' in step else False
                     stepToUpdate.save()
                 else:
+                    patternToUpdate = Pattern.objects.get(song=song, position=pattern['position'])
+                    
                     # Create new Step row in the DB, pointing to current Pattern
                     newStep = Step.objects.create(
                         pattern=patternToUpdate,
                         track=trackIndex[step['track']['position']],
                         # need to convert loc.bar, loc.beat, loc.tick to a string as they will be numbers in the JSON
-                        loc='.'.join([str(step['loc']['bar']), str(step['loc']['beat']), str(step['loc']['tick'])]),
-                        filter=step['filter'] if 'filter' in step else {},
+                        loc=loc,
                         pitch=step['pitch'] if 'pitch' in step else 'C3',
                         reverse=step['reverse'] if 'reverse' in step else False,
                         velocity=step['velocity'] if 'velocity' in step else 100,
@@ -197,6 +198,31 @@ class SongView(APIView):
                         on=step['on'] if 'on' in step else False
                     )
                     newStep.save()
+
+                if 'filters' in step:
+                    dbStep = Step.objects.get(pattern=patternIndex[pattern['position']], loc=loc, track=trackIndex[step['track']['position']])
+
+                    # For each Filter override on the current Step:
+                    for filter in step['filters']:
+                        if Filter.objects.filter(step=dbStep, position=filter['position']).exists():
+                            filterToUpdate = Filter.objects.get(step=dbStep, position=filter['position'])
+                            filterToUpdate.on = filter['on']
+                            filterToUpdate.filter_type = filter['filter_type']
+                            filterToUpdate.frequency = filter['frequency']
+                            filterToUpdate.q = filter['q']
+                            filterToUpdate.save()
+                        else :
+                            # Create new Filter row in the DB, pointing to current Track
+                            newFilter = Filter.objects.create(
+                                step=dbStep,
+                                on=filter['on'],
+                                filter_type=filter['filter_type'],
+                                frequency=filter['frequency'],
+                                q=filter['q'],
+                                position=filter['position']
+                            )
+                            newFilter.save()
+
 
         # Delete any Patterns in the DB keyed to the current song whose `position` field is a value not found in any row of patternIndex
         Pattern.objects.filter(song=song).exclude(position__in=patternIndex.keys()).delete()
@@ -240,6 +266,16 @@ class CreateSongView(APIView):
             patternSequence=request.data['patternSequence']
         )
 
+        # Create dict trackIndex of Tracks keyed by `position`
+        trackIndex = {}
+        for track in request.data['tracks']:
+            trackIndex[track['position']] = track
+
+        # Create dict patternIndex of Patterns keyed by `position`
+        patternIndex = {}
+        for pattern in request.data['tracks']:
+            patternIndex[pattern['position']] = pattern
+
         # For each Track:
         for track in request.data['tracks']:
             # Create new Track row in the DB, pointing to current Song
@@ -277,6 +313,55 @@ class CreateSongView(APIView):
                     position=filter['position']
                 )
                 newFilter.save()
+
+        # For each Pattern:
+        for pattern in request.data['patterns']:
+            # Create new Pattern row in the DB, pointing to current Song, and use the resulting saved DB row to update patternIndex
+            newPattern = Pattern.objects.create(
+                song=song,
+                name=pattern['name'],
+                bars=pattern['bars'],
+                position=pattern['position']
+            )
+            newPattern.save()
+            patternIndex[pattern['position']] = newPattern
+
+            # For each Step in the current Pattern:
+            for step in pattern['steps']:
+                # Check to see if there is an existing Step in the database keyed to the current Pattern, at the same `loc` and `track_` values
+                # If there is, update the existing Step with the new data
+                # If there is not, create a new Step with the new data
+
+                # For each Filter override on the current Step:
+                for filter in step['filters'] if 'filters' in step else []:
+                    # Create new Filter row in the DB, pointing to current Track
+                    newFilter = Filter.objects.create(
+                        step=step,
+                        on=filter['on'],
+                        filter_type=filter['filter_type'],
+                        frequency=filter['frequency'],
+                        q=filter['q'],
+                        position=filter['position']
+                    )
+                    newFilter.save()
+
+                # Create new Step row in the DB, pointing to current Pattern
+                newStep = Step.objects.create(
+                    pattern=pattern,
+                    track=trackIndex[step['track']['position']],
+                    # need to convert loc.bar, loc.beat, loc.tick to a string as they will be numbers in the JSON
+                    loc='.'.join([str(step['loc']['bar']), str(step['loc']['beat']), str(step['loc']['tick'])]),
+                    pitch=step['pitch'] if 'pitch' in step else 'C3',
+                    reverse=step['reverse'] if 'reverse' in step else False,
+                    velocity=step['velocity'] if 'velocity' in step else 100,
+                    pan=step['pan'] if 'pan' in step else 0,
+                    on=step['on'] if 'on' in step else False
+                )
+                newStep.save()
+
+        # Delete any Patterns in the DB keyed to the current song whose `position` field is a value not found in any row of patternIndex
+        Pattern.objects.filter(song=song).exclude(position__in=patternIndex.keys()).delete()
+
 
         # return response
         return Response({'id': song.id}, status=status.HTTP_201_CREATED)

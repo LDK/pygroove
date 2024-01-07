@@ -79,19 +79,6 @@ def librosaToPydub(audiofile):
     )
     return audio_segment
 
-# Takes a pydub (int16) AudioSegment and returns a librosa-formatted (float32) audiofile
-# Adapted from https://stackoverflow.com/posts/68151661/revisions
-
-def pydubToLibrosa(audio_segment:AudioSegment):
-    samples = audio_segment.get_array_of_samples()
-    y = np.array(samples).astype(np.float32)/32768 # 16 bit 
-    y = librosa.core.resample(y, audio_segment.frame_rate, 44100, res_type='kaiser_best')
-    sr = audio_segment.frame_rate
-    
-    # y = np.frombuffer(audio_segment._data, dtype=np.int16)
-    # y = y.astype(np.float32) / (1<<15)
-    return y, sr
-
 def detect_leading_silence(sound, silence_threshold=-50.0, chunk_size=10):
     trim_ms = 0 # ms
 
@@ -178,60 +165,6 @@ def split(wavFile,pieces):
             slices.append(sliceInfo)
     return slices
 
-def getTrackSound(track):
-    trackWav = './audio/' + track['sample']['filename']
-    trackSound = AudioSegment.from_wav(trackWav) - 12
-
-    if 'transpose' in track:
-        transpose = int(track['transpose'])
-        y, sr = sf.read(trackWav)
-        y_pitch = librosa.effects.pitch_shift(y, sr=sr, n_steps=transpose)
-
-        trackSound = librosaToPydub((y_pitch, sr))
-
-    if 'normalize' in track:
-        if (track['normalize'] == True):
-            trackSound = trackSound.normalize()
-
-    if 'trim' in track:
-        if (track['trim'] == True):
-            trackSound = trim(trackSound)
-
-    if 'reverse' in track:
-        if (track['reverse'] == True):
-            trackSound = trackSound.reverse()
-
-    if 'pan' in track:
-        # print ("Panning track {} to {}".format(track['name'],track['pan'] / 100))
-        trackSound = trackSound.pan(track['pan']/100)
-
-    # Apply the volume
-    if 'volume' in track:
-        trackVol = float(track['volume'])
-        trackSound += trackVol
-        # print ("Applying volume of {} to track {}".format(trackVol,track['name']))
-
-    if 'filters' in track:
-        for filter in track['filters']:
-            if filter['on'] == True:
-                if filter['filter_type'] == 'hp':
-                    trackSound = trackSound.resonant_high_pass_filter(cutoff_freq=int(filter['frequency'] * filterMaxFreq), order=3)
-                if filter['filter_type'] == 'lp':
-                    trackSound = trackSound.resonant_low_pass_filter(cutoff_freq=int(filter['frequency'] * filterMaxFreq), order=5, q=filter['q'])
-                # if filter['filter_type'] == 'bp':
-                #     trackSound = trackSound.band_pass_filter(low_cutoff_freq=int(filter['frequency']), high_cutoff_freq=int(filter['frequency2']), order=3)
-
-    # if 'amp' in track:
-    #     amp = track['amp']            
-
-    #     if 'attack' in amp:
-    #         peak = 0.0
-    #         if 'peak' in amp:
-    #             peak += float(amp['peak'])
-    #         trackSound = trackSound.fade(from_gain=-120.0, to_gain = peak, start=0, duration=200)
-
-    return trackSound
-
 def getStepSound(step, track):
     trackWav = './audio/' + track['sample']['filename']
     stepSound = AudioSegment.from_wav(trackWav) - 12
@@ -266,9 +199,13 @@ def getStepSound(step, track):
         if (track['reverse'] == True):
             stepSound = stepSound.reverse()
 
-    if 'pan' in track:
-        # print ("Panning track {} to {}".format(track['name'],track['pan'] / 100))
-        stepSound = stepSound.pan(track['pan']/100)
+    if 'pan' in step and step['pan'] != 0:
+        stepSound = stepSound.pan(step['pan']/100)
+        print ("Panning step to {}".format(step['pan'] / 100))
+    else:
+        if 'pan' in track and track['pan'] != 0:
+            # print ("Panning track {} to {}".format(track['name'],track['pan'] / 100))
+            stepSound = stepSound.pan(track['pan']/100)
 
     # Apply the volume
     if 'volume' in track:
@@ -276,8 +213,8 @@ def getStepSound(step, track):
         stepSound += trackVol
         # print ("Applying volume of {} to track {}".format(trackVol,track['name']))
 
-    if 'filters' in track:
-        for filter in track['filters']:
+    if 'filters' in step:
+        for filter in step['filters']:
             if filter['on'] == True:
                 if filter['filter_type'] == 'hp':
                     stepSound = stepSound.high_pass_filter(cutoff_freq=int(filter['frequency'] * filterMaxFreq), order=3)
@@ -285,6 +222,16 @@ def getStepSound(step, track):
                     stepSound = stepSound.resonant_low_pass_filter(cutoff_freq=int(filter['frequency'] * filterMaxFreq), order=5, q=filter['q'])
                 # if filter['filter_type'] == 'bp':
                 #     trackSound = trackSound.band_pass_filter(low_cutoff_freq=int(filter['frequency']), high_cutoff_freq=int(filter['frequency2']), order=3)
+    else:
+        if 'filters' in track:
+            for filter in track['filters']:
+                if filter['on'] == True:
+                    if filter['filter_type'] == 'hp':
+                        stepSound = stepSound.high_pass_filter(cutoff_freq=int(filter['frequency'] * filterMaxFreq), order=3)
+                    if filter['filter_type'] == 'lp':
+                        stepSound = stepSound.resonant_low_pass_filter(cutoff_freq=int(filter['frequency'] * filterMaxFreq), order=5, q=filter['q'])
+                    # if filter['filter_type'] == 'bp':
+                    #     trackSound = trackSound.band_pass_filter(low_cutoff_freq=int(filter['frequency']), high_cutoff_freq=int(filter['frequency2']), order=3)
 
     return stepSound
 
@@ -311,7 +258,7 @@ def renderStep(track, trackSound, step):
             # print ("Track volume is {}".format(track['volume']))
             # print ("Volume diff is {}".format(volumeDiff))
 
-            sound = sound + volumeDiff
+            sound = sound + (volumeDiff)
     
     # Apply the pan
     if ('pan' in step):
@@ -390,16 +337,6 @@ def renderJSON(data):
                 stepSound = getStepSound(step, track)
                 renderStep(track, stepSound, step)
 
-            # # Apply the volume
-            # if 'volume' in track:
-            #     trackVol = float(track['volume'])
-            #     channels[trackName] += trackVol
-            # Apply the pan
-            # if ('pan' in track):
-            #     trackPan = int(track['pan'])
-            #     channels[trackName] = channels[trackName].pan(trackPan/100)
-
-
         patternLength = int(pattern['bars']) if 'bars' in pattern else 2
         # Calculate duration of one pattern in milliseconds
         one_pattern_duration_ms = patternLength * beatDiv * (60000 / bpm)
@@ -418,7 +355,6 @@ def renderJSON(data):
 
     # Get the MP3 data from the buffer
     mp3_data = buffer.getvalue()
-
 
     # Write to file
 

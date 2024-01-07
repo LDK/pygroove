@@ -1,10 +1,12 @@
 import { MoreHorizTwoTone } from "@mui/icons-material";
 import { Box, Checkbox, Dialog, DialogContent, Divider, Grid, Select, Typography } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
-import { Loc, Step, Track, getActivePattern, toggleStep, Pattern, setStep } from "../redux/songSlice";
+import { Loc, Step, Track, getActivePattern, toggleStep, Pattern, setStep, Filter, findTrackByPosition } from "../redux/songSlice";
 import { useEffect, useState } from "react";
 import useDialogUI from "../theme/useDialogUI";
 import PanSlider from "../components/PanSlider";
+import Knob from "../components/Knob";
+import { RootState } from "../redux/store";
 
 export interface UseStepsProps {
   barDiv: number;
@@ -23,6 +25,25 @@ const useSteps = ({ barDiv, beatDiv, beatStep, defaultPitch, defaultVelocity }:U
   const [editingTrack, setEditingTrack] = useState<Track | undefined>(undefined);
 
   const { DialogActionButtons } = useDialogUI();
+
+  // useEffect(() => {
+  //   if (editingStep) {
+  //     if (editingStep.track && editingStep.track.position !== editingTrack?.position) {
+  //       const trackFilters = editingStep.track.filters || [];
+  //       setFilter1On(trackFilters.length ? trackFilters[0].on : false);
+  //       setFilter1Type(trackFilters.length ? trackFilters[0].filter_type : 'lp');
+  //       setFilter1Q(trackFilters.length ? trackFilters[0].q : 0);
+  //       setFilter1Freq(trackFilters.length ? trackFilters[0].frequency : 0);
+
+  //       setFilter2On((trackFilters.length && trackFilters.length > 1) ? trackFilters[1].on : false);
+  //       setFilter2Type((trackFilters.length && trackFilters.length > 1) ? trackFilters[1].filter_type : 'lp');
+  //       setFilter2Q((trackFilters.length && trackFilters.length > 1) ? trackFilters[1].q : 0);
+  //       setFilter2Freq((trackFilters.length && trackFilters.length > 1) ? trackFilters[1].frequency : 0);
+
+  //       console.log('track filters', trackFilters);
+  //     }
+  //   }
+  // }, [editingStep]);
 
   const ticks:number[] = [];
 
@@ -75,7 +96,27 @@ const useSteps = ({ barDiv, beatDiv, beatStep, defaultPitch, defaultVelocity }:U
     const [pan, setPan] = useState(step?.pan || 0);
 
     const [on, setOn] = useState(step?.on || false);
+  
+    const track = useSelector((state:RootState) => findTrackByPosition(state.song, editingStep?.track?.position || 0));
 
+    let trackFilters:Filter[] = [];
+
+    if (track) {
+      trackFilters = track.filters || [];
+    } else {
+      trackFilters = editingStep?.track?.filters || [];
+    }
+  
+    const [filter1On, setFilter1On] = useState(trackFilters.length ? trackFilters[0].on : false);
+    const [filter1Type, setFilter1Type] = useState(trackFilters.length ? trackFilters[0].filter_type : 'lp');
+    const [filter1Q, setFilter1Q] = useState(trackFilters.length ? trackFilters[0].q : 0);
+    const [filter1Freq, setFilter1Freq] = useState<number>(trackFilters.length ? trackFilters[0].frequency : 0);
+  
+    const [filter2On, setFilter2On] = useState((trackFilters.length && trackFilters.length > 1) ? trackFilters[1].on : false);
+    const [filter2Type, setFilter2Type] = useState((trackFilters.length && trackFilters.length > 1) ? trackFilters[1].filter_type : 'lp');
+    const [filter2Q, setFilter2Q] = useState((trackFilters.length && trackFilters.length > 1) ? trackFilters[1].q : 0);
+    const [filter2Freq, setFilter2Freq] = useState((trackFilters.length && trackFilters.length > 1) ? trackFilters[1].frequency : 0);
+  
     const resetDefaults = () => {
       setOctave(3);
       setNote('C');
@@ -86,6 +127,100 @@ const useSteps = ({ barDiv, beatDiv, beatStep, defaultPitch, defaultVelocity }:U
     const handleClose = () => {
       setEditingStep(null);
     }
+
+    const handleConfirm = () => {
+      console.log('handleConfirm', editingStep);
+      if (editingStep) {
+        let filters:(Filter[] | undefined) = undefined;
+
+        if (track?.filters?.length) {
+          let changed = [false, false];
+
+          for (let idx = 0; idx < track.filters.length; idx++) {
+            if (track.filters[idx]) {
+              let filter = track.filters[idx];
+
+              for (const key in filter) {
+                if (key === 'on') {
+                  let compareVal = idx === 0 ? filter1On : filter2On;
+                  changed[idx] = filter.on !== compareVal;
+
+                } else if (key === 'filter_type') {
+                  let compareVal = idx === 0 ? filter1Type : filter2Type;
+                  changed[idx] = filter.filter_type !== compareVal;
+
+                } else if (key === 'q') {
+                  let compareVal = idx === 0 ? filter1Q : filter2Q;
+                  changed[idx] = filter.q !== compareVal;
+
+                } else if (key === 'frequency') {
+                  let compareVal = idx === 0 ? filter1Freq : filter2Freq;
+                  changed[idx] = filter.frequency !== compareVal;
+
+                }
+              }
+            }
+          }
+
+          console.log('track filters changed', changed);
+
+          for (let idx = 0; idx < changed.length; idx++) {
+            if (changed[idx]) {
+              if (!filters) {
+                filters = [];
+              }
+
+              const filterPosition = idx + 1;
+              
+              filters.push({
+                on: filterPosition === 1 ? filter1On : filter2On,
+                filter_type: filterPosition === 1 ? filter1Type : filter2Type,
+                q: filterPosition === 1 ? filter1Q : filter2Q,
+                frequency: filterPosition === 1 ? filter1Freq : filter2Freq,
+                position: filterPosition,
+              });              
+            }
+          }
+        } else {
+          if (filter1On || filter2On) {
+            filters = [];
+
+            if (filter1On) {
+              filters.push({
+                on: filter1On,
+                filter_type: filter1Type,
+                q: filter1Q,
+                frequency: filter1Freq,
+                position: 1,
+              });
+            }
+
+            if (filter2On) {
+              filters.push({
+                on: filter2On,
+                filter_type: filter2Type,
+                q: filter2Q,
+                frequency: filter2Freq,
+                position: 2,
+              });
+            }
+          }
+        }
+
+        console.log('new filters', filters);
+
+        const newStep:Step = {
+          ...editingStep,
+          on: on,
+          velocity,
+          pan,
+          filters,
+          pitch: `${note}${octave}`,
+        };
+        dispatch(setStep(newStep));
+        handleClose();
+      }
+    };
 
     useEffect(() => {
       if (!step) {
@@ -98,7 +233,7 @@ const useSteps = ({ barDiv, beatDiv, beatStep, defaultPitch, defaultVelocity }:U
     if (!step) return null;
     if (!activePattern) return null;
 
-    const { track } = step;
+    // const { track } = step;
 
     if (!track) return null;
 
@@ -128,7 +263,30 @@ const useSteps = ({ barDiv, beatDiv, beatStep, defaultPitch, defaultVelocity }:U
             </Grid>
 
             {/* Pitch Selector (Note and Octave selects) */}
-            <Grid item xs={12} md={4}>
+            <Grid item xs={12} md={6}>
+
+              <Grid container spacing={0}>
+                <Grid item xs={12} sm={3}>
+                  <Typography fontWeight={600} variant="caption" component="p">Velocity:</Typography>
+
+                  <input type="number" step={1} min={0} max={127} defaultValue={velocity} style={{ width: '3rem', height: '3rem', padding: "2px" }} onChange={(e) => {
+                    setVelocity(parseInt(e.target.value) || velocity);
+                  }} />
+                </Grid>
+
+                <Grid item xs={12} sm={6} pl={4}>
+                  <Typography fontWeight={600} variant="caption" component="p">Pan:</Typography>
+
+                  <PanSlider target={step} defaultValue={pan}
+                    callback={(val:number) => {
+                    setPan(val);
+                  }} width="90%" />
+                </Grid>
+              </Grid>
+
+            </Grid>
+
+            <Grid item xs={12} md={6}>
               <Typography fontWeight={600} variant="caption" component="p">Pitch:</Typography>
               {/* Note */}
               <Box display={"inline-block"} mr={1}>
@@ -175,63 +333,90 @@ const useSteps = ({ barDiv, beatDiv, beatStep, defaultPitch, defaultVelocity }:U
               </Box>
             </Grid>
 
-            <Grid item xs={12} md={4}>
-
-              <Grid container spacing={0}>
-                <Grid item xs={12} sm={3}>
-                  <Typography fontWeight={600} variant="caption" component="p">Velocity:</Typography>
-
-                  <input type="number" step={1} min={0} max={127} defaultValue={velocity} style={{ width: '3rem', height: '3rem', padding: "2px" }} onChange={(e) => {
-                    setVelocity(parseInt(e.target.value) || velocity);
-                  }} />
+            { track.filters?.length ? <>
+                <Grid item xs={12} my={2}>
+                  <Divider sx={{ mx: 'auto', my: 2 }} />
+                  <Typography fontWeight={600} variant="caption" component="p">Filter Overrides:</Typography>
                 </Grid>
+                {
+                  track.filters?.map((filter, i) => {
+                    return (
+                      <Grid item xs={6}>
+                        <Box mb={2}>
+                          <Typography variant="subtitle1" fontWeight={600} display="inline-block">
+                            Filter {filter.position}
+                          </Typography>
 
-                <Grid item xs={12} sm={6} pl={4}>
-                  <Typography fontWeight={600} variant="caption" component="p">Pan:</Typography>
+                          <Checkbox sx={{ py: 0, display: 'inline-block' }} defaultChecked={filter.position === 1 ? filter1On : filter2On} onChange={() => {
+                            if (filter.position === 1) {
+                              setFilter1On(!filter1On);
+                            } else {
+                              setFilter2On(!filter2On);
+                            }
+                          }} />
+                        </Box>
 
-                  <PanSlider target={step} defaultValue={pan}
-                    callback={(val:number) => {
-                    setPan(val);
-                  }} width="90%" />
-                </Grid>
-              </Grid>
+                        <Grid container spacing={0}>
+                          <Grid item xs={4}>
+                            <Typography variant="caption" component="p" mt={0} mb={2}>
+                              Filter Type
+                            </Typography>
 
-            </Grid>
+                            <Select
+                              native
+                              value={i === 0 ? filter1Type : filter2Type}
+                              onChange={(e) => {
+                                if (i === 0) {
+                                  setFilter1Type(e.target.value);
+                                } else {
+                                  setFilter2Type(e.target.value);
+                                }
+                              } }
+                              inputProps={{
+                                name: 'filterType',
+                                id: 'filterType',
+                              }}
+                            >
+                              {['lp', 'hp', 'bp'].map((type) => {
+                                return (
+                                  <option key={type} value={type}>{type.toUpperCase()}</option>
+                                );
+                              })}
+                            </Select>
+                          </Grid>
 
-            <Grid item xs={12} md={4}>
-              { track.filters?.length ? <>
-                  <Typography fontWeight={600} variant="caption" component="p">Filters:</Typography>
-                  {
-                    track.filters?.map((filter, i) => {
-                      return (
-                        <Typography key={i} fontWeight={400} variant="caption" component="p">
-                          {filter.filter_type} {filter.frequency} {filter.q}
-                        </Typography>
-                      );
-                    })
-                  }
-                </> : 
-                <Typography fontWeight={400} variant="caption" component="p">No filters on track</Typography>
-              }
-            </Grid>
+                          <Grid item xs={4}>
+                            <Knob initValue={filter.position === 1 ? filter1Freq : filter2Freq} onBlur={(val:number) => {
+                              if (filter.position === 1) {
+                                setFilter1Freq(val);
+                              } else {
+                                setFilter2Freq(val);
+                              }
+                            }} />
+                          </Grid>
+
+                          <Grid item xs={4}>
+                            <Knob initValue={filter.position === 1 ? filter1Q : filter2Q} onBlur={(val:number) => {
+                              if (filter.position === 1) {
+                                setFilter1Q(val);
+                              } else {
+                                setFilter2Q(val);
+                              }
+                            }} />
+                          </Grid>
+                        </Grid>
+                      </Grid>
+                    );
+                  })
+                }
+              </> : 
+              <Typography fontWeight={400} variant="caption" component="p">No filters on track</Typography>
+            }
           </Grid>
 
           <DialogActionButtons
             onCancel={handleClose}
-            onConfirm={() => {
-              if (editingStep) {
-                const newStep:Step = {
-                  ...editingStep,
-                  on: on,
-                  velocity,
-                  pan,
-                  pitch: `${note}${octave}`,
-                };
-                handleClose();
-                dispatch(setStep(newStep));
-              }
-
-            }}
+            onConfirm={handleConfirm}
           />
         </DialogContent>
       </Dialog>
