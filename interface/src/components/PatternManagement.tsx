@@ -255,7 +255,9 @@ const PatternManagement = () => {
       <Box p={0} m={0} display="inline-block" height="48px">
         <Box width="132px" height="24px" sx={{ cursor: 'pointer' }} p={1} display="inline-block" 
           borderRadius="2px" bgcolor="primary.dark" position="relative" onClick={() => {
-            setSelectOpen(true);
+            if (!renamingPattern) { 
+              setSelectOpen(true);
+            }
           }}>
         { 
           !renamingPattern ?
