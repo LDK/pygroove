@@ -232,6 +232,7 @@ const useSteps = ({ barDiv, beatDiv, beatStep, defaultPitch, defaultVelocity }:U
 
     if (!step) return null;
     if (!activePattern) return null;
+    if (!editingStep) return null;
 
     // const { track } = step;
 

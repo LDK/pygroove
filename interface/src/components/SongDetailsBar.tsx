@@ -4,6 +4,7 @@ import { getActiveSong, setAuthor, setBpm, setSongTitle, setSwing } from "../red
 import { EditTwoTone } from "@mui/icons-material";
 import { useEffect, useState } from "react";
 import Range from "./Range";
+import PatternManagement from "./PatternManagement";
 
 const SongDetailsBar = () => {
   const { title, author, bpm, swing } = useSelector(getActiveSong);
@@ -37,6 +38,7 @@ const SongDetailsBar = () => {
     }
   }, [workingBpm, bpm, dispatch]);
 
+  
   return (
     <Grid id="song-details-bar" container bgcolor="primary.light">
       {/* Meta Section */}
@@ -162,9 +164,8 @@ const SongDetailsBar = () => {
       </Grid>
 
       {/* Pattern Section */}
-      <Grid item xs={4} sx={{ px: 4, py: 2 }}>
-        <Typography>Pattern Selector</Typography>
-        <Typography>New * Delete * Copy * Rename</Typography>
+      <Grid item xs={4} sx={{ px: 4, py: 2, textAlign: 'center' }}>
+        <PatternManagement />
       </Grid>
     </Grid>
 )};
