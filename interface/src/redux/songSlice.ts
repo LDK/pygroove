@@ -1,6 +1,7 @@
 // src/userSlice.ts
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { RootState } from './store';
+import { Root } from 'react-dom/client';
 
 export type Filter = {
   filter_type: string;
@@ -76,7 +77,7 @@ export interface SongState extends Song {
   activePattern?: Pattern;
 };
 
-export const simpleTrack = ({ song, name: trackName, sample }:{ song: SongState, name:string, sample:string }) => {
+export const simpleTrack = ({ song, name: trackName, sample }:{ song: SongState, name:string, sample:SampleData }) => {
   return {
     name: trackName,
     steps: [],
@@ -84,32 +85,56 @@ export const simpleTrack = ({ song, name: trackName, sample }:{ song: SongState,
     pan: 0,
     disabled: false,
     transpose: 0,
-    sample: { filename: sample },
+    sample: sample,
     position: song.tracks.length + 1,
   } as Track
 };
 
-const initPattern = {
-  name: 'Pattern 1',
-  steps: [],
-  bars: 2,
-  position: 1,
-};
+export const simplePattern = (position: number) => {
+  return {
+    name: `Pattern ${position}`,
+    steps: [],
+    bars: 2,
+    position: position,
+  } as Pattern;
+}
+
+const initPatterns = Array(64).fill(0).map((_, i) => simplePattern(i + 1));
 
 const initialState:SongState = {
   title: 'New Song',
-  patterns: [initPattern],
+  patterns: initPatterns,
   bpm: 120,
   swing: 0,
   patternSequence: [1],
-  activePattern: initPattern,
+  activePattern: initPatterns[0],
   tracks: [],
 };
 
-initialState.tracks.push(simpleTrack({ song: initialState, name: 'Kick', sample: '808-Kick1.wav' }));
-initialState.tracks.push(simpleTrack({ song: initialState, name: 'Snare', sample: '808-Snare1.wav' }));
-initialState.tracks.push(simpleTrack({ song: initialState, name: 'Closed Hat', sample: '808-ClosedHat1.wav' }));
-initialState.tracks.push(simpleTrack({ song: initialState, name: 'Open Hat', sample: '808-OpenHat1.wav' }));
+initialState.tracks.push(simpleTrack({ song: initialState, name: 'Kick', sample: {
+  id: 1,
+  filename: '808-Kick1.wav',
+  display: '808 Kick 1',
+  name: '808 Kick 1',
+} }));
+initialState.tracks.push(simpleTrack({ song: initialState, name: 'Snare', sample: {
+  id: 2,
+  filename: '808-Snare1.wav',
+  display: '808 Snare 1',
+  name: '808 Snare 1',
+} }));
+initialState.tracks.push(simpleTrack({ song: initialState, name: 'Closed Hat', sample: {
+  id: 4,
+  filename: '808-ClosedHat1.wav',
+  display: '808 Closed Hat 1',
+  name: '808 Closed Hat 1',
+} }));
+initialState.tracks.push(simpleTrack({ song: initialState, name: 'Open Hat', sample: {
+  id: 3,
+  filename: '808-OpenHat1.wav',
+  display: '808 Open Hat 1',
+  name: '808 Open Hat 1',
+} }));
 
 console.log(initialState);
 
@@ -141,6 +166,8 @@ const songSlice = createSlice({
 
       const pattern = state.activePattern;
 
+      console.log('setStep pattern', pattern);
+
       if (!pattern) return;
 
       if (step) {
@@ -163,6 +190,9 @@ const songSlice = createSlice({
           track: track,
         });
       }
+
+      console.log('state patterns', state.patterns);
+      console.log('pattern steps', pattern.steps);
 
       let rootPattern = state.patterns.find((ptrn) => ptrn.position === pattern.position);
 
@@ -198,18 +228,46 @@ const songSlice = createSlice({
     removeTrack: (state, action: PayloadAction<number>) => {
       state.tracks.splice(action.payload, 1);
     },
-    removePattern: (state, action: PayloadAction<number>) => {
-      state.patterns.splice(action.payload, 1);
-    },
-    renamePattern: (state, action: PayloadAction<{index: number, name: string}>) => {
-      state.patterns[action.payload.index].name = action.payload.name;
+    renamePattern: (state, action: PayloadAction<{ position: number, name: string }>) => {
+      const patternIndex = state.patterns.findIndex((ptrn) => ptrn.position === action.payload.position);
+      if (patternIndex === undefined) return;
+      state.patterns[patternIndex].name = action.payload.name;
     },
     renameTrack: (state, action: PayloadAction<{index: number, name: string}>) => {
       state.tracks[action.payload.index].name = action.payload.name;
     },
-    duplicatePattern: (state, action: PayloadAction<number>) => {
-      const pattern = state.patterns[action.payload];
-      state.patterns.push({ ...pattern, name: `${pattern.name} (copy)` });
+    clearPattern: (state, action: PayloadAction<number>) => {
+      const pattern = state.patterns.find((ptrn) => ptrn.position === action.payload);
+      const patternIndex = state.patterns.findIndex((ptrn) => ptrn.position === action.payload);
+      if (!pattern || patternIndex === undefined) return;
+
+      const init = simplePattern(pattern.position);
+
+      pattern.name = init.name;
+      pattern.steps = [];
+      pattern.bars = init.bars;
+
+      state.activePattern = pattern;
+
+      state.patterns.splice(patternIndex, 1, pattern);
+    },
+    copyPattern: (state, action: PayloadAction<{from: number, to: number}>) => {
+      const fromIndex = state.patterns.findIndex((ptrn) => ptrn.position === action.payload.from);
+      const toIndex = state.patterns.findIndex((ptrn) => ptrn.position === action.payload.to);
+      const fromPattern = state.patterns[fromIndex];
+      const toPattern = state.patterns[toIndex];
+
+      if (!fromPattern || !toPattern) return;
+      if (fromIndex === toIndex) return;
+
+      if ((fromPattern.name !== toPattern.name) && (fromPattern.name !== `Pattern ${fromPattern.position}`)) {
+        toPattern.name = fromPattern.name;
+      }
+
+      toPattern.steps = fromPattern.steps;
+      toPattern.bars = fromPattern.bars;
+
+      state.patterns.splice(toIndex, 1, toPattern);
     },
     duplicateTrack: (state, action: PayloadAction<number>) => {
       const track = state.tracks[action.payload];
@@ -260,13 +318,26 @@ const songSlice = createSlice({
 
       let rootPattern = state.patterns.find((ptrn) => ptrn.position === pattern.position);
 
+      console.log('toggleStep pattern', pattern);
+      console.log('toggleStep state patterns', state.patterns);
+      console.log('toggleStep rootPattern', rootPattern);
+      console.log('PATTERN INDEX', patternIndex(state, pattern));
+
       if (!rootPattern) return;
 
       rootPattern = { ...rootPattern, steps: pattern.steps };
+
+      console.log('updated pattern', rootPattern);
+
       state.patterns.splice(patternIndex(state, pattern), 1, rootPattern);
     },
-    setActivePattern: (state, action: PayloadAction<Pattern>) => {
-      state.activePattern = action.payload;
+    setActivePattern: (state, action: PayloadAction<number>) => {
+      console.log('setActivePattern', action.payload, state);
+      console.log('song patterns', state.patterns);
+      const pattern = state.patterns.find((ptrn) => ptrn.position === action.payload);
+      console.log('setting ActivePattern', pattern?.position, pattern);
+      if (!pattern) return;
+      state.activePattern = pattern;
     },
     updateTrack: (state, action: PayloadAction<Track>) => {
       const track = state.tracks.find((trk) => trk.position === action.payload.position);
@@ -284,11 +355,11 @@ export const {
   addPattern,
   addTrack,
   removeTrack,
-  removePattern,
   renamePattern,
   renameTrack,
-  duplicatePattern,
+  copyPattern,
   duplicateTrack,
+  clearPattern,
   setActivePattern,
   toggleStep,
   setTrackVolume,
@@ -313,12 +384,17 @@ export const getActivePattern = (state: RootState) => {
   return state.song.activePattern;
 }
 
+export const firstEmptyPattern = (state: RootState):number => {
+  const pattern = state.song.patterns.find((ptrn) => ptrn.steps.length === 0);
+  return pattern?.position || 0;
+}
+
 export const trackIndex = (state: RootState, track: Track) => {
   return state.song.tracks.findIndex((trk) => trk === track);
 }
 
 export const patternIndex = (state: SongState, pattern: Pattern) => {
-  return state.patterns.findIndex((ptrn) => ptrn === pattern);
+  return state.patterns.findIndex((ptrn) => ptrn.position === pattern.position);
 }
 
 export const findPatternStepByBeat = (pattern: Pattern, bar: number, beat: number, track: Track) => {
@@ -329,7 +405,6 @@ export const findPatternStepByBeat = (pattern: Pattern, bar: number, beat: numbe
 }
 
 export const findTrackByPosition = (state: SongState, position: number) => {
-  console.log('findTrackByPosition', position);
   const track = state.tracks.find((track) => {
     return track.position === position;
   });

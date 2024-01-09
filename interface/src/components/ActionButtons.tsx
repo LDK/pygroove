@@ -74,8 +74,6 @@ const ActionButtons = ({ user, apiCall }:ActionButtonsProps) => {
   
         if (!step.on) return;
   
-        console.log('step', step);
-
         if (!renderPattern.steps[step.track.name]) {
           renderPattern.steps[step.track.name] = [];
         }
@@ -100,7 +98,14 @@ const ActionButtons = ({ user, apiCall }:ActionButtonsProps) => {
     if (!user?.token) {
       return;
     }
-    const {activePattern: ap, loading: songLoading, error: songError, ...songData } = { ...song };
+
+    const allPatterns = song.patterns;
+
+    const patterns = allPatterns.filter((pattern) => {
+      return Boolean(pattern.steps.length) || Boolean(pattern.name !== `Pattern ${pattern.position}`);
+    });
+
+    const {activePattern: ap, loading: songLoading, error: songError, ...songData } = { ...song, patterns };
 
     await apiCall({
       uri: `/song/${songData.id ? songData.id + '/' : ''}`,
@@ -130,7 +135,6 @@ const ActionButtons = ({ user, apiCall }:ActionButtonsProps) => {
       payload,
       config: { responseType: 'blob' }, // Set responseType to 'blob'
       onSuccess: (res:AxiosResponse) => {
-        console.log('res', res);
         // Create a URL for the blob
         const url = window.URL.createObjectURL(new Blob([res.data], { type: 'audio/mpeg' }));
         const link = document.createElement('a');
