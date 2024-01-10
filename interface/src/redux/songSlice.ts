@@ -60,6 +60,12 @@ export type Pattern = {
   id?: number;
 };
 
+export type PatternEntry = {
+  position: number;
+  bar: number;
+  songTrack: number;
+}
+
 export interface Song {
   title: string;
   author?: string;
@@ -67,7 +73,7 @@ export interface Song {
   patterns: Pattern[];
   bpm: number;
   swing: number
-  patternSequence: number[];
+  patternSequence: PatternEntry[];
   id?: number;
 };
 
@@ -75,6 +81,7 @@ export interface SongState extends Song {
   loading?: boolean;
   error?: string;
   activePattern?: Pattern;
+  selectedPatternPosition?: number;
 };
 
 export const simpleTrack = ({ song, name: trackName, sample }:{ song: SongState, name:string, sample:SampleData }) => {
@@ -106,7 +113,11 @@ const initialState:SongState = {
   patterns: initPatterns,
   bpm: 120,
   swing: 0,
-  patternSequence: [1],
+  patternSequence: [{
+    position: 1,
+    bar: 1,
+    songTrack: 1,
+  }],
   activePattern: initPatterns[0],
   tracks: [],
 };
@@ -152,6 +163,9 @@ const songSlice = createSlice({
     },
     setSong: (state, action: PayloadAction<Song>) => {
       state = action.payload;
+    },
+    selectPattern: (state, action: PayloadAction<number>) => {
+      state.selectedPatternPosition = action.payload;
     },
     setStep: (state, action: PayloadAction<Step>) => {
       const { loc, track } = action.payload;
@@ -216,7 +230,7 @@ const songSlice = createSlice({
     setSwing: (state, action: PayloadAction<number>) => {
       state.swing = action.payload;
     },
-    setPatternSequence: (state, action: PayloadAction<number[]>) => {
+    setPatternSequence: (state, action: PayloadAction<PatternEntry[]>) => {
       state.patternSequence = action.payload;
     },
     addPattern: (state, action: PayloadAction<Pattern>) => {
@@ -371,7 +385,8 @@ export const {
   setSongId,
   setStep,
   updateTrack,
-  toggleTrack
+  toggleTrack,
+  selectPattern
 } = songSlice.actions;
 
 // getActiveSong selector function
@@ -409,6 +424,10 @@ export const findTrackByPosition = (state: SongState, position: number) => {
     return track.position === position;
   });
   return track;
+}
+
+export const getSelectedPatternPosition = (state: RootState) => {
+  return state.song.selectedPatternPosition;
 }
 
 export const getTrackSteps = (pattern: Pattern, track: Track) => {
