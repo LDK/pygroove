@@ -6,13 +6,19 @@ import StepSequencer from './StepSequencer';
 import { theme } from './theme/theme';
 import ActionButtons from './components/ActionButtons';
 import useApi from './hooks/useApi';
+import useArranger from './components/SongArranger';
+import { useMemo, useState } from 'react';
+import SongArranger from './components/SongArranger';
 
 function App() {
   const bgTexture = `linear-gradient(to right bottom, #fdfdff, #f9f9ff, #f6f6ff, #f2f2ff, #efefff, #ececff, #e8e8fe, #e5e5fe, #e2e2fd, #dedefc, #dbdbfb, #d8d8fa);`;
 
   const { user, UserMenu, handleOpenUserMenu, setTokenExpired, tokenExpired, apiCall } = useApi();
-  
-  console.log('App render');
+  const [arrangerOpen, setArrangerOpen] = useState(false);
+
+  // const SongArranger = useArranger();
+
+  console.log('render app');
 
   return (
     <ThemeProvider theme={theme}>
@@ -42,12 +48,14 @@ function App() {
             setTokenExpired,
             tokenExpired
           }} />
-          <SongDetailsBar />
+          <SongDetailsBar openArranger={() => { setArrangerOpen(true); }} />
           <StepSequencer />
           <ActionButtons {...{ user, apiCall }} />
 
         </Box>
       </Box>
+
+      <SongArranger open={arrangerOpen} handleClose={() => { setArrangerOpen(false); }} />
     </ThemeProvider>
   );
 }

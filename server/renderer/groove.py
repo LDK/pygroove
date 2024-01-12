@@ -1,6 +1,5 @@
 # GOAL: Create a simple groovebox using pydub to render JSON sequences created via web
 import copy
-import datetime
 import io
 import librosa
 import soundfile as sf
@@ -173,7 +172,7 @@ def getStepSound(step, track):
     transposeSteps = 0
 
     if 'pitch' in step:
-        transposeSteps += pitch_diff(track['rootPitch'],step['pitch'])
+        transposeSteps += pitch_diff(track['rootPitch'] if 'rootPitch' in track else 'C3', step['pitch'])
         shiftSteps = transposeSteps * 100
     if 'transpose' in track:
         transposeSteps += int(track['transpose'])
@@ -235,13 +234,16 @@ def getStepSound(step, track):
 
     return stepSound
 
-def renderStep(track, trackSound, step):
+def renderStep(track, trackSound, step, startingBar = 1):
     trackName = track['name']
     loc = step['loc'].split('.')
-    bar = int(loc[0])
+    bar = int(loc[0]) + startingBar - 1
     beat = int(loc[1])
     tick = int(loc[2])
     
+    print ("Rendering step {} at bar {} beat {} tick {}".format(trackName,bar,beat,tick))
+    print ("Pattern starts at bar {}".format(startingBar))
+
     if trackSound == None:
         return
 
@@ -270,6 +272,10 @@ def renderStep(track, trackSound, step):
 def renderJSON(data):
     global channels, bpm, beatDiv, tickDiv, songBars, swingAmount, swingUp, channelDefaults, songPatterns, patternIndex, trackIndex, current_offset_ms
 
+    def jumpToBar(bar):
+        global current_offset_ms
+        current_offset_ms = (bar - 1) * barLen()
+
     # Reset all the globals
     trackIndex = {}
     channels = {}
@@ -284,21 +290,23 @@ def renderJSON(data):
     swingUp = False
 
     songPatterns = data['patternSequence'] if 'patternSequence' in data else []
-    songPatterns = [1,1,1]
     songBars = 0
 
-    # For each pattern in songPatterns, add it to patternIndex
+    # For each pattern, add it to patternIndex
     for pattern in data['patterns']:
         patternIndex[pattern['position']] = pattern
 
-    for patternPosition in songPatterns:
-        pattern = patternIndex[patternPosition]
+    for patternEntry in songPatterns:
+        pattern = patternIndex[int(patternEntry['position'])]
+        bar = int(patternEntry['bar'])
+        length = int(pattern['bars']) if 'bars' in pattern else 2
 
-        if 'bars' in pattern:
-            songBars += int(pattern['bars'])
+        if (bar + length - 1 > songBars):
+            songBars = bar + length - 1
 
+    print ("Song length is {} bars".format(songBars))
 
-    title = data['title']
+    # title = data['title']
 
     # Create the master track
     master = newChannel()
@@ -323,8 +331,8 @@ def renderJSON(data):
         trackIndex[trackName] = track
 
     # For each pattern in songPatterns, for each track, add the notes, apply any filters, set the volume, set the pan and overlay onto master
-    for position in songPatterns:
-        pattern = patternIndex[position]
+    for patternEntry in songPatterns:
+        pattern = patternIndex[int(patternEntry['position'])]
 
         for trackName, steps in pattern['steps'].items():
             if trackName in trackIndex:
@@ -335,14 +343,9 @@ def renderJSON(data):
 
             for step in steps:
                 stepSound = getStepSound(step, track)
-                renderStep(track, stepSound, step)
+                renderStep(track, stepSound, step, patternEntry['bar'])
 
         patternLength = int(pattern['bars']) if 'bars' in pattern else 2
-        # Calculate duration of one pattern in milliseconds
-        one_pattern_duration_ms = patternLength * beatDiv * (60000 / bpm)
-
-        # Move to the next pattern's start
-        current_offset_ms += one_pattern_duration_ms
 
     for trackName, track in channels.items():
         master = master.overlay(track, position=0, gain_during_overlay=-6)

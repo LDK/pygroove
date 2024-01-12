@@ -1,7 +1,7 @@
 import { PlayArrowTwoTone } from "@mui/icons-material";
 import { Box, Grid, Button } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
-import { Filter, Track, Step, getActiveSong, setSongId } from "../redux/songSlice";
+import { Filter, Track, Step, getActiveSong, setSongId, PatternEntry } from "../redux/songSlice";
 import { AxiosResponse } from "axios";
 import { useEffect, useState } from "react";
 import { Song } from "../redux/songSlice";
@@ -13,7 +13,7 @@ interface RenderPayload {
   bpm: number;
   id?: number;
   author: string;
-  patternSequence: number[];
+  patternSequence: PatternEntry[];
   tracks: Track[];
   swing?: number;
   patterns: {
