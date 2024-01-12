@@ -426,7 +426,9 @@ const SongArranger = ({ open, handleClose }:{ open: boolean, handleClose: () => 
               </Box>
               <Box position="absolute" top={0} right={0}>
                 <ArrowUpwardTwoTone sx={{ cursor: 'pointer' }} onClick={() => {
-                  setStartTrack(startTrack - 1);
+                  if (startTrack > 0) {
+                    setStartTrack(startTrack - 1);
+                  }
                 } } />
               </Box>
             </Box>
