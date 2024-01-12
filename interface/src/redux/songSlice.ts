@@ -63,6 +63,7 @@ export type Pattern = {
 export type PatternEntry = {
   position: number;
   bar: number;
+  length: number;
   songTrack: number;
 }
 
@@ -117,6 +118,7 @@ const initialState:SongState = {
     position: 1,
     bar: 1,
     songTrack: 1,
+    length: 2
   }],
   activePattern: initPatterns[0],
   tracks: [],
@@ -232,6 +234,17 @@ const songSlice = createSlice({
     },
     setPatternSequence: (state, action: PayloadAction<PatternEntry[]>) => {
       state.patternSequence = action.payload;
+    },
+    addPatternEntry: (state, action: PayloadAction<PatternEntry>) => {
+      const { position, bar, songTrack } = action.payload;
+
+      const existing = state.patternSequence.find((entry) => {
+        return entry.bar === bar && entry.songTrack === songTrack;
+      });
+
+      if (!existing) {
+        state.patternSequence.push(action.payload);
+      }
     },
     addPattern: (state, action: PayloadAction<Pattern>) => {
       state.patterns.push(action.payload);
@@ -366,6 +379,7 @@ export const {
   setSong,
   setSwing,
   setPatternSequence,
+  addPatternEntry,
   addPattern,
   addTrack,
   removeTrack,
@@ -397,6 +411,10 @@ export const getActiveSong = (state: RootState) => {
 // getActivePattern selector function
 export const getActivePattern = (state: RootState) => {
   return state.song.activePattern;
+}
+
+export const getPatternSequence = (state: RootState) => {
+  return state.song.patternSequence;
 }
 
 export const firstEmptyPattern = (state: RootState):number => {

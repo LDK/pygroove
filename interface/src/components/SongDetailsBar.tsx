@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import Range from "./Range";
 import PatternManagement from "./PatternManagement";
 
-const SongDetailsBar = () => {
+const SongDetailsBar = ({ openArranger }:{ openArranger: () => void }) => {
   const { title, author, bpm, swing } = useSelector(getActiveSong);
 
   const [editTitle, setEditTitle] = useState(false);
@@ -158,7 +158,9 @@ const SongDetailsBar = () => {
             />
           </Grid>
           <Grid item xs={12}>
-            <Typography>Pattern Sequence</Typography>
+            <Typography sx={{ cursor: 'pointer' }} onClick={() => {
+              openArranger();
+            }}>Pattern Sequence</Typography>
           </Grid>
         </Grid>
       </Grid>

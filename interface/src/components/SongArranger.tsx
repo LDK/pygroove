@@ -1,10 +1,11 @@
 // Song Arranger.tsx
 import { SxProps, Dialog, DialogContent, Grid, Typography, Box, Button } from "@mui/material";
 import { useSelector } from "react-redux";
-import { Pattern, PatternEntry, getActiveSong, getSelectedPatternPosition, selectPattern, setPatternSequence } from "../redux/songSlice";
+import { Pattern, PatternEntry, addPatternEntry, getActiveSong, getPatternSequence, getSelectedPatternPosition, selectPattern, setPatternSequence } from "../redux/songSlice";
 import { useEffect, useMemo, useState } from "react";
 import React from "react";
 import { useDispatch } from "react-redux";
+import useDialogUI from "../theme/useDialogUI";
 
 const barWidth = 40;
 const maxBars = 384;
@@ -12,17 +13,90 @@ const songTrackCount = 4;
 
 const noSelect:SxProps = { userSelect: 'none' }; 
 
-const Arrangement = React.memo(({ selectedPattern }:{ selectedPattern?: number }) => {
-  const activeSong = useSelector(getActiveSong);
+type ArrangementProps = {
+  selectedPattern?: number;
+  patterns: Pattern[];
+  handleClose: () => void;
+}
+
+type ArrangementLocation = {
+  bar: number;
+  songTrack: number;
+}
+
+const Arrangement = React.memo(({ selectedPattern, patterns, handleClose }:ArrangementProps) => {
+  // const activeSong = useSelector(getActiveSong);
+  const [deleting, setDeleting] = useState(false);
   const dispatch = useDispatch();
-  const ptrn = useSelector(getSelectedPatternPosition);
   const [start, setStart] = useState(0);
 
-  const [patternEntries, setPatternEntries] = useState<PatternEntry[]>([]);
+  const initialEntries = useSelector(getPatternSequence);
+  const [patternEntries, setPatternEntries] = useState<PatternEntry[]>(initialEntries);
+
+  const [mouseDown, setMouseDown] = useState(0);
+
+  // const overlapped:ArrangementLocation[] = useMemo(() => {
+  //   const overlapped:ArrangementLocation[] = [];
+  //   for (const key in patternEntries) {
+  //     const entry = patternEntries[key];
+  //     // console.log('entry', entry);
+  //     if (entry.length > 1) {
+  //       for (let i = 1; i < entry.length; i++) {
+  //         overlapped.push({ bar: entry.bar + i, songTrack: entry.songTrack });
+  //       }
+  //     }
+  //   }
+
+  //   // console.log('overlapped', overlapped);
+  //   // console.log('entries', patternEntries);
+  //   return overlapped;
+  // }, [patternEntries]);
 
   useEffect(() => {
-    dispatch(setPatternSequence(patternEntries));
+    console.log('reset to initial', initialEntries);
+  }, [initialEntries]);
+
+  // const [overlapped, setOverlapped] = useState<ArrangementLocation[]>(initialOverlapped);
+
+  const wouldOverlap = (bar:number, songTrack:number) => {
+    const maxBar = bar + (pattern?.bars || 1) - 1;
+    let reach = bar;
+
+    const overlaps:ArrangementLocation[] = [];
+
+    while (reach <= maxBar) {
+      const o = patternEntries.find(pe => pe.bar === reach && pe.songTrack === songTrack);
+      if (o) {
+        overlaps.push(o);
+      }
+      reach++;
+    }
+
+    return overlaps;
+
+  };
+
+  const patternMap:{ [key:string]: PatternEntry } = useMemo(() => {
+    let map:{ [key:string]: PatternEntry } = {};
+
+    patternEntries.forEach(pe => {
+      map[`${pe.bar}-${pe.songTrack}`] = pe;
+    });
+
+    return map;
   }, [patternEntries]);
+
+  const pattern = useMemo(() => patterns.find(p => p.position === selectedPattern), [selectedPattern, patterns]);
+
+  // useEffect(() => {
+  //   dispatch(setPatternSequence(patternEntries));
+  // }, [patternEntries]);
+
+  const { DialogActionButtons } = useDialogUI();
+  
+  if (!pattern) {
+    return null;
+  }
 
   const pageSize = 48;
 
@@ -90,19 +164,174 @@ const Arrangement = React.memo(({ selectedPattern }:{ selectedPattern?: number }
   ]
 
   const pageBars = Array(maxBars).fill(0).map((_, idx) => idx).slice(start, start + pageSize);
+ 
+  // const addOverlap = ({ bar, songTrack }:ArrangementLocation) => {
+  //   const newOverlap = [...overlapped, { bar, songTrack }];
+  //   setOverlapped(newOverlap);
+  // };
+
+  const cellClick = ({ bar, songTrack, overwrite, overwriteOverlap }: { bar: number; songTrack: number, overwrite?: boolean, overwriteOverlap?: boolean }) => {
+
+    console.log('cell click', bar, songTrack, overwrite, overwriteOverlap);
+    if (selectedPattern) {
+      const newEntry:PatternEntry = {
+        position: selectedPattern,
+        bar: bar,
+        songTrack,
+        length: pattern.bars
+      };
+
+      const existing = patternEntries.length ? patternEntries.find(pe => pe.bar === newEntry.bar && pe.songTrack === newEntry.songTrack) : undefined;
+      // console.log('existing', existing);
+      // console.log('pattern entries', patternEntries);
+
+      // If we are overwriting existing entries
+      if (overwrite) {
+        const overlaps = wouldOverlap(bar, songTrack);
+
+        // If the new entry would overlap with an existing entry and we are overwriting overlaps
+        if (overlaps.length && overwriteOverlap) {
+          // Remove overlaps and add the new entry
+          console.log('removing overlaps', overlaps);
+          setPatternEntries([...patternEntries.filter(
+            pe => !overlaps.find(o => o.bar === pe.bar && o.songTrack === pe.songTrack)
+          ), newEntry]);
+
+          // addOverlap({ bar, songTrack });
+          // If there is an existing entry in the same spot
+          if (existing)  {
+            console.log('removing existing', existing);
+            // Remove existing entry
+            setPatternEntries([...patternEntries.filter(pe => pe.bar !== existing.bar && pe.songTrack !== existing.songTrack)]);
+          }
+        } else if (overlaps.length && !overwriteOverlap) {
+          return;
+        } else if (existing) {
+          // addOverlap({ bar, songTrack });
+          console.log('setting entries', existing);
+          setPatternEntries([...patternEntries.filter(pe => pe.bar !== existing.bar && pe.songTrack !== existing.songTrack), newEntry]);
+        } else {
+          console.log('no overlaps or existing, so just adding new entry');
+          // No overlaps or existing, so just adding new entry
+          setPatternEntries([...patternEntries, newEntry]);
+        }
+      // If there is no existing entry, no overlaps, and we are not overwriting (existing or overlaps)
+      } else if (!existing && !wouldOverlap(bar, songTrack).length) {
+        // Just add the new entry
+        console.log('adding new entry', newEntry);
+        setPatternEntries([...patternEntries, newEntry]);
+      }
+
+    }
+  }
+
+  const BarCell = ({ bar, songTrack }: { bar: number; songTrack: number }) => {
+    const key = `${bar}-${songTrack}`;
+
+    return (
+      <Box p={0} m={0} pl={0} position="relative" borderLeft="1px solid black" borderBottom="1px solid black" width={barWidth + 8} 
+        bgcolor="primary.light" height={40}
+        onMouseUp={(e) => {
+          e.stopPropagation();
+          setMouseDown(0);
+        }}
+        onClick={(e) => {
+          e.stopPropagation();
+          cellClick({ bar, songTrack, overwrite: true, overwriteOverlap: true });
+        }}
+        // onMouseEnter={(e) => {
+        //   if (mouseDown === songTrack && !overlapped.find(o => o.bar === bar && o.songTrack === songTrack)) {
+        //     // console.log('drawing at', bar, songTrack);
+        //     cellClick({ bar, songTrack, overwrite: true, overwriteOverlap: true });
+        //   }
+        // }}
+        display="inline-block"
+      >
+        {Boolean(patternMap[key]) && <BarMarker entry={patternMap[key]} />}
+      </Box>
+    );
+  };
+
+  const BarMarker = ({ entry }: { entry: PatternEntry }) => {
+    const width = `${100 * (entry.length || 1)}%`;
+
+    const barClick = () => {
+      setMouseDown(0);
+      console.log('bar click', entry);
+      const existing = patternEntries.find(pe => pe.bar === entry.bar && pe.songTrack === entry.songTrack);
+      if (existing) {
+        const filtered = patternEntries.filter((pe) => {
+          return (pe.bar !== existing.bar || pe.songTrack !== existing.songTrack);
+        });
+        console.log('filtered', filtered, existing, patternEntries);
+        setPatternEntries(filtered);
+      }
+    }
+
+    window.removeEventListener('keydown', (e) => {
+      if (e.key === 'Shift') {
+        setDeleting(true);
+      }
+    });
+
+    window.removeEventListener('keyup', (e) => {
+      if (e.key === 'Shift') {
+        setDeleting(false);
+      }
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Shift') {
+        setDeleting(true);
+      }
+    });
+
+    window.addEventListener('keyup', (e) => {
+      if (e.key === 'Shift') {
+        setDeleting(false);
+      }
+    });
+
+    return (
+      <Box p={0} m={0} width={width} position="absolute" zIndex={5} height="100%" top={0} left={0}
+        bgcolor="warning.light"
+        display="block"
+        onMouseEnter={(e) => {
+          // if (deleting && mouseDown) {
+          //   barClick();
+          // }
+          setMouseDown(0);
+        }}
+        // onMouseDown={(e) => {
+        //   e.stopPropagation();
+        // }}
+        onClick={(e) => {
+          e.stopPropagation();
+          barClick();
+        }}>
+        <Typography sx={{...noSelect}} px={0} height="100%" color="primary.contrastText" textAlign="center">
+          {entry.position}
+        </Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box>
-      <Typography variant="subtitle1" fontWeight={600} color="black" textAlign="left" pl={0} mb={2}>
-        Arrangement
+      <Typography display="inline" variant="subtitle1" fontWeight={600} color="black" textAlign="left" pl={0} mb={2}>
+        Arrangement {deleting && '(deleting)'}
       </Typography>
+      <Button onClick={() => {
+        // dispatch(setPatternSequence([]));
+        setPatternEntries([]);
+      }}>Clear</Button>
       <Grid container spacing={0} sx={{ mb: 1 }}>
             <Grid item xs={2}>
-              <Box p={0} m={0} pl={1} py={1} borderLeft="1px solid black" borderBottom="2px solid black" width="100%" bgcolor="black" display="inline-block">
+              <Box p={0} m={0} pl={1} py={1} borderLeft="1px solid black" borderBottom="1px solid black" width="100%" bgcolor="black" display="inline-block">
                 <Typography sx={{...noSelect}} color="primary.contrastText" textAlign="left" pl={2}>Bar:</Typography>
               </Box>
               {[...Array(songTrackCount)].map((val, num) => (
-                <Box p={0} m={0} pl={1} py={1} borderLeft="1px solid black" borderBottom="2px solid black" width={"100%"} bgcolor="primary.dark" display="inline-block">
+                <Box p={0} m={0} pl={1} py={1} borderLeft="1px solid black" borderBottom="1px solid black" width={"100%"} bgcolor="primary.dark" display="inline-block">
                   <Typography sx={{...noSelect}} color="primary.contrastText" textAlign="left" pl={2}>
                     Track {num + 1}
                   </Typography>
@@ -110,11 +339,15 @@ const Arrangement = React.memo(({ selectedPattern }:{ selectedPattern?: number }
               ))}
             </Grid>
             <Grid item xs={10}>
-              <Box px={0} sx={{ overflowX: 'scroll' }} borderLeft="1px solid black" borderRight="1px solid black">
+              <Box px={0} sx={{ overflowX: 'scroll' }} borderLeft="1px solid black" borderRight="1px solid black"
+                onMouseUp={() => {
+                  setMouseDown(0);
+                }}
+              >
                 <Box px={0} id="song-arranger" width={`${(barWidth + 9) * pageSize}px`} bgcolor="primary.dark">
                     {
                       [...pageBars].map((bar, idx) => 
-                        <Box p={0} m={0} pl={1} py={1} borderLeft="1px solid black" borderBottom="2px solid black" width={barWidth} bgcolor="secondary.light" display="inline-block">
+                        <Box p={0} m={0} pl={1} py={1} borderLeft="1px solid black" borderBottom="1px solid black" width={barWidth} bgcolor="secondary.light" display="inline-block">
                           <Typography sx={{...noSelect}} color="primary.contrastText" textAlign="left" pl={0}>
                             {bar + 1}
                           </Typography>
@@ -123,21 +356,14 @@ const Arrangement = React.memo(({ selectedPattern }:{ selectedPattern?: number }
                     }
                   {
                     [...Array(songTrackCount)].map((val, num) => 
-                      <Box>
+                      <Box maxHeight={41}
+                        // onMouseDown={(e) => {
+                          // setDrawing(num + 1);
+                          // e.stopPropagation();
+                        // }}
+                      >
                         {
-                          [...pageBars].map((val, bar) => 
-                            <Box p={0} m={0} pl={1} py={1} borderLeft="1px solid black" borderBottom="2px solid black" width={barWidth} bgcolor="primary.light" display="inline-block">
-                              <Typography sx={{...noSelect}} color="primary.contrastText" textAlign="left" pl={2} onClick={() => {
-                                console.log({
-                                  position: selectedPattern,
-                                  bar: bar + 1 + start,
-                                  songTrack: num + 1,
-                                } as PatternEntry);
-                              }}>
-                                &nbsp;
-                              </Typography>
-                            </Box>
-                          )
+                          [...pageBars].map((val, bar) => <BarCell bar={bar + 1 + start} songTrack={num + 1} />)
                         }
                       </Box>
                     )
@@ -148,7 +374,7 @@ const Arrangement = React.memo(({ selectedPattern }:{ selectedPattern?: number }
             </Grid>
       </Grid>
 
-      <Typography variant="subtitle1" fontWeight={600} color="black" textAlign="left" pl={0} mb={1}>
+      <Typography variant="subtitle1" fontWeight={600} color="black" textAlign="left" pl={0} mt={1} mb={2}>
         Bar Range
       </Typography>
 
@@ -165,38 +391,39 @@ const Arrangement = React.memo(({ selectedPattern }:{ selectedPattern?: number }
         </Button>
       ))}
 
+      <DialogActionButtons
+          onCancel={() => {
+            handleClose();
+          }}
+          confirmLabel="Save"
+          onConfirm={() => {
+            dispatch(setPatternSequence(patternEntries)); 
+            handleClose();
+          }}
+      />
+
     </Box>
 );
 });
 
-const SongArranger = () => {
+const SongArranger = ({ open, handleClose }:{ open: boolean, handleClose: () => void }) => {
   const { patterns } = useSelector(getActiveSong);
 
-  const dispatch = useDispatch();
-
-  const activePatterns = patterns
-  .filter(p => (
+  const activePatterns = patterns.filter(p => (
     Boolean(p.steps.length) || p.name != `Pattern ${p.position}`
-  ))
-  ;
-
-  const addEntry = console.log;
+  ));
 
   const defaultPattern = activePatterns[0]?.position || 0;
   const [selectedPattern, setSelectedPattern] = useState(1);
+  const [saveCallback, setSaveCallback] = useState<(arg?:PatternEntry) => void>(() => {});
 
   useEffect(() => {
     setSelectedPattern(defaultPattern);
   }, [defaultPattern]);
 
-  // useEffect(() => {
-  //   console.log('selectedPattern', selectedPattern);
-  //   dispatch(selectPattern(selectedPattern));
-  // }, [selectedPattern]);
-
   return (
     <Dialog 
-      open={true} 
+      open={open} 
       onClose={() => {}}
       maxWidth="lg"
       fullWidth={true}
@@ -205,7 +432,7 @@ const SongArranger = () => {
         <Grid container spacing={0}>
           <Grid item xs={3}>
             <Typography sx={{...noSelect}} variant="subtitle1" color="black" textAlign="left" pl={0} fontWeight={600}>Patterns</Typography>
-            <Box p={0} m={0} mt={2}>
+            <Box p={0} m={0} mt={2} height={394} sx={{ overflowY: 'scroll' }}>
               {activePatterns.map((pattern) => (
                 <Box
                   onClick={() => setSelectedPattern(pattern.position)}
@@ -219,9 +446,10 @@ const SongArranger = () => {
             </Box>
           </Grid>
           <Grid item xs={9}>
-            <Arrangement selectedPattern={selectedPattern} />
+            <Arrangement {...{selectedPattern, patterns, saveCallback, handleClose}} />
           </Grid>
         </Grid>
+
       </DialogContent>
     </Dialog> 
   );
