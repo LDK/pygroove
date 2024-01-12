@@ -5,6 +5,13 @@ import { Dialog, DialogTitle, DialogContent, Typography, Box, RadioGroup, FormCo
 import { useState, useEffect } from "react";
 import useDialogUI from "../theme/useDialogUI";
 import { set } from "react-hook-form";
+import { Variant } from "@mui/material/styles/createTypography";
+
+export const TextLink = ({ text, onClick, variant }:{ text: string, variant?: Variant, onClick: () => void }) => (
+  <Typography fontWeight={600} color="primary.dark" display="inline" sx={{ cursor: 'pointer' }} variant={`${variant || 'caption'}`} component="span" onClick={onClick}>
+    {text}
+  </Typography>
+);
 
 const PatternManagement = () => {
   const dispatch = useDispatch();
@@ -230,12 +237,6 @@ const PatternManagement = () => {
   }
 
   const dot = <Typography display="inline" fontWeight={700} variant="caption" px={"3px"}>&middot;</Typography>;
-
-  const TextLink = ({ text, onClick }:{ text: string, onClick: () => void }) => (
-    <Typography fontWeight={600} color="primary.dark" display="inline" sx={{ cursor: 'pointer' }} variant="caption" component="span" onClick={onClick}>
-      {text}
-    </Typography>
-  );
 
   // When we stop editing the pattern name, set the pattern name to the working pattern name, if it has changed
   useEffect(() => {

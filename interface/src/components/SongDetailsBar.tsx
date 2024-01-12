@@ -4,7 +4,7 @@ import { getActiveSong, setAuthor, setBpm, setSongTitle, setSwing } from "../red
 import { EditTwoTone } from "@mui/icons-material";
 import { useEffect, useState } from "react";
 import Range from "./Range";
-import PatternManagement from "./PatternManagement";
+import PatternManagement, { TextLink } from "./PatternManagement";
 
 const SongDetailsBar = ({ openArranger }:{ openArranger: () => void }) => {
   const { title, author, bpm, swing } = useSelector(getActiveSong);
@@ -43,96 +43,107 @@ const SongDetailsBar = ({ openArranger }:{ openArranger: () => void }) => {
     <Grid id="song-details-bar" container bgcolor="primary.light">
       {/* Meta Section */}
       <Grid item xs={4} sx={{ borderRight: '1px solid #ccc', px: 4, py: 2 }}>
-        { 
-          !editTitle ?
-            <Typography display="inline-block">Title: {title}</Typography> :
-            <TextField
-              id="title"
-              label="Title"
-              defaultValue={title}
-              variant="standard"
-              sx={{ width: '100%' }}
-              onKeyDown={(e) => {
-                // If enter is pressed, set editing to false
-                if (e.key === 'Enter') {
+        <Grid container spacing={0}>
+          <Grid item xs={12} xl={7}>
+            { 
+              !editTitle ?
+                <Typography display="inline-block">Title: {title}</Typography> :
+                <TextField
+                  id="title"
+                  label="Title"
+                  defaultValue={title}
+                  variant="standard"
+                  sx={{ width: '100%' }}
+                  onKeyDown={(e) => {
+                    // If enter is pressed, set editing to false
+                    if (e.key === 'Enter') {
+                      setEditTitle(false);
+                    }
+                  }}
+                  onChange={(e) => {
+                    setWorkingTitle(e.target.value);
+                  }}
+                />
+            }
+            { !editTitle &&
+              <EditTwoTone sx={{ 
+                display: 'inline-block',
+                position: 'relative',
+                top: '.3rem',
+                width: '1rem',
+                pl: 1,
+                cursor: 'pointer'
+              }} 
+                onClick={() => {
+                  setEditTitle(true);
+                }}
+              />
+            }
+            { editTitle && 
+              <Button
+                variant="contained"
+                sx={{ textAlign: 'center', py: 0, my: 1 }}
+                onClick={() => {
                   setEditTitle(false);
-                }
-              }}
-              onChange={(e) => {
-                setWorkingTitle(e.target.value);
-              }}
-            />
-        }
-        { !editTitle &&
-          <EditTwoTone sx={{ 
-            display: 'inline-block',
-            position: 'relative',
-            top: '.3rem',
-            width: '1rem',
-            pl: 1,
-            cursor: 'pointer'
-          }} 
-            onClick={() => {
-              setEditTitle(true);
-            }}
-          />
-        }
-        { editTitle && 
-          <Button
-            variant="contained"
-            sx={{ textAlign: 'center', py: 0, my: 1 }}
-            onClick={() => {
-              setEditTitle(false);
-            }}>
-              Save
-            </Button>
-        }
+                }}>
+                  Save
+                </Button>
+            }
 
-        <br />
-        { 
-          !editAuthor ?
-            <Typography display="inline-block">Author: {author}</Typography> :
-            <TextField
-              id="author"
-              label="Author"
-              defaultValue={author}
-              variant="standard"
-              sx={{ width: '100%' }}
-              onKeyDown={(e) => {
-                // If enter is pressed, set editing to false
-                if (e.key === 'Enter') {
+            <br />
+            { 
+              !editAuthor ?
+                <Typography display="inline-block">Author: {author}</Typography> :
+                <TextField
+                  id="author"
+                  label="Author"
+                  defaultValue={author}
+                  variant="standard"
+                  sx={{ width: '100%' }}
+                  onKeyDown={(e) => {
+                    // If enter is pressed, set editing to false
+                    if (e.key === 'Enter') {
+                      setEditAuthor(false);
+                    }
+                  }}
+                  onChange={(e) => {
+                    setWorkingAuthor(e.target.value);
+                  }}
+                />
+            }
+            { !editAuthor &&
+              <EditTwoTone sx={{ 
+                display: 'inline-block',
+                position: 'relative',
+                top: '.3rem',
+                width: '1rem',
+                pl: 1,
+                cursor: 'pointer'
+              }} 
+                onClick={() => {
+                  setEditAuthor(true);
+                }}
+              />
+            }
+            { editAuthor && 
+              <Button
+                variant="contained"
+                sx={{ textAlign: 'center', py: 0, my: 1 }}
+                onClick={() => {
                   setEditAuthor(false);
-                }
-              }}
-              onChange={(e) => {
-                setWorkingAuthor(e.target.value);
-              }}
-            />
-        }
-        { !editAuthor &&
-          <EditTwoTone sx={{ 
-            display: 'inline-block',
-            position: 'relative',
-            top: '.3rem',
-            width: '1rem',
-            pl: 1,
-            cursor: 'pointer'
-          }} 
-            onClick={() => {
-              setEditAuthor(true);
-            }}
-          />
-        }
-        { editAuthor && 
-          <Button
-            variant="contained"
-            sx={{ textAlign: 'center', py: 0, my: 1 }}
-            onClick={() => {
-              setEditAuthor(false);
-            }}>
-              Save
-            </Button>
-        }
+                }}>
+                  Save
+                </Button>
+            }
+          </Grid>
+
+          <Grid item xs={12} xl={5} sx={{ pt: 1 }}>
+            <TextLink text="Pattern Sequence" variant="subtitle2" onClick={() => {
+              openArranger();
+            }} />
+          </Grid>
+
+        </Grid>
       </Grid>
 
       {/* Song Section */}
@@ -156,11 +167,6 @@ const SongDetailsBar = ({ openArranger }:{ openArranger: () => void }) => {
               labelPrefix="Swing: "
               percentage 
             />
-          </Grid>
-          <Grid item xs={12}>
-            <Typography sx={{ cursor: 'pointer' }} onClick={() => {
-              openArranger();
-            }}>Pattern Sequence</Typography>
           </Grid>
         </Grid>
       </Grid>
