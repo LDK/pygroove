@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import React from "react";
 import { useDispatch } from "react-redux";
 import useDialogUI from "../theme/useDialogUI";
+import { ArrowUpwardTwoTone, ArrowDownwardTwoTone } from "@mui/icons-material";
 
 const barWidth = 40;
 const maxBars = 384;
@@ -17,6 +18,7 @@ type ArrangementProps = {
   selectedPattern?: number;
   patterns: Pattern[];
   handleClose: () => void;
+  startTrack: number;
 }
 
 type ArrangementLocation = {
@@ -24,11 +26,10 @@ type ArrangementLocation = {
   songTrack: number;
 }
 
-const Arrangement = React.memo(({ selectedPattern, patterns, handleClose }:ArrangementProps) => {
+const Arrangement = React.memo(({ selectedPattern, patterns, handleClose, startTrack }:ArrangementProps) => {
   // const activeSong = useSelector(getActiveSong);
-  const [deleting, setDeleting] = useState(false);
   const dispatch = useDispatch();
-  const [start, setStart] = useState(0);
+  const [startBar, setStartBar] = useState(0);
 
   const initialEntries = useSelector(getPatternSequence);
   const [patternEntries, setPatternEntries] = useState<PatternEntry[]>(initialEntries);
@@ -163,7 +164,7 @@ const Arrangement = React.memo(({ selectedPattern, patterns, handleClose }:Arran
     },
   ]
 
-  const pageBars = Array(maxBars).fill(0).map((_, idx) => idx).slice(start, start + pageSize);
+  const pageBars = Array(maxBars).fill(0).map((_, idx) => idx).slice(startBar, startBar + pageSize);
  
   // const addOverlap = ({ bar, songTrack }:ArrangementLocation) => {
   //   const newOverlap = [...overlapped, { bar, songTrack }];
@@ -246,6 +247,9 @@ const Arrangement = React.memo(({ selectedPattern, patterns, handleClose }:Arran
         //   }
         // }}
         display="inline-block"
+        sx={{
+          cursor: 'pointer'
+        }}
       >
         {Boolean(patternMap[key]) && <BarMarker entry={patternMap[key]} />}
       </Box>
@@ -268,43 +272,14 @@ const Arrangement = React.memo(({ selectedPattern, patterns, handleClose }:Arran
       }
     }
 
-    window.removeEventListener('keydown', (e) => {
-      if (e.key === 'Shift') {
-        setDeleting(true);
-      }
-    });
-
-    window.removeEventListener('keyup', (e) => {
-      if (e.key === 'Shift') {
-        setDeleting(false);
-      }
-    });
-
-    window.addEventListener('keydown', (e) => {
-      if (e.key === 'Shift') {
-        setDeleting(true);
-      }
-    });
-
-    window.addEventListener('keyup', (e) => {
-      if (e.key === 'Shift') {
-        setDeleting(false);
-      }
-    });
-
     return (
       <Box p={0} m={0} width={width} position="absolute" zIndex={5} height="100%" top={0} left={0}
         bgcolor="warning.light"
         display="block"
+        sx={{ cursor: 'crosshair' }}
         onMouseEnter={(e) => {
-          // if (deleting && mouseDown) {
-          //   barClick();
-          // }
           setMouseDown(0);
         }}
-        // onMouseDown={(e) => {
-        //   e.stopPropagation();
-        // }}
         onClick={(e) => {
           e.stopPropagation();
           barClick();
@@ -318,11 +293,7 @@ const Arrangement = React.memo(({ selectedPattern, patterns, handleClose }:Arran
 
   return (
     <Box>
-      <Typography display="inline" variant="subtitle1" fontWeight={600} color="black" textAlign="left" pl={0} mb={2}>
-        Arrangement {deleting && '(deleting)'}
-      </Typography>
       <Button onClick={() => {
-        // dispatch(setPatternSequence([]));
         setPatternEntries([]);
       }}>Clear</Button>
       <Grid container spacing={0} sx={{ mb: 1 }}>
@@ -333,13 +304,13 @@ const Arrangement = React.memo(({ selectedPattern, patterns, handleClose }:Arran
               {[...Array(songTrackCount)].map((val, num) => (
                 <Box p={0} m={0} pl={1} py={1} borderLeft="1px solid black" borderBottom="1px solid black" width={"100%"} bgcolor="primary.dark" display="inline-block">
                   <Typography sx={{...noSelect}} color="primary.contrastText" textAlign="left" pl={2}>
-                    Track {num + 1}
+                    Track {num + 1 + startTrack}
                   </Typography>
                 </Box>
               ))}
             </Grid>
             <Grid item xs={10}>
-              <Box px={0} sx={{ overflowX: 'scroll' }} borderLeft="1px solid black" borderRight="1px solid black"
+              <Box px={0} sx={{ overflowX: 'scroll', overflowY: 'hidden' }} borderLeft="1px solid black" borderRight="1px solid black"
                 onMouseUp={() => {
                   setMouseDown(0);
                 }}
@@ -363,7 +334,7 @@ const Arrangement = React.memo(({ selectedPattern, patterns, handleClose }:Arran
                         // }}
                       >
                         {
-                          [...pageBars].map((val, bar) => <BarCell bar={bar + 1 + start} songTrack={num + 1} />)
+                          [...pageBars].map((val, bar) => <BarCell bar={bar + 1 + startBar} songTrack={num + 1 + startTrack} />)
                         }
                       </Box>
                     )
@@ -381,10 +352,10 @@ const Arrangement = React.memo(({ selectedPattern, patterns, handleClose }:Arran
       {pages.map(({ label, start: pageStart }) => (
         <Button
           
-          variant={start === pageStart ? 'contained' : 'outlined'}
+          variant={startBar === pageStart ? 'contained' : 'outlined'}
           sx={{ mr: 1, mb: 1, width: '92px' }}
           onClick={() => {
-            setStart(pageStart);
+            setStartBar(pageStart);
           }}
         >
           {label}
@@ -416,6 +387,7 @@ const SongArranger = ({ open, handleClose }:{ open: boolean, handleClose: () => 
   const defaultPattern = activePatterns[0]?.position || 0;
   const [selectedPattern, setSelectedPattern] = useState(1);
   const [saveCallback, setSaveCallback] = useState<(arg?:PatternEntry) => void>(() => {});
+  const [startTrack, setStartTrack] = useState(0);
 
   useEffect(() => {
     setSelectedPattern(defaultPattern);
@@ -445,8 +417,22 @@ const SongArranger = ({ open, handleClose }:{ open: boolean, handleClose: () => 
               )}
             </Box>
           </Grid>
-          <Grid item xs={9}>
-            <Arrangement {...{selectedPattern, patterns, saveCallback, handleClose}} />
+          <Grid item xs={1} sx={{ textAlign: 'right', pr: 2, pt: 4, height: '100%' }}>
+            <Box position="relative" height={205}>
+              <Box position="absolute" bottom={0} right={0}>
+                <ArrowDownwardTwoTone sx={{ cursor: 'pointer' }} onClick={() => {
+                  setStartTrack(startTrack + 1);
+                } } />
+              </Box>
+              <Box position="absolute" top={0} right={0}>
+                <ArrowUpwardTwoTone sx={{ cursor: 'pointer' }} onClick={() => {
+                  setStartTrack(startTrack - 1);
+                } } />
+              </Box>
+            </Box>
+          </Grid>
+          <Grid item xs={8}>
+            <Arrangement {...{ selectedPattern, patterns, saveCallback, handleClose, startTrack }} />
           </Grid>
         </Grid>
 
