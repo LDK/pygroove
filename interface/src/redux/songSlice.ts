@@ -1,7 +1,6 @@
 // src/userSlice.ts
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { RootState } from './store';
-import { Root } from 'react-dom/client';
 
 export type Filter = {
   filter_type: string;
@@ -76,6 +75,7 @@ export interface Song {
   swing: number
   patternSequence: PatternEntry[];
   id?: number;
+  lastEdited?: Date;
 };
 
 export interface SongState extends Song {
@@ -122,6 +122,8 @@ const initialState:SongState = {
   }],
   activePattern: initPatterns[0],
   tracks: [],
+  id: undefined,
+  lastEdited: undefined,
 };
 
 initialState.tracks.push(simpleTrack({ song: initialState, name: 'Kick', sample: {
@@ -149,8 +151,6 @@ initialState.tracks.push(simpleTrack({ song: initialState, name: 'Open Hat', sam
   name: '808 Open Hat 1',
 } }));
 
-console.log(initialState);
-
 const songSlice = createSlice({
   name: 'song',
   initialState,
@@ -172,8 +172,6 @@ const songSlice = createSlice({
     setStep: (state, action: PayloadAction<Step>) => {
       const { loc, track } = action.payload;
 
-      console.log('setStep', action.payload);
-
       if (!track) return;
 
       const step = state.activePattern?.steps.find((step) => {
@@ -181,8 +179,6 @@ const songSlice = createSlice({
       });
 
       const pattern = state.activePattern;
-
-      console.log('setStep pattern', pattern);
 
       if (!pattern) return;
 
@@ -206,9 +202,6 @@ const songSlice = createSlice({
           track: track,
         });
       }
-
-      console.log('state patterns', state.patterns);
-      console.log('pattern steps', pattern.steps);
 
       let rootPattern = state.patterns.find((ptrn) => ptrn.position === pattern.position);
 
@@ -236,7 +229,7 @@ const songSlice = createSlice({
       state.patternSequence = action.payload;
     },
     addPatternEntry: (state, action: PayloadAction<PatternEntry>) => {
-      const { position, bar, songTrack } = action.payload;
+      const { bar, songTrack } = action.payload;
 
       const existing = state.patternSequence.find((entry) => {
         return entry.bar === bar && entry.songTrack === songTrack;
@@ -302,13 +295,12 @@ const songSlice = createSlice({
     },
     setTrackVolume: (state, action: PayloadAction<{position: number, value: number}>) => {
       const track = state.tracks.find((track) => track.position === action.payload.position);
-      console.log('setTrackVolume', track, action.payload);
+
       if (!track) return;
 
       track.volume = action.payload.value;
     },
     setTrackSample: (state, action: PayloadAction<{position: number, sample: SampleData}>) => {
-      console.log('setTrackSample', action.payload);
       const track = state.tracks.find((track) => track.position === action.payload.position);
       if (!track) return;
       track.sample = action.payload.sample;
@@ -345,26 +337,50 @@ const songSlice = createSlice({
 
       let rootPattern = state.patterns.find((ptrn) => ptrn.position === pattern.position);
 
-      console.log('toggleStep pattern', pattern);
-      console.log('toggleStep state patterns', state.patterns);
-      console.log('toggleStep rootPattern', rootPattern);
-      console.log('PATTERN INDEX', patternIndex(state, pattern));
-
       if (!rootPattern) return;
 
       rootPattern = { ...rootPattern, steps: pattern.steps };
 
-      console.log('updated pattern', rootPattern);
-
       state.patterns.splice(patternIndex(state, pattern), 1, rootPattern);
     },
     setActivePattern: (state, action: PayloadAction<number>) => {
-      console.log('setActivePattern', action.payload, state);
-      console.log('song patterns', state.patterns);
       const pattern = state.patterns.find((ptrn) => ptrn.position === action.payload);
-      console.log('setting ActivePattern', pattern?.position, pattern);
+
       if (!pattern) return;
       state.activePattern = pattern;
+    },
+    setActiveSong: (state, action: PayloadAction<Song | null>) => {
+      if (!action.payload) {
+        Object.assign(state, initialState);
+        return;
+      }
+
+      let newPatterns = [];
+
+      // Still need to fill in all 64 patterns even if they're empty
+      for (let i = 1; i <= 64; i++) {
+        const pattern = action.payload.patterns.find((ptrn) => ptrn.position === i);
+        if (pattern) {
+          newPatterns.push(pattern);
+        } else {
+          newPatterns.push(simplePattern(i));
+        }
+      }
+
+      state.loading = true;
+      state.patterns = newPatterns;
+      state.tracks = action.payload.tracks;
+      state.title = action.payload.title;
+      state.bpm = action.payload.bpm;
+      state.swing = action.payload.swing;
+      state.patternSequence = action.payload.patternSequence;
+      state.id = action.payload.id;
+      state.activePattern = newPatterns[0] || undefined;
+
+      // state = newState as SongState;
+    },
+    setLoading: (state, action: PayloadAction<boolean>) => {
+      state.loading = action.payload;
     },
     updateTrack: (state, action: PayloadAction<Track>) => {
       const track = state.tracks.find((trk) => trk.position === action.payload.position);
@@ -376,6 +392,7 @@ const songSlice = createSlice({
 
 export const {
   clearSong,
+  setLoading,
   setSong,
   setSwing,
   setPatternSequence,
@@ -389,6 +406,7 @@ export const {
   duplicateTrack,
   clearPattern,
   setActivePattern,
+  setActiveSong,
   toggleStep,
   setTrackVolume,
   setTrackPan,

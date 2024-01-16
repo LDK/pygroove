@@ -171,8 +171,10 @@ def getStepSound(step, track):
     shiftSteps = 0
     transposeSteps = 0
 
+    rootPitch = track['rootPitch'] if 'rootPitch' in track else 'C3'
+
     if 'pitch' in step:
-        transposeSteps += pitch_diff(track['rootPitch'] if 'rootPitch' in track else 'C3', step['pitch'])
+        transposeSteps += pitch_diff(rootPitch, step['pitch'])
         shiftSteps = transposeSteps * 100
     if 'transpose' in track:
         transposeSteps += int(track['transpose'])

@@ -18,5 +18,6 @@ urlpatterns = [
     path('sample/<int:pk>/waveform', views.SampleImageView.as_view(), name='sample_waveform'),
     path('song/', views.CreateSongView.as_view(), name='song'),
     path('song/<int:pk>/', views.SongView.as_view(), name='song'),
+    path('song/<int:pk>/rename/', views.RenameSongView.as_view(), name='song_rename'),
     path('token/refresh/', views.RefreshTokenView.as_view(), name='token_refresh'),
 ]

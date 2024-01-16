@@ -37,7 +37,6 @@ const StepSequencer = () => {
     const [patternSteps, setPatternSteps] = useState<Step[]>(activePattern ? getTrackSteps(activePattern, track) : []);
 
     const handleTrackToggle = () => {
-      console.log('handleTrackToggle', track);
       dispatch(toggleTrack(track.position));
     }
 

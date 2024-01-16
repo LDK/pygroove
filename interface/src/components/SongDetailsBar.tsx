@@ -1,13 +1,13 @@
 import { Button, Grid, TextField, Typography } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
-import { getActiveSong, setAuthor, setBpm, setSongTitle, setSwing } from "../redux/songSlice";
+import { getActiveSong, setAuthor, setBpm, setLoading, setSongTitle, setSwing } from "../redux/songSlice";
 import { EditTwoTone } from "@mui/icons-material";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Range from "./Range";
 import PatternManagement, { TextLink } from "./PatternManagement";
 
 const SongDetailsBar = ({ openArranger }:{ openArranger: () => void }) => {
-  const { title, author, bpm, swing } = useSelector(getActiveSong);
+  const { title, author, bpm, swing, loading } = useSelector(getActiveSong);
 
   const [editTitle, setEditTitle] = useState(false);
   const [editAuthor, setEditAuthor] = useState(false);
@@ -22,23 +22,60 @@ const SongDetailsBar = ({ openArranger }:{ openArranger: () => void }) => {
     if (!editTitle && workingTitle !== title) {
       dispatch(setSongTitle(workingTitle));
     }
-  }, [editTitle, workingTitle, dispatch, title]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editTitle, workingTitle, dispatch]);
+
+  useEffect(() => {
+    if (loading) {
+      setWorkingTitle(title);
+      setWorkingAuthor(author || '');
+      setWorkingBpm(bpm);
+      dispatch(setLoading(false));
+      return;
+    }
+  }, [loading, title, author, bpm, dispatch]);
 
   // When we stop editing the author, set the author to the working author, if it has changed
   useEffect(() => {
     if (!editAuthor && workingAuthor !== author) {
       dispatch(setAuthor(workingAuthor));
     }
-  }, [editAuthor, workingAuthor, dispatch, author]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editAuthor, workingAuthor, dispatch]);
 
   // When we change the bpm, set the bpm to the working bpm, if it has changed
   useEffect(() => {
-    if (workingBpm !== bpm) {
+    if (workingBpm !== bpm && !loading) {
       dispatch(setBpm(workingBpm));
     }
-  }, [workingBpm, bpm, dispatch]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [workingBpm, dispatch, loading]);
 
-  
+  const swingSlider = useMemo(() => {
+    return (
+      <Range
+        defaultValue={swing || 0}
+        onBlur={(e) => {
+          if (!loading) {
+            dispatch(setSwing(parseFloat(e.target.value)));
+          }
+        }}
+        step={0.01}
+        min={0}
+        max={1}
+        labelPrefix="Swing: "
+        percentage 
+      />
+    );
+  }, [swing, loading, dispatch]);
+
+  const bpmInput = useMemo(() => {
+   return (
+    <input type="number" step={1} min={1} max={999} defaultValue={bpm} value={bpm} style={{ width: '3rem' }} onChange={(e) => {
+      setWorkingBpm(parseInt(e.target.value) || bpm);
+    }} />
+   )}, [bpm]);
+
   return (
     <Grid id="song-details-bar" container bgcolor="primary.light">
       {/* Meta Section */}
@@ -151,22 +188,10 @@ const SongDetailsBar = ({ openArranger }:{ openArranger: () => void }) => {
         <Grid container>
           <Grid item xs={6}>
             <Typography display="inline-block" pr={1}>BPM: </Typography>
-            <input type="number" step={1} min={1} max={999} defaultValue={bpm} style={{ width: '3rem' }} onChange={(e) => {
-              setWorkingBpm(parseInt(e.target.value) || bpm);
-            }} />
+            {bpmInput}
           </Grid>
           <Grid item xs={6}>
-            <Range
-              defaultValue={swing || 0}
-              onBlur={(e) => {
-                dispatch(setSwing(parseFloat(e.target.value)));
-              }}
-              step={0.01}
-              min={0}
-              max={1}
-              labelPrefix="Swing: "
-              percentage 
-            />
+            {swingSlider}
           </Grid>
         </Grid>
       </Grid>

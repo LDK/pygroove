@@ -1,10 +1,9 @@
 import { PlayArrowTwoTone } from "@mui/icons-material";
 import { Box, Grid, Button } from "@mui/material";
-import { useDispatch, useSelector } from "react-redux";
-import { Filter, Track, Step, getActiveSong, setSongId, PatternEntry } from "../redux/songSlice";
+import { useSelector } from "react-redux";
+import { Filter, Track, Step, getActiveSong, PatternEntry } from "../redux/songSlice";
 import { AxiosResponse } from "axios";
 import { useEffect, useState } from "react";
-import { Song } from "../redux/songSlice";
 import { ApiCallProps } from "../hooks/useApi";
 import { UserState } from "../redux/userSlice";
 
@@ -44,9 +43,8 @@ const ActionButtons = ({ user, apiCall }:ActionButtonsProps) => {
 
   useEffect(() => {
     setSong(activeSong);
+    console.log('activeSong', activeSong);
   }, [activeSong]);
-
-  const dispatch = useDispatch();
 
   const prepareRenderPayload = () => {
     // Take the songState and mutate it into RenderPayload format
@@ -94,34 +92,6 @@ const ActionButtons = ({ user, apiCall }:ActionButtonsProps) => {
     return renderPayload;
   };
 
-  const handleSave = async () => {
-    if (!user?.token) {
-      return;
-    }
-
-    const allPatterns = song.patterns;
-
-    const patterns = allPatterns.filter((pattern) => {
-      return Boolean(pattern.steps.length) || Boolean(pattern.name !== `Pattern ${pattern.position}`);
-    });
-
-    const {activePattern: ap, loading: songLoading, error: songError, ...songData } = { ...song, patterns };
-
-    await apiCall({
-      uri: `/song/${songData.id ? songData.id + '/' : ''}`,
-      method: songData.id ? 'put' : 'post',
-      payload: {...songData} as Song,
-      onSuccess: (res:AxiosResponse) => {
-        if (res.data?.id) {
-          dispatch(setSongId(res.data.id));
-        }
-      },
-      onError: (error:any) => {
-        console.error('Error during save:', error);
-      },
-    });
-  };
-
   const handleRender = async () => {
     if (!user?.token) {
       return;
@@ -167,13 +137,6 @@ const ActionButtons = ({ user, apiCall }:ActionButtonsProps) => {
           </Button>
         </Grid>
 
-        { Boolean(user?.token) &&
-          <Grid item xs={4}>
-            <Button onClick={handleSave} variant="contained" color="primary" sx={{ float: 'right', my: 1, mr: 1 }}>
-              Save Song
-            </Button>
-          </Grid>
-        }
       </Grid>
       
     </Box>
