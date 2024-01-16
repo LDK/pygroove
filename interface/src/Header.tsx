@@ -3,13 +3,14 @@ import ProfileIcon from '@mui/icons-material/AccountCircle';
 import { AppBar, Grid, Typography, Box, useTheme, Dialog, DialogTitle, DialogContent } from "@mui/material";
 import { useEffect, useState } from "react";
 import LoginRegisterDialog from "./components/LoginRegisterDialog";
-import { clearSong } from './redux/songSlice';
+import { clearSong, getActiveSong } from './redux/songSlice';
 import { useDispatch } from 'react-redux';
 import { UserState, clearUser } from './redux/userSlice';
 import SongManagement from './components/SongManagement';
 import { TextLink, dot } from './components/PatternManagement';
 import useDialogUI from './theme/useDialogUI';
 import useSong from './hooks/useSong';
+import { useSelector } from 'react-redux';
 
 interface HeaderProps {
   user: UserState,
@@ -19,10 +20,40 @@ interface HeaderProps {
   handleOpenUserMenu: (event:React.MouseEvent) => void,
 };
 
+const SaveSongDialog = ({ open, onClose }: { open: boolean, onClose: () => void }) => {
+  const activeSong = useSelector(getActiveSong);
+  const { handleSave } = useSong();
+  const { DialogActionButtons } = useDialogUI();
+
+  if (!activeSong) {
+    return null;
+  }
+
+  return (
+    <Dialog open={open} onClose={onClose} sx={{ mb: 4, py: 8 }}>
+      <DialogContent>
+        <Typography variant="subtitle1" pb={4}>
+          Save changes to <Typography component="span" fontWeight={700}>
+            {activeSong.title}
+          </Typography>?
+          </Typography>
+      </DialogContent>
+      <DialogActionButtons
+        onCancel={onClose}
+        onConfirm={() => { handleSave(); onClose(); }}
+        confirmLabel="Save"
+        cancelLabel="Cancel"
+        internal padding 
+      />
+    </Dialog>
+  );
+};
+
 const Header = ({ user, tokenExpired, setTokenExpired, handleOpenUserMenu, UserMenu }:HeaderProps) => {
   const [loginOpen, setLoginOpen] = useState(false);
   const [songListOpen, setSongListOpen] = useState(false);
   const [newOpen, setNewOpen] = useState(false);
+  const [saveOpen, setSaveOpen] = useState(false);
 
   const theme = useTheme();
   const dispatch = useDispatch();
@@ -53,7 +84,7 @@ const Header = ({ user, tokenExpired, setTokenExpired, handleOpenUserMenu, UserM
             <Box p={0} m={0} mr={2} display="inline-block" px={2} py={1}>
               <TextLink text="New Song" variant="subtitle1" color="white" onClick={() => { setNewOpen(true); }} />  
               {dot}
-              <TextLink text="Save Song" variant="subtitle1" color="white" onClick={handleSave} />
+              <TextLink text="Save Song" variant="subtitle1" color="white" onClick={() => { setSaveOpen(true) }} />
               {dot}
               <TextLink text="Explore Songs" variant="subtitle1" color="white" onClick={() => { setSongListOpen(true); }} />
             </Box>
@@ -90,6 +121,8 @@ const Header = ({ user, tokenExpired, setTokenExpired, handleOpenUserMenu, UserM
         />
       </Dialog>
     }
+
+    {saveOpen && <SaveSongDialog open={saveOpen} onClose={() => { setSaveOpen(false); }} />}
 
   </AppBar>);
 };
