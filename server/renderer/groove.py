@@ -214,7 +214,11 @@ def getStepSound(step, track):
         stepSound += trackVol
         # print ("Applying volume of {} to track {}".format(trackVol,track['name']))
 
-    if 'filters' in step:
+    if 'filters' in step and len(step['filters']) > 0:
+        print ("Applying filters to step")
+        print (step['filters'])
+
+
         for filter in step['filters']:
             if filter['on'] == True:
                 if filter['filter_type'] == 'hp':
