@@ -1,9 +1,8 @@
 import { Grid, Typography, Select, Divider, Checkbox } from "@mui/material";
 import { FolderTwoTone as BrowseIcon, HeadphonesTwoTone as PlayIcon } from "@mui/icons-material";
-import { Filter, Track } from "../redux/songSlice";
+import { Track } from "../redux/songSlice";
 import useControls from "./useControls";
 import { useEffect, useState } from "react";
-import useFilters from "./useFilters";
 
 type FilterInfo = {
   filter1On: boolean;
