@@ -1,13 +1,14 @@
 import { Box, Checkbox, Grid, Select, Typography } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Track } from "../redux/songSlice";
 import Knob from "../components/Knob";
 
 interface useFiltersProps {
   track?: Track;
+  changeCallback?: (filters: any) => void;
 }
 
-const useFilters = ({ track }: useFiltersProps) => {
+const useFilters = ({ track, changeCallback }: useFiltersProps) => {
   // Filter controls
   const [filter1On, setFilter1On] = useState(track?.filters?.length ? track.filters[0].on : false);
   const [filter1Type, setFilter1Type] = useState(track?.filters?.length ? track.filters[0].filter_type : 'lp');
@@ -19,7 +20,37 @@ const useFilters = ({ track }: useFiltersProps) => {
   const [filter2Q, setFilter2Q] = useState((track?.filters?.length && track.filters.length > 1) ? track.filters[1].q : 0);
   const [filter2Freq, setFilter2Freq] = useState((track?.filters?.length && track.filters.length > 1) ? track.filters[1].frequency : 0);
 
-  const TrackFilters = () => (
+  useEffect(() => {
+    console.log('filter1 On', filter1On, changeCallback);
+    if (changeCallback) {
+      console.log('change callback');
+      changeCallback({
+        filter1On, filter1Type, filter1Q, filter1Freq,
+        filter2On, filter2Type, filter2Q, filter2Freq,
+      });
+    }
+  }, [filter1On, filter1Type, filter1Q, filter1Freq,
+    filter2On, filter2Type, filter2Q, filter2Freq]);
+
+  const TrackFilters = () => { 
+    const [changed, setChanged] = useState(false);
+
+    useEffect(() => {
+      if (changed) {
+        console.log('hi');
+        if (changeCallback) {
+          console.log('changeCallback');
+          changeCallback({
+            filter1On, filter1Type, filter1Q, filter1Freq,
+            filter2On, filter2Type, filter2Q, filter2Freq,
+          });
+        }
+  
+        setChanged(false);
+      }
+    }, [changed]);
+
+    return (
     <Grid container spacing={0} sx={{ height: '314px' }}>
       {[1, 2].map((filterIdx) => (
         <Grid key={`filter-${filterIdx}`} item xs={12} p={0} m={0} mb={1}>
@@ -33,6 +64,7 @@ const useFilters = ({ track }: useFiltersProps) => {
               } else {
                 setFilter2On(!filter2On);
               }
+              setChanged(true);
             }} />
             <Typography variant="subtitle1" component="span">
               Filter {filterIdx}
@@ -53,6 +85,8 @@ const useFilters = ({ track }: useFiltersProps) => {
                     } else {
                       setFilter2Type(e.target.value);
                     }
+
+                    setChanged(true);
                   } }
                   inputProps={{
                     name: 'filterType',
@@ -78,6 +112,8 @@ const useFilters = ({ track }: useFiltersProps) => {
                   } else {
                     setFilter2Freq(val);
                   }
+
+                  setChanged(true);
                 }} />
 
                 <Typography variant="caption">
@@ -96,6 +132,8 @@ const useFilters = ({ track }: useFiltersProps) => {
                   } else {
                     setFilter2Q(val);
                   }
+
+                  setChanged(true);
                 }} />
 
                 <Typography variant="caption">
@@ -107,7 +145,7 @@ const useFilters = ({ track }: useFiltersProps) => {
         </Grid>
       ))}
     </Grid>
-  );
+  );}
 
   return {
     TrackFilters,

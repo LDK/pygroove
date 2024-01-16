@@ -1,10 +1,22 @@
 import { Grid, Typography, Select, Divider, Checkbox } from "@mui/material";
-import { FolderTwoTone as BrowseIcon } from "@mui/icons-material";
-import { Track } from "../redux/songSlice";
+import { FolderTwoTone as BrowseIcon, HeadphonesTwoTone as PlayIcon } from "@mui/icons-material";
+import { Filter, Track } from "../redux/songSlice";
 import useControls from "./useControls";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import useFilters from "./useFilters";
 
-const useTrackSettings = ({track}:{track?: Track}) => {
+type FilterInfo = {
+  filter1On: boolean;
+  filter1Type: string;
+  filter1Q: number;
+  filter1Freq: number;
+  filter2On: boolean;
+  filter2Type: string;
+  filter2Q: number;
+  filter2Freq: number;
+};
+
+const useTrackSettings = ({track, filters}:{track?: Track, filters: FilterInfo}) => {
   const { VolumeSlider, PanSlider } = useControls();
   const [volume, setVolume] = useState(track?.volume || -6);
   const [pan, setPan] = useState(track?.pan || 0);
@@ -19,9 +31,54 @@ const useTrackSettings = ({track}:{track?: Track}) => {
   const [trim, setTrim] = useState(track?.disabled || false);
   const [normalize, setNormalize] = useState(track?.disabled || false);
   
-  const queryString = `?${Object.entries({ reverse, trim, normalize }).map(([key, val]) => `${key}=${val}`).join('&')}`;
+  // Holds MP3 binary data
+  const [trackAudio, setTrackAudio] = useState<HTMLAudioElement | null>(null);
 
-  const TrackSettings = ({ browseCallback }:{ browseCallback:() => void }) => {
+  const {
+    filter1On, filter1Type, filter1Q, filter1Freq, 
+    filter2On, filter2Type, filter2Q, filter2Freq
+  } = filters;
+
+  const queryKeyMap = {
+    reverse: 'rv',
+    trim: 'tr',
+    normalize: 'nm',
+    pan: 'pn',
+    volume: 'vl',
+    pitchShift: 'ps',
+    transpose: 'ts',
+    filter1On: 'f1',
+    filter1Freq: 'fq1',
+    filter1Q: 'q1',
+    filter1Type: 'ft1',
+    filter2On: 'f2',
+    filter2Freq: 'fq2',
+    filter2Q: 'q2',
+    filter2Type: 'ft2',
+  };
+
+  const audioQueryString = `?${Object.entries({ 
+    reverse, trim, normalize, pan, volume, pitchShift, transpose,
+    filter1On, filter1Type, filter1Q, filter1Freq,
+    filter2On, filter2Type, filter2Q, filter2Freq
+  }).map(([key, val]) => `${queryKeyMap[key as keyof typeof queryKeyMap]}=${val}`).join('&')}`;
+
+  console.log('track filters', filters);
+
+  useEffect(() => {
+    setTrackAudio(null);
+    if (sample){
+      const audio = new Audio(`${process.env.REACT_APP_API_URL}/sample/${sample.id}/preview${audioQueryString}`);
+
+      if (audio) {
+        setTrackAudio(audio);
+      }
+}
+  }, [audioQueryString, sample]);
+
+  const imageQueryString = `?${Object.entries({ reverse, trim, normalize }).map(([key, val]) => `${queryKeyMap[key as keyof typeof queryKeyMap]}=${val}`).join('&')}`;
+
+  const TrackSettings = ({ browseCallback }:{ browseCallback:() => void, }) => {
     if (!track) return null;
 
     return (
@@ -88,7 +145,7 @@ const useTrackSettings = ({track}:{track?: Track}) => {
 
         <Grid item xs={12} md={2} lg={2}>
           <Typography fontWeight={600} pb={1} variant="caption" component="p">Transpose:</Typography>
-          <input type="number" step={1} min={-12} max={12} defaultValue={transpose} style={{ width: '3rem', height: '3rem', padding: "2px" }} onChange={(e) => {
+          <input type="number" step={1} min={-36} max={36} defaultValue={transpose} style={{ width: '3rem', height: '3rem', padding: "2px" }} onChange={(e) => {
             setTranspose(parseInt(e.target.value) || transpose);
           } } />
         </Grid>
@@ -108,8 +165,17 @@ const useTrackSettings = ({track}:{track?: Track}) => {
           <Grid container spacing={0} bgcolor="primary.dark" px={1} pt={2} pb={1}>
             <Grid item xs={12} md={8} position={"relative"}>
               {Boolean(sample && sample?.id)
-                ? <img alt={sample?.name || ''} src={`${process.env.REACT_APP_API_URL}/sample/${sample?.id}/waveform${queryString}`} style={{ height: '10rem', width: '100%' }} />
+                ? <img alt={sample?.name || ''} src={`${process.env.REACT_APP_API_URL}/sample/${sample?.id}/waveform${imageQueryString}`} style={{ height: '10rem', width: '100%' }} />
                 : null}
+
+              <PlayIcon
+                onClick={() => {
+                  if (sample && trackAudio) {
+                    trackAudio.play();
+                  }
+                } }
+                sx={{ position: 'absolute', bottom: '.25rem', right: '2.5rem', color: 'primary', fontSize: '2rem', cursor: 'pointer' }} />
+              
               <BrowseIcon
                 onClick={browseCallback}
                 sx={{ position: 'absolute', bottom: '.25rem', right: '.25rem', color: 'primary', fontSize: '2rem', cursor: 'pointer' }} />

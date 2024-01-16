@@ -16,6 +16,7 @@ urlpatterns = [
     path('sample/', views.CreateSampleView.as_view(), name='sample'),
     path('sample/<int:pk>/', views.SampleView.as_view(), name='sample'),
     path('sample/<int:pk>/waveform', views.SampleImageView.as_view(), name='sample_waveform'),
+    path('sample/<int:pk>/preview', views.SampleAudioView.as_view(), name='sample_preview'),
     path('song/', views.CreateSongView.as_view(), name='song'),
     path('song/<int:pk>/', views.SongView.as_view(), name='song'),
     path('song/<int:pk>/rename/', views.RenameSongView.as_view(), name='song_rename'),

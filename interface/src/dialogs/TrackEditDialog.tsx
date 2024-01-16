@@ -28,7 +28,7 @@ const TrackEditDialog = ({ track, setEditingTrack }:{ track?:Track, setEditingTr
     filter2On, setFilter2On, filter2Type, setFilter2Type,
     filter2Q, setFilter2Q, filter2Freq, setFilter2Freq,
     TrackFilters
-  } = useFilters({ track });
+  } = useFilters({ track, changeCallback: (filters) => { console.log('FILTORZ', filters); }});
 
   const {
     volume, setVolume,
@@ -42,7 +42,10 @@ const TrackEditDialog = ({ track, setEditingTrack }:{ track?:Track, setEditingTr
     trim, setTrim,
     normalize, setNormalize,
     TrackSettings
-  } = useTrackSettings({ track });
+  } = useTrackSettings({ track, filters: {
+    filter1On, filter1Type, filter1Q, filter1Freq,
+    filter2On, filter2Type, filter2Q, filter2Freq,
+  } });
 
   const { SampleBrowser, fetchSamples } = useSamples();
 
@@ -179,7 +182,9 @@ const TrackEditDialog = ({ track, setEditingTrack }:{ track?:Track, setEditingTr
           {/* Settings Tab */}
 
           <TabPanel value={tab} index={SETTINGS}>
-            <TrackSettings browseCallback={() => { setTab(SAMPLES) }} />
+            <TrackSettings
+              browseCallback={() => { setTab(SAMPLES) }}
+            />
           </TabPanel>
 
           {/* Sample Tab */}

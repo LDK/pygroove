@@ -31,8 +31,6 @@ const Knob = ({ onBlur, initValue }:{ initValue: number; onBlur: (val:number) =>
     onBlur(value);
   };
 
-  console.log('Knob render', 'initValue:', initValue, 'value:', value);
-
   return (
     <Box textAlign={"left"} ml={2}>
       <CircularInput value={value} max={1} min={0} radius={15} onChange={setValue} onChangeEnd={handleBlur}>
