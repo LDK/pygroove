@@ -1,7 +1,7 @@
 // Song Arranger.tsx
 import { SxProps, Dialog, DialogContent, Grid, Typography, Box, Button } from "@mui/material";
 import { useSelector } from "react-redux";
-import { Pattern, PatternEntry, addPatternEntry, getActiveSong, getPatternSequence, getSelectedPatternPosition, selectPattern, setPatternSequence } from "../redux/songSlice";
+import { Pattern, PatternEntry, getActiveSong, getPatternSequence, setPatternSequence } from "../redux/songSlice";
 import { useEffect, useMemo, useState } from "react";
 import React from "react";
 import { useDispatch } from "react-redux";
@@ -34,7 +34,7 @@ const Arrangement = React.memo(({ selectedPattern, patterns, handleClose, startT
   const initialEntries = useSelector(getPatternSequence);
   const [patternEntries, setPatternEntries] = useState<PatternEntry[]>(initialEntries);
 
-  const [mouseDown, setMouseDown] = useState(0);
+  const [/*mouseDown*/, setMouseDown] = useState(0);
 
   // const overlapped:ArrangementLocation[] = useMemo(() => {
   //   const overlapped:ArrangementLocation[] = [];
@@ -61,16 +61,15 @@ const Arrangement = React.memo(({ selectedPattern, patterns, handleClose, startT
 
   const wouldOverlap = (bar:number, songTrack:number) => {
     const maxBar = bar + (pattern?.bars || 1) - 1;
-    let reach = bar;
 
     const overlaps:ArrangementLocation[] = [];
 
-    while (reach <= maxBar) {
+    for (let reach = bar; reach <= maxBar; reach++) {
       const o = patternEntries.find(pe => pe.bar === reach && pe.songTrack === songTrack);
+
       if (o) {
         overlaps.push(o);
       }
-      reach++;
     }
 
     return overlaps;
@@ -414,12 +413,11 @@ const SongArranger = ({ open, handleClose }:{ open: boolean, handleClose: () => 
   const { patterns } = useSelector(getActiveSong);
 
   const activePatterns = patterns.filter(p => (
-    Boolean(p.steps.length) || p.name != `Pattern ${p.position}`
+    Boolean(p.steps.length) || p.name !== `Pattern ${p.position}`
   ));
 
   const defaultPattern = activePatterns[0]?.position || 0;
   const [selectedPattern, setSelectedPattern] = useState(1);
-  const [saveCallback, setSaveCallback] = useState<(arg?:PatternEntry) => void>(() => {});
   const [startTrack, setStartTrack] = useState(0);
 
   useEffect(() => {
@@ -471,7 +469,7 @@ const SongArranger = ({ open, handleClose }:{ open: boolean, handleClose: () => 
             </Box>
           </Grid>
           <Grid item xs={8}>
-            <Arrangement {...{ selectedPattern, patterns, saveCallback, handleClose, startTrack }} />
+            <Arrangement {...{ selectedPattern, patterns, handleClose, startTrack }} />
           </Grid>
         </Grid>
 

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Step, Track, getActivePattern, getActiveSong, getTrackSteps, toggleTrack } from "./redux/songSlice";
 import { useDispatch, useSelector } from "react-redux";
 import useSteps from "./hooks/useSteps";
-import TrackEditDialog from "./components/TrackEditDialog";
+import TrackEditDialog from "./dialogs/TrackEditDialog";
 import useControls from "./hooks/useControls";
 
 const stepSettings = {

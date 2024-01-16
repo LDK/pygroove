@@ -1,16 +1,14 @@
 import LoginIcon from '@mui/icons-material/AccountCircleOutlined';
 import ProfileIcon from '@mui/icons-material/AccountCircle';
-import { AppBar, Grid, Typography, Box, useTheme, Dialog, DialogTitle, DialogContent } from "@mui/material";
+import { AppBar, Grid, Typography, Box, useTheme } from "@mui/material";
 import { useEffect, useState } from "react";
-import LoginRegisterDialog from "./components/LoginRegisterDialog";
-import { clearSong, getActiveSong } from './redux/songSlice';
+import LoginRegisterDialog from "./dialogs/LoginRegisterDialog";
 import { useDispatch } from 'react-redux';
 import { UserState, clearUser } from './redux/userSlice';
 import SongManagement from './components/SongManagement';
 import { TextLink, dot } from './components/PatternManagement';
-import useDialogUI from './theme/useDialogUI';
-import useSong from './hooks/useSong';
-import { useSelector } from 'react-redux';
+import NewSongDialog from './dialogs/NewSongDialog';
+import SaveSongDialog from './dialogs/SaveSongDialog';
 
 interface HeaderProps {
   user: UserState,
@@ -18,35 +16,6 @@ interface HeaderProps {
   tokenExpired: boolean,
   setTokenExpired: (arg:boolean) => void,
   handleOpenUserMenu: (event:React.MouseEvent) => void,
-};
-
-const SaveSongDialog = ({ open, onClose }: { open: boolean, onClose: () => void }) => {
-  const activeSong = useSelector(getActiveSong);
-  const { handleSave } = useSong();
-  const { DialogActionButtons } = useDialogUI();
-
-  if (!activeSong) {
-    return null;
-  }
-
-  return (
-    <Dialog open={open} onClose={onClose} sx={{ mb: 4, py: 8 }}>
-      <DialogContent>
-        <Typography variant="subtitle1" pb={4}>
-          Save changes to <Typography component="span" fontWeight={700}>
-            {activeSong.title}
-          </Typography>?
-          </Typography>
-      </DialogContent>
-      <DialogActionButtons
-        onCancel={onClose}
-        onConfirm={() => { handleSave(); onClose(); }}
-        confirmLabel="Save"
-        cancelLabel="Cancel"
-        internal padding 
-      />
-    </Dialog>
-  );
 };
 
 const Header = ({ user, tokenExpired, setTokenExpired, handleOpenUserMenu, UserMenu }:HeaderProps) => {
@@ -58,8 +27,6 @@ const Header = ({ user, tokenExpired, setTokenExpired, handleOpenUserMenu, UserM
   const theme = useTheme();
   const dispatch = useDispatch();
 
-  const { handleSave } = useSong();
-
   useEffect(() => {
     if (tokenExpired) {
       setLoginOpen(true);
@@ -67,8 +34,6 @@ const Header = ({ user, tokenExpired, setTokenExpired, handleOpenUserMenu, UserM
       setTokenExpired(false);
     }
   }, [tokenExpired, dispatch, setTokenExpired]);
-
-  const { DialogActionButtons } = useDialogUI();
 
   return (
   <AppBar position="static" sx={{ pt: 1, pb: 2, px: 4, bgcolor: theme.palette.primary.dark }}>
@@ -102,27 +67,8 @@ const Header = ({ user, tokenExpired, setTokenExpired, handleOpenUserMenu, UserM
     {(!user.id || tokenExpired) && <LoginRegisterDialog open={loginOpen || tokenExpired} onClose={() => { setLoginOpen(false); setTokenExpired(false); }} />}
     {(user.id && !tokenExpired) && <SongManagement open={songListOpen} onClose={() => { setSongListOpen(false); }} />}
 
-    {newOpen &&
-      <Dialog open={newOpen} onClose={() => { setNewOpen(false); }}>
-        <DialogTitle id="alert-dialog-title">New Song</DialogTitle>
-        <DialogContent>
-          <Typography variant="subtitle1">
-            Start a new song?  Any unsaved changes to the current song will be lost.
-          </Typography>
-        </DialogContent>
-        <DialogActionButtons
-          onCancel={() => { setNewOpen(false); }}
-          onConfirm={() => { 
-            dispatch(clearSong());
-            setNewOpen(false); 
-          }}
-          confirmLabel="OK"
-          cancelLabel="Cancel"
-        />
-      </Dialog>
-    }
-
-    {saveOpen && <SaveSongDialog open={saveOpen} onClose={() => { setSaveOpen(false); }} />}
+    <NewSongDialog open={newOpen} onClose={() => { setNewOpen(false); }} />
+    <SaveSongDialog open={saveOpen} onClose={() => { setSaveOpen(false); }} />
 
   </AppBar>);
 };
