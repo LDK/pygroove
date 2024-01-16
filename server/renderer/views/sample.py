@@ -1,8 +1,9 @@
 
 import base64
 from io import BytesIO
+import io
 from os import curdir, rename
-from django.http import HttpResponse
+from django.http import FileResponse, HttpResponse
 from rest_framework.permissions import AllowAny
 
 from renderer.waveform import Waveform
@@ -16,6 +17,8 @@ from rest_framework import status, viewsets
 from os.path import join as pjoin
 
 from django.conf import settings
+
+from renderer.sample_process import SampleProcess
 
 class SampleViewSet(viewsets.ModelViewSet):
     permission_classes = (AllowAny,)
@@ -135,9 +138,9 @@ class SampleImageView(APIView):
         serializer = SampleSerializer(sample)
         fLoc = pjoin("./audio", sample.filename)
 
-        reverse:bool = (request.GET.get('reverse', False) in ['true', 'True', True])
-        trim:bool = (request.GET.get('trim', False) in ['true', 'True', True])
-        normalize:bool = (request.GET.get('normalize', False) in ['true', 'True', True])
+        reverse:bool = (request.GET.get('rv', False) in ['true', 'True', True])
+        trim:bool = (request.GET.get('tr', False) in ['true', 'True', True])
+        normalize:bool = (request.GET.get('nm', False) in ['true', 'True', True])
 
         waveform_image = Waveform(fLoc, {
             'normalize': normalize,
@@ -155,6 +158,79 @@ class SampleImageView(APIView):
 
                 # Create a HttpResponse with the PNG data
                 response = HttpResponse(buffer, content_type='image/png')
+                return response
+
+            except IOError:
+                # Handle the case where the image file does not exist or cannot be opened
+                print("Error opening waveform image for sample id:", pk)
+                return Response(None, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+class SampleAudioView(APIView):
+    permission_classes = (AllowAny,)
+    queryset = Track.objects.all()
+    serializer_class = SampleSerializer
+
+    def get(self, request, pk=None):
+        sample = Sample.objects.get(pk=pk)
+        serializer = SampleSerializer(sample)
+        fLoc = pjoin("./audio", sample.filename)
+
+        reverse:bool = (request.GET.get('rv', False) in ['true', 'True', True])
+        trim:bool = (request.GET.get('tr', False) in ['true', 'True', True])
+        normalize:bool = (request.GET.get('nm', False) in ['true', 'True', True])
+        transpose:int = int(request.GET.get('ts', 0))
+        pitchShift:int = int(request.GET.get('ps', 0))
+        pan:int = int(request.GET.get('pn', 0))
+        volume:float = float(request.GET.get('vl', 0))
+
+        filter1On:bool = (request.GET.get('f1', False) in ['true', 'True', True])
+        filter1Type:str = request.GET.get('ft1', 'lowpass')
+        fq1:float = float(request.GET.get('fq1', 0))
+        filter1Freq:float = float(fq1 * 22000)
+        filter1Q:float = float(request.GET.get('q1', 0))
+
+        filter2On:bool = (request.GET.get('f2', False) in ['true', 'True', True])
+        filter2Type:str = request.GET.get('ft2', 'lowpass')
+        fq2:float = float(request.GET.get('fq2', 0))
+        filter2Freq:float = float(fq2 * 22000)
+        filter2Q:float = float(request.GET.get('q2', 0))
+        
+
+        processed = SampleProcess(fLoc, {
+            'normalize': normalize,
+            'trim': trim,
+            'reverse': reverse,
+            'transpose': transpose,
+            'pitchShift': pitchShift,
+            'pan': pan,
+            'volume': volume,
+            'filter1On': filter1On,
+            'filter1Type': filter1Type,
+            'filter1Freq': filter1Freq,
+            'filter1Q': filter1Q,
+            'filter2On': filter2On,
+            'filter2Type': filter2Type,
+            'filter2Freq': filter2Freq,
+            'filter2Q': filter2Q,
+        }).audio()
+
+        # Create a FileResponse with MP3 data
+        # response = FileResponse(io.BytesIO(processed), as_attachment=False)
+        # response['Content-Type'] = 'audio/mpeg'
+
+
+        if processed:
+            try:
+                # Create a buffer to hold the image data
+                buffer = BytesIO()
+                # Save the image to the buffer
+                processed.export(buffer, format='mp3')
+                buffer.seek(0)
+
+                # Create a HttpResponse with the PNG data
+                response = HttpResponse(buffer, content_type='audio/mpeg')
                 return response
 
             except IOError:
