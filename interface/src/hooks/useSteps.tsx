@@ -26,25 +26,6 @@ const useSteps = ({ barDiv, beatDiv, beatStep, defaultPitch, defaultVelocity }:U
 
   const { DialogActionButtons } = useDialogUI();
 
-  // useEffect(() => {
-  //   if (editingStep) {
-  //     if (editingStep.track && editingStep.track.position !== editingTrack?.position) {
-  //       const trackFilters = editingStep.track.filters || [];
-  //       setFilter1On(trackFilters.length ? trackFilters[0].on : false);
-  //       setFilter1Type(trackFilters.length ? trackFilters[0].filter_type : 'lp');
-  //       setFilter1Q(trackFilters.length ? trackFilters[0].q : 0);
-  //       setFilter1Freq(trackFilters.length ? trackFilters[0].frequency : 0);
-
-  //       setFilter2On((trackFilters.length && trackFilters.length > 1) ? trackFilters[1].on : false);
-  //       setFilter2Type((trackFilters.length && trackFilters.length > 1) ? trackFilters[1].filter_type : 'lp');
-  //       setFilter2Q((trackFilters.length && trackFilters.length > 1) ? trackFilters[1].q : 0);
-  //       setFilter2Freq((trackFilters.length && trackFilters.length > 1) ? trackFilters[1].frequency : 0);
-
-  //       console.log('track filters', trackFilters);
-  //     }
-  //   }
-  // }, [editingStep]);
-
   const ticks:number[] = [];
 
   switch (beatStep) {
@@ -79,7 +60,14 @@ const useSteps = ({ barDiv, beatDiv, beatStep, defaultPitch, defaultVelocity }:U
   };
 
   const getOverallStep = (loc:Loc) => {
-    return ((loc.bar - 1) * barDiv * beatStep) + ((loc.beat - 1) * beatStep) + (ticks.indexOf(loc.tick) + 1);
+    const bar = parseInt(`${loc.bar}`);
+    const beat = parseInt(`${loc.beat}`);
+    const tick = parseInt(`${loc.tick}`);
+
+    const tickIndex = ticks.indexOf(tick) + 1;
+    const overallStep = ((bar - 1) * barDiv * beatStep) + ((beat - 1) * beatStep) + tickIndex;
+    
+    return overallStep;
   }
 
   const StepEditDialog = ({ step }:{ step:Step | null }) => {
@@ -129,7 +117,6 @@ const useSteps = ({ barDiv, beatDiv, beatStep, defaultPitch, defaultVelocity }:U
     }
 
     const handleConfirm = () => {
-      console.log('handleConfirm', editingStep);
       if (editingStep) {
         let filters:(Filter[] | undefined) = undefined;
 
@@ -161,8 +148,6 @@ const useSteps = ({ barDiv, beatDiv, beatStep, defaultPitch, defaultVelocity }:U
               }
             }
           }
-
-          console.log('track filters changed', changed);
 
           for (let idx = 0; idx < changed.length; idx++) {
             if (changed[idx]) {
@@ -206,8 +191,6 @@ const useSteps = ({ barDiv, beatDiv, beatStep, defaultPitch, defaultVelocity }:U
             }
           }
         }
-
-        console.log('new filters', filters);
 
         const newStep:Step = {
           ...editingStep,
@@ -426,8 +409,12 @@ const useSteps = ({ barDiv, beatDiv, beatStep, defaultPitch, defaultVelocity }:U
 
   const StepMarker = ({ step, track }:{ step:Step, track:Track }) => {
     const { on } = step;
-    const isDownbeat = step.loc.beat % beatDiv === 1 && step.loc.tick === 1;
-    const isBeat = step.loc.tick === 1 && !isDownbeat;
+
+    const tick = parseInt(`${step.loc.tick}`);
+    const beat = parseInt(`${step.loc.beat}`);
+
+    const isDownbeat = beat % beatDiv === 1 && tick === 1;
+    const isBeat = tick === 1 && !isDownbeat;
     const bgColor = isDownbeat ? 'secondary.main' : isBeat ? 'info.main' : 'info.light';
     const dispatch = useDispatch();
   

@@ -377,6 +377,39 @@ const Arrangement = React.memo(({ selectedPattern, patterns, handleClose, startT
 );
 });
 
+const NoPatternsDialog = ({ open, handleClose }:{ open: boolean, handleClose: () => void }) => {
+  const { DialogActionButtons } = useDialogUI();
+
+  return (
+    <Dialog 
+      open={open} 
+      onClose={() => {}}
+      maxWidth="lg"
+      fullWidth={true}
+    >
+      <DialogContent>
+        <Typography variant="h6" fontWeight={600} color="black" textAlign="left" pl={0} mt={1} mb={2}>
+          No Patterns
+        </Typography>
+        <Typography variant="body1" color="black" textAlign="left" pl={0} mt={1} mb={2}>
+          You must create at least one pattern before you can arrange your song.
+        </Typography>
+
+        <DialogActionButtons
+          onCancel={() => {
+            handleClose();
+          }}
+          hideCancel={true}
+          confirmLabel="OK"
+          onConfirm={() => {
+            handleClose();
+          }}
+        />
+      </DialogContent>
+    </Dialog> 
+  );
+}
+
 const SongArranger = ({ open, handleClose }:{ open: boolean, handleClose: () => void }) => {
   const { patterns } = useSelector(getActiveSong);
 
@@ -392,6 +425,10 @@ const SongArranger = ({ open, handleClose }:{ open: boolean, handleClose: () => 
   useEffect(() => {
     setSelectedPattern(defaultPattern);
   }, [defaultPattern]);
+
+  if (!activePatterns.length) {
+    return <NoPatternsDialog open={open} handleClose={handleClose} />;
+  }
 
   return (
     <Dialog 

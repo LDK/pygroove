@@ -4,19 +4,22 @@ import { OpenInFullTwoTone, ArrowLeftTwoTone, ArrowRightTwoTone } from "@mui/ico
 import { Dialog, DialogTitle, DialogContent, Typography, Box, RadioGroup, FormControlLabel, Radio, Divider, Select, TextField } from "@mui/material";
 import { useState, useEffect } from "react";
 import useDialogUI from "../theme/useDialogUI";
-import { set } from "react-hook-form";
 import { Variant } from "@mui/material/styles/createTypography";
 
-export const TextLink = ({ text, onClick, variant }:{ text: string, variant?: Variant, onClick: () => void }) => (
-  <Typography fontWeight={600} color="primary.dark" display="inline" sx={{ cursor: 'pointer' }} variant={`${variant || 'caption'}`} component="span" onClick={onClick}>
+export const TextLink = ({ text, onClick, variant, color }:{ color?: string, text: string, variant?: Variant, onClick: () => void }) => (
+  <Typography fontWeight={600} color={color || "primary.dark"} display="inline" sx={{ cursor: 'pointer' }} variant={`${variant || 'caption'}`} component="span" onClick={onClick}>
     {text}
   </Typography>
 );
+
+export const dot = <Typography display="inline" fontWeight={700} variant="caption" px={"3px"}>&middot;</Typography>;
 
 const PatternManagement = () => {
   const dispatch = useDispatch();
   
   const activePattern = useSelector(getActivePattern);
+
+  console.log('activePattern', activePattern);
 
   const { name: patternName, position } = activePattern || { name: '', position: 0 };
 
@@ -36,7 +39,8 @@ const PatternManagement = () => {
       setWorkingPatternPosition(undefined);
       dispatch(setActivePattern(patternPosition));
     }
-  }, [patternPosition, patternName]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [patternPosition, patternName, dispatch]);
 
   const { DialogActionButtons } = useDialogUI();
 
@@ -218,7 +222,6 @@ const PatternManagement = () => {
   }
 
   const onClearClick = () => {
-    console.log('clear pattern', patternPosition);
     if (patternPosition) {
       dispatch(clearPattern(patternPosition));
     }
@@ -236,8 +239,6 @@ const PatternManagement = () => {
     setWorkingPatternPosition(patternPosition);
   }
 
-  const dot = <Typography display="inline" fontWeight={700} variant="caption" px={"3px"}>&middot;</Typography>;
-
   // When we stop editing the pattern name, set the pattern name to the working pattern name, if it has changed
   useEffect(() => {
     if (!renamingPattern && workingPatternName && workingPatternName !== patternName 
@@ -245,7 +246,8 @@ const PatternManagement = () => {
       dispatch(renamePattern({ position: patternPosition, name: workingPatternName }));
       dispatch(setActivePattern(patternPosition));
     }
-  }, [renamePattern, workingPatternName, patternName, dispatch, renamingPattern, workingPatternPosition, patternPosition]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [renamePattern, workingPatternName, dispatch, renamingPattern, workingPatternPosition, patternPosition]);
 
   return (
     <Box p={0} m={0} id="pattern-management">

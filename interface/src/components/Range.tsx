@@ -34,7 +34,12 @@ const Range = ({ min, max, panDisplay, onChange, step=1, labelVariant, labelColo
         callback(workingValue);
       }
     }
-  }, [editing, workingValue, defaultValue, callback]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editing, workingValue, callback]);
+
+  useEffect(() => {
+    setWorkingValue(defaultValue);
+  }, [defaultValue]);
 
   const horizontalStyle = {
     height: height,
@@ -62,7 +67,8 @@ const Range = ({ min, max, panDisplay, onChange, step=1, labelVariant, labelColo
 
   return (
     <>
-      <input type="range" 
+      <input type="range"
+      value={workingValue}
         {...{ onBlur, min, max, step, defaultValue, orient: orientation, appearance: `slider-${orientation}` }}
         style={inputStyle}
         aria-orientation={orientation}

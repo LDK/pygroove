@@ -12,7 +12,8 @@ import { AxiosError, AxiosRequestConfig, AxiosResponse } from "axios";
 import useUser from "./useUser";
 import axios from "../axiosWithIntercept";
 import { useCallback, useEffect, useState } from "react";
-import { UserToken } from "../redux/userSlice";
+import { UserToken, setUserSongs } from "../redux/userSlice";
+import { useDispatch } from "react-redux";
 
 export type ApiMethodCallProps = {
   uri: string;
@@ -102,6 +103,8 @@ const useApi = () => {
     await apiCall({ uri, method: 'put', payload, onSuccess, onError, sendAuth });
   }, [apiCall]);
 
+  const dispatch = useDispatch();
+
   // When user logs in, set the token and fetch user song data
   useEffect(() => {
     if (user?.token && user.token.access !== token?.access) {
@@ -110,7 +113,8 @@ const useApi = () => {
       apiGet({
         uri: '/user/songs',
         onSuccess: (res) => {
-          console.log('Songs:', res.data);
+          console.log('User songs:', res.data);
+          dispatch(setUserSongs(res.data));
         },
         onError: (err) => {
           console.error('Error getting user data:', err);

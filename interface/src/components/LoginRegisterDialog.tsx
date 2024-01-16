@@ -46,7 +46,8 @@ const LoginRegisterDialog: React.FC<LoginRegisterDialogProps> = ({ open, onClose
           id: res.data.id,
           username: res.data.username,
           email: res.data.email,
-          token: res.data.token
+          token: res.data.token,
+          songs: []
         }));
         onClose();
       }
@@ -71,7 +72,8 @@ const LoginRegisterDialog: React.FC<LoginRegisterDialogProps> = ({ open, onClose
           id: res.data.id,
           username: res.data.username,
           email: res.data.email,
-          token: res.data.token
+          token: res.data.token,
+          songs: []
         }));
         onClose();
       }
