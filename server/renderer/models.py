@@ -9,6 +9,7 @@ class Song(models.Model):
     swing = models.FloatField(default=0)
     patternSequence = models.JSONField(default=list)
     author = models.CharField(max_length=100, default='Anonymous')
+    lastEdited = models.DateTimeField(auto_now=True)
 
 class Sample(models.Model):
     filename = models.CharField(max_length=100)
