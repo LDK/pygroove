@@ -8,10 +8,10 @@ import { GridRenderCellParams } from "@mui/x-data-grid";
 import { isFunction } from "@mui/x-data-grid/internals";
 import { LaunchButton, EditButton, DeleteButton, DuplicateButton } from "./ItemActionButtons";
 import SongsTable from "./SongsTable";
-import RenameSongDialog from "./RenameSongDialog";
-import DeleteSongDialog from "./DeleteSongDialog";
-import LaunchSongDialog from "./LaunchSongDialog";
-import DuplicateSongDialog from "./DuplicateSongDialog";
+import RenameSongDialog from "../dialogs/RenameSongDialog";
+import DeleteSongDialog from "../dialogs/DeleteSongDialog";
+import LaunchSongDialog from "../dialogs/LaunchSongDialog";
+import DuplicateSongDialog from "../dialogs/DuplicateSongDialog";
 
 type ActionFieldsProps = {
   actions: string[];

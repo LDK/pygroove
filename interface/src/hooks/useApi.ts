@@ -121,7 +121,7 @@ const useApi = () => {
         }
       });
     }
-  }, [user.token, token?.access, apiGet]);
+  }, [user.token, token?.access, apiGet, dispatch]);
 
   return { apiCall, apiGet, apiPost, apiPut, apiDelete, user, UserMenu, handleOpenUserMenu, setTokenExpired, tokenExpired };
 };

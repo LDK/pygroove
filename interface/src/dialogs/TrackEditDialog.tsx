@@ -4,7 +4,7 @@ import { SampleData, Track, updateTrack } from "../redux/songSlice";
 import useDialogUI from '../theme/useDialogUI';
 import { useDispatch } from "react-redux";
 
-import TabPanel from "./TabPanel";
+import TabPanel from "../components/TabPanel";
 import useFilters from "../hooks/useFilters";
 import useSamples from "../hooks/useSamples";
 import useTrackSettings from "../hooks/useTrackSettings";

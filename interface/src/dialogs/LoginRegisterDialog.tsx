@@ -4,15 +4,13 @@ import { Box, Dialog, DialogContent, DialogTitle, Divider, Grid, Tabs, Tab } fro
 import axios from 'axios';
 import { useDispatch } from 'react-redux';
 import { UserState, setUser } from '../redux/userSlice';
-import RegistrationForm from './RegistrationForm';
-import LoginForm from './LoginForm';
+import RegistrationForm from '../forms/RegistrationForm';
+import LoginForm from '../forms/LoginForm';
 
 type LoginRegisterDialogProps = {
   open: boolean;
   onClose: () => void;
 };
-
-console.log('process.env', process.env);
 
 const apiUrl = process.env.REACT_APP_API_URL;
 
@@ -64,8 +62,6 @@ const LoginRegisterDialog: React.FC<LoginRegisterDialogProps> = ({ open, onClose
 
     axios.post(`${apiUrl}/register/`, data).then((res:{ status: number, data: UserState }) => {
       setLoading(false);
-
-      console.log('registered', res);
 
       if (res.status === 201 && res.data && res.data.id) {
         dispatch(setUser({

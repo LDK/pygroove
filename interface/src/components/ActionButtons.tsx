@@ -1,36 +1,11 @@
 import { PlayArrowTwoTone } from "@mui/icons-material";
 import { Box, Grid, Button } from "@mui/material";
 import { useSelector } from "react-redux";
-import { Filter, Track, Step, getActiveSong, PatternEntry } from "../redux/songSlice";
-import { AxiosResponse } from "axios";
-import { useEffect, useState } from "react";
+import { getActiveSong } from "../redux/songSlice";
+import { useState } from "react";
 import { ApiCallProps } from "../hooks/useApi";
 import { UserState } from "../redux/userSlice";
-
-interface RenderPayload {
-  title: string;
-  bpm: number;
-  id?: number;
-  author: string;
-  patternSequence: PatternEntry[];
-  tracks: Track[];
-  swing?: number;
-  patterns: {
-    id?: number;
-    position: number;
-    name: string;
-    bars: number;
-    steps: {
-     [trackName:string]: {
-      loc: string;
-      pitch: string;
-      velocity: number;
-      filters?: Filter[];
-      pan?: number;
-     }[]; 
-    };
-  }[];
-};
+import RenderDialog from "../dialogs/RenderDialog";
 
 interface ActionButtonsProps {
   user: UserState;
@@ -39,88 +14,8 @@ interface ActionButtonsProps {
 
 const ActionButtons = ({ user, apiCall }:ActionButtonsProps) => {
   const activeSong = useSelector(getActiveSong);
-  const [song, setSong] = useState(activeSong);
+  const [rendering, setRendering] = useState<boolean>(false);
 
-  useEffect(() => {
-    setSong(activeSong);
-    console.log('activeSong', activeSong);
-  }, [activeSong]);
-
-  const prepareRenderPayload = () => {
-    // Take the songState and mutate it into RenderPayload format
-    // Only include steps that are on
-  
-    const { title, bpm, id: songId, author, patternSequence, tracks, patterns, swing } = song;
-  
-    const renderPayload:RenderPayload = {
-      title, bpm, swing, id: songId, author: author || '', patternSequence, tracks, patterns: [],
-    };
-  
-    // Iterate through the patterns and build the renderPayload.patterns array
-    patterns.forEach((pattern, i) => {
-      const { id, position, name, bars, steps } = pattern;
-  
-      const renderPattern:RenderPayload['patterns'][0] = {
-        id, position, name, bars, steps: {},
-      };
-  
-      // Iterate through the steps and build the renderPattern.steps object
-      steps.forEach((step:Step) => {
-        // Each step will contain a reference to a track
-        // We need to key the pattern.steps array by track name and include the step's loc, pitch, and velocity
-        const { loc, pitch, velocity, filters, pan } = step;
-  
-        if (!step.on) return;
-  
-        if (!renderPattern.steps[step.track.name]) {
-          renderPattern.steps[step.track.name] = [];
-        }
-  
-        renderPattern.steps[step.track.name].push({
-          loc: `${loc.bar}.${loc.beat}.${loc.tick}`,
-          pitch,
-          velocity,
-          filters,
-          pan,
-        });
-      });
-  
-      renderPayload.patterns.push(renderPattern);
-  
-    });
-
-    return renderPayload;
-  };
-
-  const handleRender = async () => {
-    if (!user?.token) {
-      return;
-    }
-
-    const payload = prepareRenderPayload();
-
-    await apiCall({
-      uri: '/render/',
-      method: 'post',
-      payload,
-      config: { responseType: 'blob' }, // Set responseType to 'blob'
-      onSuccess: (res:AxiosResponse) => {
-        // Create a URL for the blob
-        const url = window.URL.createObjectURL(new Blob([res.data], { type: 'audio/mpeg' }));
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', `${song.title}.mp3`);
-        document.body.appendChild(link);
-        link.click();
-        link.remove(); // Clean up
-        window.URL.revokeObjectURL(url); // Release memory
-      },
-      onError: (error:any) => {
-        console.error('Error during render:', error);
-      },
-    });
-  };
-  
   return (
     <Box textAlign="center" position="absolute" bottom={0} zIndex={2} left={0} right={0} bgcolor="primary.dark" color="primary.contrastText" p={0}>
       <Grid container>
@@ -132,13 +27,14 @@ const ActionButtons = ({ user, apiCall }:ActionButtonsProps) => {
         </Grid>
 
         <Grid item xs={4}>
-          <Button onClick={handleRender} variant="contained" color="primary" sx={{ float: 'left', my: 1, ml: 1 }}>
+          <Button onClick={() => { setRendering(true); }} variant="contained" color="primary" sx={{ float: 'left', my: 1, ml: 1 }}>
             Render to MP3
           </Button>
         </Grid>
 
       </Grid>
-      
+
+      <RenderDialog open={rendering} onClose={() => { setRendering(false); }} song={activeSong} />
     </Box>
   );
 }

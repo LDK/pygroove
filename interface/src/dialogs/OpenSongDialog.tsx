@@ -1,6 +1,6 @@
 import { Dialog, DialogContent, DialogActions, Typography } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
-import { CancelButton, ConfirmButton } from "./DialogButtons";
+import { CancelButton, ConfirmButton } from "../components/DialogButtons";
 import { SongState, getActiveSong, setSongId, setSongTitle } from "../redux/songSlice";
 import { getActiveUser } from "../redux/userSlice";
 
