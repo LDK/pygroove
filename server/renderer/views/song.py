@@ -36,7 +36,6 @@ class SongView(APIView):
                 trackToUpdate.sample = Sample.objects.get(id=track['sample']['id'])
                 trackToUpdate.disabled = track['disabled'] if 'disabled' in track else False
                 trackToUpdate.transpose = track['transpose'] if 'transpose' in track else 0
-                trackToUpdate.isPiano = track['isPiano'] if 'isPiano' in track else False
                 trackToUpdate.rootPitch = track['rootPitch'] if 'rootPitch' in track else 'C3'
                 trackToUpdate.pitchShift = track['pitchShift'] if 'pitchShift' in track else 0
                 trackToUpdate.reverse = track['reverse'] if 'reverse' in track else False
@@ -128,7 +127,7 @@ class SongView(APIView):
                 # If there is not, create a new Step with the new data
                 loc = '.'.join([str(step['loc']['bar']), str(step['loc']['beat']), str(step['loc']['tick'])])    
 
-                if Step.objects.filter(pattern=patternIndex[pattern['position']], track=trackIndex[step['track']['position']], loc=loc).exists():
+                if Step.objects.filter(pattern=patternIndex[pattern['position']], track=trackIndex[step['track']['position']], index=step['index'] if 'index' in step else -1).exists():
                     # Update that row with Step data
                     stepToUpdate = Step.objects.get(pattern=patternIndex[pattern['position']], track=trackIndex[step['track']['position']], loc=loc)
                     stepToUpdate.pitch = step['pitch'] if 'pitch' in step else 'C3'
@@ -159,7 +158,7 @@ class SongView(APIView):
                     newStep.save()
 
                 if 'filters' in step:
-                    dbStep = Step.objects.get(pattern=patternIndex[pattern['position']], loc=loc, track=trackIndex[step['track']['position']])
+                    dbStep = Step.objects.get(pattern=patternIndex[pattern['position']], index=step['index'] if 'index' in step else -1, track=trackIndex[step['track']['position']])
 
                     # For each Filter override on the current Step:
                     for filter in step['filters']:
@@ -306,7 +305,6 @@ class CreateSongView(APIView):
                 trackToUpdate.sample = Sample.objects.get(id=track['sample']['id'])
                 trackToUpdate.disabled = track['disabled'] if 'disabled' in track else False
                 trackToUpdate.transpose = track['transpose'] if 'transpose' in track else 0
-                trackToUpdate.isPiano = track['isPiano'] if 'isPiano' in track else False
                 trackToUpdate.rootPitch = track['rootPitch'] if 'rootPitch' in track else 'C3'
                 trackToUpdate.pitchShift = track['pitchShift'] if 'pitchShift' in track else 0
                 trackToUpdate.reverse = track['reverse'] if 'reverse' in track else False
