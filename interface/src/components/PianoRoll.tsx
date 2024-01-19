@@ -295,7 +295,9 @@ const PianoRoll = ({ track, stepSettings, onClose }:{ track?:Track, stepSettings
 
                   if (mode === 'slice') {
                     e.stopPropagation();
-                    splitStep(step, i);
+                    if (step.duration > 1) {
+                      splitStep(step, Math.max(i, 1));
+                    }
                   }
                 }}
                 onMouseEnter={(e) => {
@@ -578,7 +580,7 @@ const PianoRoll = ({ track, stepSettings, onClose }:{ track?:Track, stepSettings
       <Grid item xs={3} textAlign={"center"}>
         <SliceIcon
           onClick={() => setMode('slice')}
-          sx={{ color: 'white', width: '.75em', fontSize: '2rem', cursor: 'pointer' }} />
+          sx={{ color: (mode === 'slice' ? 'warning.light' : 'white'), width: '.75em', fontSize: '2rem', cursor: 'pointer' }} />
       </Grid>
     </Grid>
   );
