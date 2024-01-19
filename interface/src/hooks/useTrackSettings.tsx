@@ -24,6 +24,7 @@ const useTrackSettings = ({track, filters}:{track?: Track, filters: FilterInfo})
   const [pitchShift, setPitchShift] = useState(track?.pitchShift || 0);
   const [transpose, setTranspose] = useState(track?.transpose || 0);
   const [sample, setSample] = useState(track?.sample || null);
+  const [trackName, setTrackName] = useState(track?.name || track?.sample?.display || `Track ${track?.position}` || 'Track');
 
   // Track Sample controls
   const [reverse, setReverse] = useState(track?.disabled || false);
@@ -61,8 +62,6 @@ const useTrackSettings = ({track, filters}:{track?: Track, filters: FilterInfo})
     filter1On, filter1Type, filter1Q, filter1Freq,
     filter2On, filter2Type, filter2Q, filter2Freq
   }).map(([key, val]) => `${queryKeyMap[key as keyof typeof queryKeyMap]}=${val}`).join('&')}`;
-
-  console.log('track filters', filters);
 
   useEffect(() => {
     setTrackAudio(null);
@@ -145,14 +144,14 @@ const useTrackSettings = ({track, filters}:{track?: Track, filters: FilterInfo})
         <Grid item xs={12} md={2} lg={2}>
           <Typography fontWeight={600} pb={1} variant="caption" component="p">Transpose:</Typography>
           <input type="number" step={1} min={-36} max={36} defaultValue={transpose} style={{ width: '3rem', height: '3rem', padding: "2px" }} onChange={(e) => {
-            setTranspose(parseInt(e.target.value) || transpose);
+            setTranspose(parseInt(e.target.value) || 0);
           } } />
         </Grid>
 
         <Grid item xs={12} md={2} lg={2}>
           <Typography fontWeight={600} pb={1} variant="caption" component="p">Pitch Shift:</Typography>
           <input type="number" step={1} min={-200} max={200} defaultValue={pitchShift} style={{ width: '3rem', height: '3rem', padding: "2px" }} onChange={(e) => {
-            setPitchShift(parseInt(e.target.value) || pitchShift);
+            setPitchShift(parseInt(e.target.value) || 0);
           } } />
         </Grid>
 
@@ -236,6 +235,7 @@ const useTrackSettings = ({track, filters}:{track?: Track, filters: FilterInfo})
     reverse, setReverse,
     trim, setTrim,
     normalize, setNormalize,
+    trackName, setTrackName,
     TrackSettings
   };
 };

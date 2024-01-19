@@ -2,7 +2,7 @@ import { MoreHorizTwoTone } from "@mui/icons-material";
 import { Box, Checkbox, Dialog, DialogContent, Divider, Grid, Select, Typography } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { Loc, Step, Track, getActivePattern, toggleStep, Pattern, setStep, Filter, findTrackByPosition } from "../redux/songSlice";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import useDialogUI from "../theme/useDialogUI";
 import PanSlider from "../components/PanSlider";
 import Knob from "../components/Knob";
@@ -16,16 +16,8 @@ export interface UseStepsProps {
   defaultVelocity: number;
 }
 
-const useSteps = ({ barDiv, beatDiv, beatStep, defaultPitch, defaultVelocity }:UseStepsProps) => {
-  // barDiv: How many beats are in a bar
-  // beatDiv: How many ticks are in a beat
-  // beatStep: How many ticks we display per beat (equidistant)
-
-  const [editingStep, setEditingStep] = useState<Step | null>(null);
-  const [editingTrack, setEditingTrack] = useState<Track | undefined>(undefined);
-
-  const { DialogActionButtons } = useDialogUI();
-
+// TODO: Split these off into some sort of utility file
+export const getTicks = ( beatStep:number ) => {
   const ticks:number[] = [];
 
   switch (beatStep) {
@@ -51,6 +43,42 @@ const useSteps = ({ barDiv, beatDiv, beatStep, defaultPitch, defaultVelocity }:U
       break;
   }
 
+  return ticks;
+}
+
+export const getOverallStep = (loc:Loc, ticks:number[], barDiv:number, beatStep: number) => {
+  const bar = parseInt(`${loc.bar}`);
+  const beat = parseInt(`${loc.beat}`);
+  const tick = parseInt(`${loc.tick}`);
+
+  const tickIndex = ticks.indexOf(tick) + 1;
+  const overallStep = ((bar - 1) * barDiv * beatStep) + ((beat - 1) * beatStep) + tickIndex;
+  
+  return overallStep;
+};
+
+export const getLoc = (overallStep:number, ticks:number[], barDiv:number, beatStep:number) => {
+  const bar = Math.ceil(overallStep / (barDiv * beatStep));
+  const beat = Math.ceil((overallStep % (barDiv * beatStep)) / beatStep) || barDiv;
+  const tick = ticks[(overallStep % (barDiv * beatStep)) % beatStep - 1] || ticks[beatStep - 1];
+
+  return { bar, beat, tick };
+};
+
+// END TODO
+
+const useSteps = ({ barDiv, beatDiv, beatStep, defaultPitch, defaultVelocity }:UseStepsProps) => {
+  // barDiv: How many beats are in a bar
+  // beatDiv: How many ticks are in a beat
+  // beatStep: How many ticks we display per beat (equidistant)
+
+  const [editingStep, setEditingStep] = useState<Step | null>(null);
+  const [editingTrack, setEditingTrack] = useState<Track | undefined>(undefined);
+
+  const { DialogActionButtons } = useDialogUI();
+
+  const ticks = useMemo(() =>  getTicks(beatStep), [beatStep]);
+
   const getLoc = (overallStep:number) => {
     const bar = Math.ceil(overallStep / (barDiv * beatStep));
     const beat = Math.ceil((overallStep % (barDiv * beatStep)) / beatStep) || barDiv;
@@ -58,17 +86,6 @@ const useSteps = ({ barDiv, beatDiv, beatStep, defaultPitch, defaultVelocity }:U
 
     return { bar, beat, tick };
   };
-
-  const getOverallStep = (loc:Loc) => {
-    const bar = parseInt(`${loc.bar}`);
-    const beat = parseInt(`${loc.beat}`);
-    const tick = parseInt(`${loc.tick}`);
-
-    const tickIndex = ticks.indexOf(tick) + 1;
-    const overallStep = ((bar - 1) * barDiv * beatStep) + ((beat - 1) * beatStep) + tickIndex;
-    
-    return overallStep;
-  }
 
   const StepEditDialog = ({ step }:{ step:Step | null }) => {
     const dispatch = useDispatch();
@@ -233,7 +250,7 @@ const useSteps = ({ barDiv, beatDiv, beatStep, defaultPitch, defaultVelocity }:U
             </Grid>
             <Grid item xs={4} sx={{ textAlign: 'center' }}>
               <Typography fontWeight={600} component="span">Step: </Typography>
-              <Typography fontWeight={400} component="span">{getOverallStep(step.loc)} of {activePattern.bars * barDiv * beatStep}</Typography>
+              <Typography fontWeight={400} component="span">{getOverallStep(step.loc, ticks, barDiv, beatStep)} of {activePattern.bars * barDiv * beatStep}</Typography>
             </Grid>
             <Grid item xs={4} sx={{ textAlign: 'right' }}>
               <Typography fontWeight={600} component="span">Active: </Typography>
@@ -471,7 +488,7 @@ const useSteps = ({ barDiv, beatDiv, beatStep, defaultPitch, defaultVelocity }:U
       // The index of 9 is 1, so we add 1 to the overallStep.
       // Therefore, 2.4.9 is the 15th step in the pattern (8 + 6 + 1 = 15)
   
-      const overallStep = getOverallStep(step.loc);
+      const overallStep = getOverallStep(step.loc, ticks, barDiv, beatStep);
   
       // 1.1.1 -> 1
       // 2.3.1 -> 9
@@ -502,6 +519,8 @@ const useSteps = ({ barDiv, beatDiv, beatStep, defaultPitch, defaultVelocity }:U
           beat,
           tick,
         },
+        duration: 1,
+        index: i,
       };
   
       return <StepMarker {...{ track }} key={i} step={newStep} />;

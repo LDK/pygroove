@@ -12,7 +12,7 @@ const barWidth = 40;
 const maxBars = 384;
 const songTrackCount = 4;
 
-const noSelect:SxProps = { userSelect: 'none' }; 
+export const noSelect:SxProps = { userSelect: 'none' }; 
 
 type ArrangementProps = {
   selectedPattern?: number;
@@ -192,7 +192,6 @@ const Arrangement = React.memo(({ selectedPattern, patterns, handleClose, startT
         // If the new entry would overlap with an existing entry and we are overwriting overlaps
         if (overlaps.length && overwriteOverlap) {
           // Remove overlaps and add the new entry
-          console.log('removing overlaps', overlaps);
           setPatternEntries([...patternEntries.filter(
             pe => !overlaps.find(o => o.bar === pe.bar && o.songTrack === pe.songTrack)
           ), newEntry]);
@@ -200,7 +199,6 @@ const Arrangement = React.memo(({ selectedPattern, patterns, handleClose, startT
           // addOverlap({ bar, songTrack });
           // If there is an existing entry in the same spot
           if (existing)  {
-            console.log('removing existing', existing);
             // Remove existing entry
             setPatternEntries([...patternEntries.filter(pe => pe.bar !== existing.bar && pe.songTrack !== existing.songTrack)]);
           }
@@ -208,17 +206,14 @@ const Arrangement = React.memo(({ selectedPattern, patterns, handleClose, startT
           return;
         } else if (existing) {
           // addOverlap({ bar, songTrack });
-          console.log('setting entries', existing);
           setPatternEntries([...patternEntries.filter(pe => pe.bar !== existing.bar && pe.songTrack !== existing.songTrack), newEntry]);
         } else {
-          console.log('no overlaps or existing, so just adding new entry');
           // No overlaps or existing, so just adding new entry
           setPatternEntries([...patternEntries, newEntry]);
         }
       // If there is no existing entry, no overlaps, and we are not overwriting (existing or overlaps)
       } else if (!existing && !wouldOverlap(bar, songTrack).length) {
         // Just add the new entry
-        console.log('adding new entry', newEntry);
         setPatternEntries([...patternEntries, newEntry]);
       }
 

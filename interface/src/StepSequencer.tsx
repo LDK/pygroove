@@ -1,13 +1,22 @@
 import { Box, Button, Grid, Typography } from "@mui/material";
-import { MoreHorizTwoTone } from "@mui/icons-material";
+import { MoreHorizTwoTone, PianoTwoTone } from "@mui/icons-material";
 import { useEffect, useState } from "react";
 import { Step, Track, getActivePattern, getActiveSong, getTrackSteps, toggleTrack } from "./redux/songSlice";
 import { useDispatch, useSelector } from "react-redux";
-import useSteps from "./hooks/useSteps";
+import useSteps, { getLoc, getOverallStep, getTicks } from "./hooks/useSteps";
 import TrackEditDialog from "./dialogs/TrackEditDialog";
 import useControls from "./hooks/useControls";
+import PianoRoll from "./components/PianoRoll";
 
-const stepSettings = {
+export type StepSettings = {
+  barDiv: number;
+  beatDiv: number;
+  beatStep: number;
+  defaultPitch: string;
+  defaultVelocity: number;
+};
+
+const stepSettings:StepSettings = {
   barDiv: 4,
   beatDiv: 4,
   beatStep: 4,
@@ -31,6 +40,8 @@ const StepSequencer = () => {
   const { VolumeSlider, PanSlider, onSliderSave } = useControls();
 
   const dispatch = useDispatch();
+
+  const [pianoRollOpen, setPianoRollOpen] = useState<Track | undefined>(undefined);
 
   const SequencerTrack = ({ track }:{ track:Track }) => {
     const [ on, setOn ] = useState(!track.disabled);
@@ -88,7 +99,101 @@ const StepSequencer = () => {
         </Grid>
       );
     };
-  
+
+    const noteValues = {
+      'A': 1,
+      'A#': 2,
+      'B': 3,
+      'C': 4,
+      'C#': 5,
+      'D': 6,
+      'D#': 7,
+      'E': 8,
+      'F': 9,
+      'F#': 10,
+      'G': 11,
+      'G#': 12
+    };
+
+    const getNoteValue = (pitch:string) => {
+      const octave = parseInt(pitch.slice(-1));
+      const base = noteValues[pitch.slice(0, -1) as keyof typeof noteValues];
+      return octave * 12 + base;
+    };
+
+    const getNoteRange = (pitches:string[]) => {
+      // For each pitch in `pitches`, separate the numeric value at the end from the 1-or-2 character pitch name
+      // Multiply the octave by 12 and add the base value of the pitch name
+
+      const values = pitches.map(getNoteValue);
+
+      return {
+        lowest: Math.min(...values),
+        highest: Math.max(...values),
+        range: Math.max(...values) - Math.min(...values),
+      };
+    }
+
+    // A box that contains the piano roll for this track.  Not editable, does not show piano keys.
+    const PianoDisplay = () => {
+      const { steps, bars } = activePattern;
+      const { beatDiv, barDiv, beatStep } = stepSettings;
+
+      const ticks = getTicks(beatStep);      
+      const pitches:string[] = [];
+
+      const notes = steps.filter((step) => {
+        return (step.on && (step.track.position === track.position));
+      }).map((step, i) => {
+        const { pitch } = step;
+        pitches.push(pitch);
+        const overall = getOverallStep(step.loc, ticks, barDiv, beatStep);
+        return { pitch, overall, duration: step.duration };
+      })
+
+      const { lowest, highest, range } = getNoteRange(pitches);
+      const rowHeightPct = 100 / (range + 1);
+      const beatWidthPct = 100 / (bars * beatDiv * beatStep);
+
+      console.log('PITCHES', pitches, lowest, highest, range, rowHeightPct, beatWidthPct);
+
+      return (
+        <Box px={2} sx={{ position: 'relative', cursor: 'pointer' }} 
+          height={{md: 131, lg: 80 }}
+          onClick={() => { setPianoRollOpen(track) }}
+        >
+          <Box bgcolor="secondary.main" height="100%" width="100%" position="relative">
+            {notes.map((note, i) => {
+              const { pitch, overall } = note;
+              const pitchIdx = getNoteValue(pitch);
+              const top = (highest - pitchIdx) * rowHeightPct;
+              console.log('TOP', top, highest, pitchIdx, (highest - pitchIdx), rowHeightPct);
+              const left = (overall - 1) * beatWidthPct;
+              return (
+                <Box
+                  key={i}
+                  position="absolute"
+                  top={`${top}%`}
+                  left={`${left}%`}
+                  width={`calc(${beatWidthPct}% * ${note.duration})`}
+                  height={`calc(${rowHeightPct}%)`}
+                  bgcolor="warning.light"
+                  sx={{ zIndex: 4 }}
+                >
+
+                </Box>
+              );
+            })}
+
+            {[1,2].map((i) => 
+              <Box sx={{ zIndex: 3 }} position="absolute" top={0} left={`${(i-1) * 50 + 25}%`} width="25%" height="100%" bgcolor="rgba(0,0,0,.25)">
+              </Box>
+            )}
+          </Box>
+        </Box>
+      );
+    };
+
     return (
       <Grid container bgcolor="tray.main" sx={{ width: "100%", mx: 0, px: { xs: 2, lg: 1 }, my: 1, py: 1 }}>
         <Grid item xs={3}>
@@ -148,24 +253,31 @@ const StepSequencer = () => {
                   {on ? 'On' : 'Off'}
                 </Typography>
   
-                <MoreHorizTwoTone sx={{ color:'black', p:0, m:0 }} />
+                <Typography sx={{ cursor: 'pointer' }} onClick={() => { setPianoRollOpen(track) }} variant="caption" component="div" color="text.secondary">
+                  <PianoTwoTone sx={{ p: 0, m:0 }} />
+                </Typography>
+
+                {/* <MoreHorizTwoTone sx={{ color:'black', p:0, m:0 }} /> */}
               </Box>
             </Grid>
           </Grid>
         </Grid>
   
         <Grid item xs={9}>
-          <StepMarkers />
+          { Boolean(activePattern.pianoIndex && activePattern.pianoIndex[`${track.position}`]) ? <PianoDisplay /> : <StepMarkers /> }
+          {/* <StepMarkers /> */}
         </Grid>
       </Grid>
     );
   };
+    
 
   return (
     <Box px={{ xs: 2, lg: 1, xl: 0 }} m={0} sx={{ overflowY: 'scroll', overflowX: 'hidden' }} maxHeight="400px">
       {tracks.map((track, i) => <SequencerTrack key={i} track={track} />)}
       <StepEditDialog step={editingStep} />
       <TrackEditDialog track={editingTrack} setEditingTrack={setEditingTrack} />
+      <PianoRoll open={Boolean(pianoRollOpen)} onClose={() => { setPianoRollOpen(undefined); }} track={pianoRollOpen} {...{ stepSettings }} />
     </Box>
   );
 };

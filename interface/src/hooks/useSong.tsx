@@ -40,7 +40,6 @@ const useSong = () => {
     await apiGet({
       uri: '/user/songs',
       onSuccess: (res) => {
-        console.log('User songs:', res.data);
         dispatch(setUserSongs(res.data));
       },
       onError: (err) => {
@@ -95,10 +94,6 @@ const useSong = () => {
       method: 'post',
       payload: {...songData} as Song,
       onSuccess: (res:AxiosResponse) => {
-        // if (res.data?.id) {
-        //   dispatch(setActiveSong(res.data));
-        // }
-        console.log('duplicate response', res.data);
         getUserSongs();
       },
       onError: (error:any) => {

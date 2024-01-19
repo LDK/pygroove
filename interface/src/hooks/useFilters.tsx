@@ -21,9 +21,7 @@ const useFilters = ({ track, changeCallback }: useFiltersProps) => {
   const [filter2Freq, setFilter2Freq] = useState((track?.filters?.length && track.filters.length > 1) ? track.filters[1].frequency : 0);
 
   useEffect(() => {
-    console.log('filter1 On', filter1On, changeCallback);
     if (changeCallback) {
-      console.log('change callback');
       changeCallback({
         filter1On, filter1Type, filter1Q, filter1Freq,
         filter2On, filter2Type, filter2Q, filter2Freq,
@@ -37,9 +35,7 @@ const useFilters = ({ track, changeCallback }: useFiltersProps) => {
 
     useEffect(() => {
       if (changed) {
-        console.log('hi');
         if (changeCallback) {
-          console.log('changeCallback');
           changeCallback({
             filter1On, filter1Type, filter1Q, filter1Freq,
             filter2On, filter2Type, filter2Q, filter2Freq,
