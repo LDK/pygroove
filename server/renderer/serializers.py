@@ -1,5 +1,4 @@
 # serializers.py
-import base64
 from rest_framework import serializers
 from .models import Song, Pattern, Step, Sample, Filter, Track
 from django.contrib.auth.models import User
@@ -7,7 +6,7 @@ from django.contrib.auth.models import User
 class StepSerializer(serializers.ModelSerializer):
     class Meta:
         model = Step
-        fields = ['loc', 'track', 'filter', 'pitch', 'reverse', 'velocity', 'pan', 'on']
+        fields = ['loc', 'track', 'filter', 'pitch', 'reverse', 'velocity', 'pan', 'on', 'duration', 'index']
 
 class FilterSerializer(serializers.ModelSerializer):
     class Meta:
@@ -20,14 +19,14 @@ class TrackSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Track
-        fields = ['name', 'pan', 'volume', 'sample', 'disabled', 'transpose', 'position', 'filters']
+        fields = ['name', 'pan', 'volume', 'sample', 'disabled', 'transpose', 'position', 'filters', 'isPiano']
 
 class PatternSerializer(serializers.ModelSerializer):
     steps = StepSerializer(many=True, read_only=True)
 
     class Meta:
         model = Pattern
-        fields = ['name', 'bars', 'position', 'steps']
+        fields = ['name', 'bars', 'position', 'steps', 'pianoIndex']
 
 class SampleSerializer(serializers.ModelSerializer):
     # For waveform image, return the base64 encoded image

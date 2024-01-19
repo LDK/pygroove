@@ -36,6 +36,7 @@ class SongView(APIView):
                 trackToUpdate.sample = Sample.objects.get(id=track['sample']['id'])
                 trackToUpdate.disabled = track['disabled'] if 'disabled' in track else False
                 trackToUpdate.transpose = track['transpose'] if 'transpose' in track else 0
+                trackToUpdate.isPiano = track['isPiano'] if 'isPiano' in track else False
                 trackToUpdate.rootPitch = track['rootPitch'] if 'rootPitch' in track else 'C3'
                 trackToUpdate.pitchShift = track['pitchShift'] if 'pitchShift' in track else 0
                 trackToUpdate.reverse = track['reverse'] if 'reverse' in track else False
@@ -105,6 +106,7 @@ class SongView(APIView):
                 patternToUpdate = Pattern.objects.get(song=song, position=pattern['position'])
                 patternToUpdate.name = pattern['name']
                 patternToUpdate.bars = pattern['bars']
+                patternToUpdate.pianoIndex = pattern['pianoIndex']
                 patternToUpdate.save()
                 patternIndex[pattern['position']] = patternToUpdate
             else:
@@ -113,6 +115,7 @@ class SongView(APIView):
                     song=song,
                     name=pattern['name'],
                     bars=pattern['bars'],
+                    pianoIndex=pattern['pianoIndex'],
                     position=pattern['position']
                 )
                 newPattern.save()
@@ -133,6 +136,8 @@ class SongView(APIView):
                     stepToUpdate.velocity = step['velocity'] if 'velocity' in step else 100
                     stepToUpdate.pan = step['pan'] if 'pan' in step else 0
                     stepToUpdate.on = step['on'] if 'on' in step else False
+                    stepToUpdate.duration = step['duration'] if 'duration' in step else 1
+                    stepToUpdate.index = step['index'] if 'index' in step else 0
                     stepToUpdate.save()
                 else:
                     patternToUpdate = Pattern.objects.get(song=song, position=pattern['position'])
@@ -147,7 +152,9 @@ class SongView(APIView):
                         reverse=step['reverse'] if 'reverse' in step else False,
                         velocity=step['velocity'] if 'velocity' in step else 100,
                         pan=step['pan'] if 'pan' in step else 0,
-                        on=step['on'] if 'on' in step else False
+                        on=step['on'] if 'on' in step else False,
+                        duration=step['duration'] if 'duration' in step else 1,
+                        index=step['index'] if 'index' in step else 0
                     )
                     newStep.save()
 
@@ -299,6 +306,7 @@ class CreateSongView(APIView):
                 trackToUpdate.sample = Sample.objects.get(id=track['sample']['id'])
                 trackToUpdate.disabled = track['disabled'] if 'disabled' in track else False
                 trackToUpdate.transpose = track['transpose'] if 'transpose' in track else 0
+                trackToUpdate.isPiano = track['isPiano'] if 'isPiano' in track else False
                 trackToUpdate.rootPitch = track['rootPitch'] if 'rootPitch' in track else 'C3'
                 trackToUpdate.pitchShift = track['pitchShift'] if 'pitchShift' in track else 0
                 trackToUpdate.reverse = track['reverse'] if 'reverse' in track else False
@@ -396,6 +404,8 @@ class CreateSongView(APIView):
                     stepToUpdate.velocity = step['velocity'] if 'velocity' in step else 100
                     stepToUpdate.pan = step['pan'] if 'pan' in step else 0
                     stepToUpdate.on = step['on'] if 'on' in step else False
+                    stepToUpdate.duration = step['duration'] if 'duration' in step else 1
+                    stepToUpdate.index = step['index'] if 'index' in step else 0
                     stepToUpdate.save()
                 else:
                     patternToUpdate = Pattern.objects.get(song=song, position=pattern['position'])
@@ -410,7 +420,9 @@ class CreateSongView(APIView):
                         reverse=step['reverse'] if 'reverse' in step else False,
                         velocity=step['velocity'] if 'velocity' in step else 100,
                         pan=step['pan'] if 'pan' in step else 0,
-                        on=step['on'] if 'on' in step else False
+                        on=step['on'] if 'on' in step else False,
+                        duration=step['duration'] if 'duration' in step else 1,
+                        index=step['index'] if 'index' in step else 0
                     )
                     newStep.save()
 
