@@ -225,6 +225,7 @@ const songSlice = createSlice({
         step.filters = action.payload.filters || step.filters || [];
 
         const stepIndex = pattern?.steps.findIndex((stp) => stp.loc === step.loc && stp.track.position === track.position);
+        step.index = stepIndex || step.index || 0;
         pattern?.steps.splice(stepIndex!, 1, step);
       } else {
         pattern?.steps.push({
@@ -361,6 +362,7 @@ const songSlice = createSlice({
       if (step) {
         step.on = !step.on;
         const stepIndex = pattern?.steps.findIndex((stp) => stp.loc === step.loc && stp.track.position === track.position);
+        step.index = stepIndex || step.index || 0;
         pattern?.steps.splice(stepIndex!, 1, step);
       } else {
         pattern?.steps.push({
@@ -370,7 +372,7 @@ const songSlice = createSlice({
           loc: loc,
           track: track,
           duration: 1,
-          index: pattern.steps.length,
+          index: pattern.steps.filter((stp) => stp.track.position === track.position).length,
         });
       }
 

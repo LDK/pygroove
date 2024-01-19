@@ -155,8 +155,6 @@ const StepSequencer = () => {
       const rowHeightPct = 100 / (range + 1);
       const beatWidthPct = 100 / (bars * beatDiv * beatStep);
 
-      console.log('PITCHES', pitches, lowest, highest, range, rowHeightPct, beatWidthPct);
-
       return (
         <Box px={2} sx={{ position: 'relative', cursor: 'pointer' }} 
           height={{md: 131, lg: 80 }}
@@ -167,7 +165,6 @@ const StepSequencer = () => {
               const { pitch, overall } = note;
               const pitchIdx = getNoteValue(pitch);
               const top = (highest - pitchIdx) * rowHeightPct;
-              console.log('TOP', top, highest, pitchIdx, (highest - pitchIdx), rowHeightPct);
               const left = (overall - 1) * beatWidthPct;
               return (
                 <Box

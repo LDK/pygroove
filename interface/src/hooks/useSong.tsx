@@ -61,10 +61,54 @@ const useSong = () => {
 
     const {activePattern, loading, error, ...songData } = { ...activeSong, patterns };
 
+    const payloadPatterns = patterns.map((pattern) => {
+      const { id, position, name, bars, steps, pianoIndex } = pattern;
+
+      const payloadPattern = {
+        id, position, pianoIndex, name, bars, steps: [] as Step[],
+      };
+
+      if (!payloadPattern.pianoIndex) {
+        payloadPattern.pianoIndex = {};
+      }
+
+      let trackStepCount:{ [position:string]: number } = {};
+
+      steps.forEach((step:Step) => {
+        const { loc, pitch, velocity, filters, pan, duration, track } = step;
+
+        if (!step.on) return;
+
+        const position = `${track.position}`;
+
+        if (!trackStepCount[position]) {
+          trackStepCount[position] = 0;
+        }
+
+        trackStepCount[position]++;
+
+        payloadPattern.steps.push({...{
+          loc,
+          pitch,
+          velocity,
+          filters,
+          pan,
+          duration,
+          track,
+          on: true,
+          index: trackStepCount[position],
+        }});
+      });
+
+      return payloadPattern;
+    });
+
+    const payload = {...songData, patterns: payloadPatterns};
+
     await apiCall({
       uri: `/song/${songData.id ? songData.id + '/' : ''}`,
       method: songData.id ? 'put' : 'post',
-      payload: {...songData} as Song,
+      payload: payload,
       onSuccess: (res:AxiosResponse) => {
         if (res.data?.id) {
           dispatch(setSongId(res.data.id));
