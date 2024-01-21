@@ -75,7 +75,7 @@ const useSong = () => {
       let trackStepCount:{ [position:string]: number } = {};
 
       steps.forEach((step:Step) => {
-        const { loc, pitch, velocity, filters, pan, duration, track } = step;
+        const { loc, pitch, velocity, filters, pan, duration, reverse, track, retrigger } = step;
 
         if (!step.on) return;
 
@@ -96,6 +96,8 @@ const useSong = () => {
           duration,
           track,
           on: true,
+          retrigger: retrigger || 0,
+          reverse: reverse || false,
           index: trackStepCount[position],
         }});
       });
