@@ -179,8 +179,12 @@ const songSlice = createSlice({
     selectPattern: (state, action: PayloadAction<number>) => {
       state.selectedPatternPosition = action.payload;
     },
-    setPatternTrackSteps: (state, action: PayloadAction<{pattern: Pattern, track: Track, steps: Step[], isPiano?:boolean}>) => {
-      const { pattern, track, steps } = action.payload;
+    setPatternTrackSteps: (state, action: PayloadAction<{track: Track, steps: Step[], isPiano?:boolean}>) => {
+      const { track, steps } = action.payload;
+
+      const pattern = state.activePattern;
+
+      if (!pattern) return;
 
       const otherSteps = pattern.steps.filter((step) => {
         return step.track.position !== track.position;

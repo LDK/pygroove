@@ -274,7 +274,7 @@ const StepSequencer = () => {
       {tracks.map((track, i) => <SequencerTrack key={i} track={track} />)}
       <StepEditDialog step={editingStep} />
       <TrackEditDialog track={editingTrack} setEditingTrack={setEditingTrack} />
-      <PianoRoll open={Boolean(pianoRollOpen)} onClose={() => { setPianoRollOpen(undefined); }} track={pianoRollOpen} {...{ stepSettings }} />
+      <PianoRoll onClose={() => { setPianoRollOpen(undefined); }} track={pianoRollOpen} {...{ stepSettings }} />
     </Box>
   );
 };
