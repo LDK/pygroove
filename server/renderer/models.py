@@ -53,6 +53,7 @@ class Step(models.Model):
     on = models.BooleanField(default=True)
     duration = models.IntegerField(default=1)
     index = models.IntegerField(default=0)
+    retrigger = models.PositiveSmallIntegerField(default=0)
 
 class Filter(models.Model):
     position = models.IntegerField(default=1)

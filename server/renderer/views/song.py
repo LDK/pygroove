@@ -137,6 +137,7 @@ class SongView(APIView):
                     stepToUpdate.on = step['on'] if 'on' in step else False
                     stepToUpdate.duration = step['duration'] if 'duration' in step else 1
                     stepToUpdate.index = step['index'] if 'index' in step else 0
+                    stepToUpdate.retrigger = step['retrigger'] if 'retrigger' in step else 0
                     stepToUpdate.save()
                 else:
                     patternToUpdate = Pattern.objects.get(song=song, position=pattern['position'])
@@ -153,7 +154,8 @@ class SongView(APIView):
                         pan=step['pan'] if 'pan' in step else 0,
                         on=step['on'] if 'on' in step else False,
                         duration=step['duration'] if 'duration' in step else 1,
-                        index=step['index'] if 'index' in step else 0
+                        index=step['index'] if 'index' in step else 0,
+                        retrigger=step['retrigger'] if 'retrigger' in step else 0
                     )
                     newStep.save()
 
@@ -404,6 +406,7 @@ class CreateSongView(APIView):
                     stepToUpdate.on = step['on'] if 'on' in step else False
                     stepToUpdate.duration = step['duration'] if 'duration' in step else 1
                     stepToUpdate.index = step['index'] if 'index' in step else 0
+                    stepToUpdate.retrigger = step['retrigger'] if 'retrigger' in step else 0
                     stepToUpdate.save()
                 else:
                     patternToUpdate = Pattern.objects.get(song=song, position=pattern['position'])
@@ -420,7 +423,8 @@ class CreateSongView(APIView):
                         pan=step['pan'] if 'pan' in step else 0,
                         on=step['on'] if 'on' in step else False,
                         duration=step['duration'] if 'duration' in step else 1,
-                        index=step['index'] if 'index' in step else 0
+                        index=step['index'] if 'index' in step else 0,
+                        retrigger=step['retrigger'] if 'retrigger' in step else 0
                     )
                     newStep.save()
 
