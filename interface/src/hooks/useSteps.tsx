@@ -521,6 +521,7 @@ const useSteps = ({ barDiv, beatDiv, beatStep, defaultPitch, defaultVelocity }:U
         },
         duration: 1,
         index: i,
+        retrigger: 0
       };
   
       return <StepMarker {...{ track }} key={i} step={newStep} />;
