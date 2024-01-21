@@ -1,8 +1,8 @@
-import { Box, Dialog, DialogContent, DialogTitle, Grid, Typography } from "@mui/material";
+import { Box, Checkbox, Dialog, DialogContent, DialogTitle, FormControl, Grid, NativeSelect, Typography } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
-import { Loc, Step, Track, getActivePattern, getActiveSong, setPatternTrackSteps } from "../redux/songSlice";
+import { Loc, Step, Track, getActivePattern, setPatternTrackSteps } from "../redux/songSlice";
 import { StepSettings } from "../StepSequencer";
-import { ReactElement, useEffect, useMemo, useRef, useState } from "react";
+import { ChangeEvent, ReactElement, useCallback, useEffect, useMemo, useState } from "react";
 import { getLoc, getOverallStep, getTicks } from "../hooks/useSteps";
 import { 
   ClearTwoTone as EraseIcon,
@@ -19,6 +19,7 @@ import {
 import { BlackKey, WhiteKey } from "./PianoKey";
 import { noSelect } from "./SongArranger";
 import useDialogUI from "../theme/useDialogUI";
+import PanSlider from "./PanSlider";
 
 
 const doStepsMatch = (compare: Step[], ignorePitch:boolean = false) => {
@@ -34,12 +35,18 @@ const doStepsMatch = (compare: Step[], ignorePitch:boolean = false) => {
     return false;
   }
   
-  if (step1.on !== step2.on) {
-    return false;
-  }
+  // if (step1.on !== step2.on) {
+  //   return false;
+  // }
   
   return true;
 };
+
+const VerticalLine = ({ display }:{ display?: any }) => (
+  <Box display={display || "inline-block"} height={24} bgcolor="secondary.light" width={"1px"} mx={2} pt={0}>
+
+  </Box>
+);
 
 const PianoRoll = ({ track, stepSettings, onClose }:{ track?:Track, stepSettings: StepSettings, open:boolean, onClose: () => void }) => {
   const dispatch = useDispatch();
@@ -53,11 +60,15 @@ const PianoRoll = ({ track, stepSettings, onClose }:{ track?:Track, stepSettings
   const tickDivs = getTicks(beatStep);
 
   const [pitchStart, setPitchStart] = useState(71);
-  const pitchRange = 16;
+
+  const defaultPitchRange = 16;
+  const [pitchRange, setPitchRange] = useState(defaultPitchRange);
 
   const [barStart, setBarStart] = useState(0);
   const barRange = 2;
 
+  const [focus, setFocus] = useState<'velocity' | 'pan' | false>(false);
+  
   const notes:string[] = useMemo(() => {
     const octaves = [9, 8, 7, 6, 5, 4, 3, 2, 1, 0, -1, -2, -3, -4];
     const pitches = ['B', 'A#', 'A', 'G#', 'G', 'F#', 'F', 'E', 'D#', 'D', 'C#', 'C'];
@@ -87,7 +98,7 @@ const PianoRoll = ({ track, stepSettings, onClose }:{ track?:Track, stepSettings
     }
 
     return list;
-  }, [pitchStart, notes]);
+  }, [pitchStart, notes, pitchRange, keyHeight]);
 
   const originalSteps = useMemo(() => (!activePattern || !track) ? [] as Step[] : 
     activePattern.steps.filter(step => step.track.position === track.position),
@@ -99,6 +110,10 @@ const PianoRoll = ({ track, stepSettings, onClose }:{ track?:Track, stepSettings
     setSteps(originalSteps);
   }, [originalSteps]);
 
+  useEffect(() => {
+    console.log('STEPS', steps);
+  }, [steps]);
+
   const [mode, setMode] = useState<'select' | 'draw' | 'erase' | 'slice'>('select');
 
   const [erasing, setErasing] = useState(false);
@@ -106,13 +121,29 @@ const PianoRoll = ({ track, stepSettings, onClose }:{ track?:Track, stepSettings
   const [sizing, setSizing] = useState<Step | false>(false);
   const [dragging, setDragging] = useState<Step | false>(false);
   const [dragStart, setDragStart] = useState<number | false>(false);
+  const [selected, setSelected] = useState<Step | undefined>(undefined);
 
   const { DialogActionButtons } = useDialogUI();
+
+  const checkHeight = useCallback(() => {
+    if (window.innerHeight < 700) {
+      const keysBelow = Math.ceil((700 - window.innerHeight) / keyHeight);
+      setPitchRange(Math.max(defaultPitchRange - keysBelow, 1));
+    } else {
+      setPitchRange(defaultPitchRange);
+    }
+  }, [defaultPitchRange, keyHeight]);
+
+  // when window height changes
+  useEffect(() => { 
+    window.removeEventListener('resize', checkHeight);
+    window.addEventListener('resize', checkHeight);
+  }, [checkHeight]);
 
   if (!activePattern || !track) {
     return null;
   }
-
+  
   const { bars } = activePattern;
 
   const beatWidth = `calc((100%  / ${barDiv}) - 1px)`;
@@ -160,6 +191,23 @@ const PianoRoll = ({ track, stepSettings, onClose }:{ track?:Track, stepSettings
 
     setSteps(newSteps);
   };
+
+  const updateStep = (step:Step) => {
+    console.log('update step', step);
+    if (step.index === selected?.index) {
+      setSelected(step);
+    }
+
+    const newSteps = steps.map(s => {
+      if (s.index === step.index) {
+        return step;
+      }
+
+      return s;
+    });
+
+    setSteps(newSteps);
+  }
 
   const addStep = (step:Step) => {
     const newSteps:Step[] = [];
@@ -252,20 +300,28 @@ const PianoRoll = ({ track, stepSettings, onClose }:{ track?:Track, stepSettings
 
     const isDragging = dragging && dragging.index === step.index;
     const isSizing = sizing && sizing.index === step.index;
+    const isSelected = selected && selected.index === step.index;
+
+    const bgColor = (Boolean(step.on)) ? `${(isDragging || isSizing || isSelected) ? 'secondary.light' : 'warning.main'}` : '#CCC';
 
     return (
       <Box 
         borderColor="#333" borderRight={1} 
         zIndex={(isDragging || isSizing) ? 6 : 4} position="absolute" top={0} left={0}
-        bgcolor={`warning.${ (isDragging || isSizing) ? 'light' : 'main' }`} pl={0}
+        bgcolor={bgColor}
+        pl={0}
+        sx={{
+          opacity: step.on ? 1 : .8,
+        }}
         height={`${height}px`} width={`calc(100% * ${step.duration} + ${step.duration - 1}px + ${Math.floor(step.duration / 4)}px)`}
         onMouseDown={(e) => {
-          e.stopPropagation();
           if (mode === 'draw') {
+            e.stopPropagation();
             setSizing(step);
           }
         }}
         onMouseEnter={(e) => {
+          console.log('note marker mouse enter', erasing);
           if (erasing) {
             removeStep(step);
           }
@@ -276,9 +332,13 @@ const PianoRoll = ({ track, stepSettings, onClose }:{ track?:Track, stepSettings
           if (mode === 'erase') {
             removeStep(step);
           }
+
+          if (mode === 'select') {
+            setSelected(step);
+          }
         }}
       >
-        <Typography pl={".25rem"} variant="caption" fontWeight={600} pt={".25rem"} display="block">
+        <Typography color={(isDragging || isSelected || isSizing) ? 'white' : undefined} pl={".25rem"} variant="caption" fontWeight={600} pt={".25rem"} display="block">
           {step.pitch}
         </Typography>
 
@@ -289,6 +349,7 @@ const PianoRoll = ({ track, stepSettings, onClose }:{ track?:Track, stepSettings
                 onMouseDown={(e) => {
                   if (mode === 'select') {
                     e.stopPropagation();
+                    setSelected(step);
                     setDragging(step);
                     setDragStart(overall + i);
                   }
@@ -335,6 +396,7 @@ const PianoRoll = ({ track, stepSettings, onClose }:{ track?:Track, stepSettings
       on: true,
       duration: 1,
       index: 0,
+      retrigger: 0,
     };
 
     const step = steps.find(step => doStepsMatch([step, searchStep]));
@@ -350,6 +412,8 @@ const PianoRoll = ({ track, stepSettings, onClose }:{ track?:Track, stepSettings
             const dropStart = getOverallStep({ bar, beat, tick }, tickDivs, barDiv, beatStep);
             const dropEnd = dropStart + dragging.duration - 1;
             // console.log('dropped item ranges from', dropStart, 'to', dropEnd);
+
+            setSelected(dragging);
 
             setDragging(false);
             setDragStart(false);
@@ -403,6 +467,8 @@ const PianoRoll = ({ track, stepSettings, onClose }:{ track?:Track, stepSettings
               }
             });
           }
+
+          console.log('turning off erasing');
           setErasing(false);
           setDrawing(false);
           setSizing(false);
@@ -444,6 +510,7 @@ const PianoRoll = ({ track, stepSettings, onClose }:{ track?:Track, stepSettings
           }
         }}
         onMouseDown={() => {
+          console.log('mouse down', mode);
           if (mode === 'erase') {
             setErasing(true);
 
@@ -456,6 +523,10 @@ const PianoRoll = ({ track, stepSettings, onClose }:{ track?:Track, stepSettings
             if (!step) {
               setSizing(addStep(searchStep));
             }
+          }
+
+          if (mode === 'select') {
+            setSelected(step);
           }
         }}
       >
@@ -585,6 +656,209 @@ const PianoRoll = ({ track, stepSettings, onClose }:{ track?:Track, stepSettings
     </Grid>
   );
 
+  const SelectedStepEditor = ({ step }:{ step?:Step }) => {
+    const [velocity, setVelocity] = useState(step?.velocity || 0);
+    const [reverse, setReverse] = useState(step?.reverse || false);
+    const [on, setOn] = useState(step?.on || false);
+    const [retrigger, setRetrigger] = useState(step?.retrigger ||0);
+
+    const retriggerLabels = {
+      "0": 'Off',
+      "1": 'Each Beat',
+      "2": 'Each 1/2 Beat',
+      "3": 'Each 1/3 Beat',
+      "4": 'Each 1/4 Beat',
+      "6": 'Each 1/6 Beat',
+      "8": 'Each 1/8 Beat',
+    };
+
+    const CheckBox =({ checked, onChange, label }:{ checked: boolean, label: string, onChange: (e:React.ChangeEvent<HTMLInputElement>) => void }) => {
+      return (
+        <>
+          <Checkbox
+            sx={{ color: 'white', pt: 0 }}
+            {...{ checked, onChange }}
+          />
+
+          <Typography color="white" variant="caption" pt={0} position="relative" top={-4}>
+            { label }
+          </Typography>
+        </>
+      );
+    };
+
+    if (!step) {
+      return null;
+    }
+
+    return (
+      <Grid container spacing={0}>
+        <Grid item xs={12} textAlign={"left"}>
+          <Box display={{ xs: 'none', lg: 'inline' }} pt={0} pl={0} position="relative" top={-8}>
+            <Typography color="white" variant="caption" pl={2}>
+              <Typography variant="caption" pl={2} display={{ xs: 'none', xl: 'inline' }}>Selected </Typography>
+              Step: 
+              <Typography variant="caption" fontWeight="bold"> {step.pitch} </Typography>
+              at 
+              <Typography variant="caption" fontWeight="bold"> {`${step.loc.bar}.${step.loc.beat}.${step.loc.tick}`}
+              </Typography>
+            </Typography>
+          </Box>
+
+          <VerticalLine display={{ xs: 'none', lg: 'inline-block' }} />
+
+          <Box display={{ xs: 'none', lg: 'inline' }} pt={0} pl={0} position="relative" top={-8}>
+            <Typography color="white" variant="caption" pr={0}>Beats: {step.duration}</Typography>
+          </Box>
+
+          <VerticalLine display={{ xs: 'none', lg: 'inline-block' }} />
+
+          <Box display="inline" pt={0} pl={0} position="relative" top={-4}>
+            <CheckBox label="On" checked={on} onChange={(e) => { updateStep({...step, on: e.target.checked }); }} />
+          </Box>
+
+          <Box display="inline" pt={0} pl={0} position="relative" top={-4}>
+            <CheckBox label="Rev." checked={reverse} onChange={(e) => { updateStep({...step, reverse: e.target.checked }); }} />
+          </Box>
+
+          <VerticalLine />
+
+          <Box display="inline-block" pt={0} pl={0} position="relative" top={-8}>
+            <Typography color="white" variant="caption" pr={2}>Vel:</Typography>
+            <input name="velocity"
+              style={{ width: 36 }}
+              type="number"
+              max={127}
+              min={1}
+              autoFocus={focus === 'velocity'}
+              onKeyUp={(e) => {
+                if (velocity !== selected?.velocity) {
+                  setFocus('velocity');
+                  updateStep({...step, velocity: velocity });
+                }
+              }}
+              onMouseDown={(e) => {
+                setFocus('velocity');
+              }}
+              onMouseEnter={(e) => {
+                setFocus('velocity');
+              }}
+              onMouseLeave={(e) => {
+                setFocus(false);
+              }}
+              onMouseUp={(e) => {
+                if (velocity !== selected?.velocity) {
+                  updateStep({...step, velocity: velocity });
+                }
+              }}
+              onFocus={() => { setFocus('velocity'); }}
+              onBlur={() => { setFocus(false); }}
+              value={velocity}
+              onChange={(e) => { setVelocity(parseInt(e.target.value)); }}
+            />
+          </Box>
+
+          <VerticalLine />
+
+          <Typography color="white" variant="caption" pr={2} position="relative" top={-8}>Pan:</Typography>
+
+          <Box display="inline-block" pt={0} pl={0} position="absolute" top={-4}>
+            {/* 
+                  <PanSlider target={step} defaultValue={pan}
+                    callback={(val:number) => {
+                    setPan(val);
+                  }} width="90%" />
+            */}
+            <PanSlider
+              inputProps={
+                {
+                  style: {
+                    height: '5px',
+                    position: 'relative',
+                    top: '2px',
+                    width: '50%'
+                  },
+                  autoFocus: focus === 'pan',
+                  onMouseEnter: () => { setFocus('pan'); },
+                  onFocus: () => { setFocus('pan'); },
+                  onKeyDown: () => { setFocus('pan'); },
+                  onMouseLeave: (e:React.MouseEvent<HTMLInputElement>) => {
+                    if (e.target instanceof HTMLInputElement) {
+                      const val = parseInt(e.target.value);
+
+                      if (val !== step.pan) {
+                        setFocus(false);
+                        updateStep({...step, pan: val });
+                      } 
+                    }
+                  },
+                  onBlur: (e:React.FocusEvent<HTMLInputElement>) => {
+                    if (e.target instanceof HTMLInputElement) {
+                      const val = parseInt(e.target.value);
+
+                      if (val !== step.pan) {
+                        setFocus(false);
+                        updateStep({...step, pan: val });
+                      } 
+                    }
+                },
+                  onKeyUp: (e:React.KeyboardEvent<HTMLInputElement>) => {
+                    if (e.target instanceof HTMLInputElement) {
+                      const val = parseInt(e.target.value);
+                      if (val !== step.pan) {
+                        setFocus('pan');
+                        updateStep({...step, pan: val });
+                      } 
+                    }
+                  }
+                }
+              }
+              hideLabel={true}
+              target={step}
+              defaultValue={step.pan || 0}
+              callback={(val:number) => {
+                updateStep({...step, pan: val });
+              }}
+              width="90%" />
+
+            <Typography color="white" variant="caption" position="relative" left={"calc(50% + 16px)"} top={-15}>
+              {step.pan! > 0 ? `${step.pan!}R` : (step.pan! < 0 ? `${step.pan! * -1}L` : 'C')}
+            </Typography>
+          </Box>
+
+          <Box p={0} m={0} display="inline-block" position="absolute" right={8} top={8}>
+            <VerticalLine />
+
+            <Typography variant="caption" color="white" position="relative" top={-8} pl={0} pr={1}>Retrigger: </Typography>
+
+            <FormControl>
+              <NativeSelect
+                defaultValue={retrigger}
+                onChange={(e:ChangeEvent<HTMLSelectElement>) => {
+                  const val = parseInt(e.target.value);
+                  setRetrigger(val);
+                  updateStep({...step, retrigger: val });
+                }}
+                inputProps={{
+                  style: {backgroundColor: 'white', paddingLeft: 8, paddingTop: 1, paddingBottom: 1, height: 22, fontSize: '.8rem'},
+                  name: 'age',
+                  id: 'uncontrolled-native',
+                }}
+              >
+                {Object.keys(retriggerLabels).map(key => {
+                  return (
+                    <option value={key}>{retriggerLabels[key as keyof typeof retriggerLabels]}</option>
+                  );
+                })}
+              </NativeSelect>
+            </FormControl>
+              
+          </Box>
+        </Grid>
+      </Grid>
+    );
+  };
+
   return (
     <Dialog
       sx={{...noSelect}}
@@ -603,6 +877,7 @@ const PianoRoll = ({ track, stepSettings, onClose }:{ track?:Track, stepSettings
               cursor: (barStart === 0 ? 'default' : 'pointer'),
             }}
             onClick={() => { setBarStart(Math.max(0, barStart - 1)) }} />
+
           <RightIcon
             sx={{
               opacity: (barStart >= bars - barRange ? 0.25 : 1),
@@ -613,8 +888,23 @@ const PianoRoll = ({ track, stepSettings, onClose }:{ track?:Track, stepSettings
       </DialogTitle>
 
       <DialogContent sx={{ overflow: 'hidden' }}>
-        <Box width="100%" mb={2} borderRight={1} borderColor="#333" height={`calc(${pitchRange + 1} * ${keyHeight}px)`} position="relative" sx={{ overflow: 'hidden' }}>
-          <Box width="5%" display="inline-block" position="absolute" top={0} left={0} height={`calc(${pitchRange + 1} * ${keyHeight}px)`}>
+        <Box width="100%" mb={0} borderRight={1} borderColor="#333" height={`calc(${pitchRange + 1} * ${keyHeight}px)`} position="relative" sx={{ overflow: 'hidden' }}>
+          <Box width="2.5%" display="inline-block" position="absolute" top={0} left={0} height={`calc(${pitchRange + 1} * ${keyHeight}px)`}>
+            <UpDoubleIcon
+              onClick={() => {
+                setPitchStart(Math.max(0, pitchStart - Math.min(12, pitchRange - 1)));
+              }}
+              sx={{ 
+                width: '.75em',
+                fontSize: '2rem',
+                cursor: (pitchStart === 0 ? 'default' : 'pointer'),
+                position: 'absolute',
+                top: '0rem',
+                left: 0,
+                opacity: (pitchStart === 0 ? 0.25 : 1),
+              }}
+            />
+
             <UpIcon 
               onClick={() => {
                 setPitchStart(Math.max(0, pitchStart - 1));
@@ -624,27 +914,12 @@ const PianoRoll = ({ track, stepSettings, onClose }:{ track?:Track, stepSettings
                 fontSize: '2rem',
                 cursor: (pitchStart === 0 ? 'default' : 'pointer'),
                 position: 'absolute',
-                top: 0, 
+                top: '2rem', 
                 left: 0,
                 opacity: (pitchStart === 0 ? 0.25 : 1),
               }}
             />
             
-            <UpDoubleIcon
-              onClick={() => {
-                setPitchStart(Math.max(0, pitchStart - 12));
-              }}
-              sx={{ 
-                width: '.75em',
-                fontSize: '2rem',
-                cursor: (pitchStart === 0 ? 'default' : 'pointer'),
-                position: 'absolute',
-                top: 0,
-                left: '50%',
-                opacity: (pitchStart === 0 ? 0.25 : 1),
-              }}
-            />
-
             <DownIcon 
               onClick={() => {
                 setPitchStart(Math.min(notes.length - pitchRange, pitchStart + 1));
@@ -655,14 +930,14 @@ const PianoRoll = ({ track, stepSettings, onClose }:{ track?:Track, stepSettings
                 cursor: (pitchStart >= notes.length - pitchRange ? 'default' : 'pointer'),
                 position: 'absolute',
                 opacity: (pitchStart >= notes.length - pitchRange ? 0 : 1),
-                bottom: 0, 
+                bottom: '2rem', 
                 left: 0,
               }}
             />
             
             <DownDoubleIcon
               onClick={() => {
-                setPitchStart(Math.min(notes.length - pitchRange, pitchStart + 12));
+                setPitchStart(Math.min(notes.length - pitchRange, pitchStart + Math.min(12, pitchRange - 1)));
               }}
               sx={{ 
                 width: '.75em',
@@ -671,18 +946,18 @@ const PianoRoll = ({ track, stepSettings, onClose }:{ track?:Track, stepSettings
                 position: 'absolute',
                 opacity: (pitchStart >= notes.length - pitchRange ? 0 : 1),
                 bottom: 0,
-                left: '50%' 
+                left: 0 
               }}
             />
 
           </Box>
 
-          <Box width="95%" borderBottom={1} borderColor="#333" height={`calc(100% - ${keyHeight - 1}px)`} display="inline-block" position="relative" left={"5%"}>
+          <Box width="97.5%" borderBottom={1} borderColor="#333" height={`calc(100% - ${keyHeight - 1}px)`} display="inline-block" position="relative" left={"2.5%"}>
             <Box height={keyHeight} p={0} m={0} bgcolor="primary.dark" width="120px">
               <ModeSelector />
             </Box>
 
-            <Box sx={{ zIndex: 5 }} height={keyHeight * pitchRange - 5} top={keyHeight} left={0} display="inline-block" width="120px" position="absolute" bgcolor="#333333" borderLeft={1} borderBottom={1} borderColor={'#333333'} borderRadius={0}> 
+            <Box sx={{ zIndex: 5 }} height={keyHeight * pitchRange} top={keyHeight} left={0} display="inline-block" width="120px" position="absolute" bgcolor="#333333" borderLeft={1} borderBottom={1} borderColor={'#333333'} borderRadius={0}> 
               {keys}
             </Box>
 
@@ -697,6 +972,10 @@ const PianoRoll = ({ track, stepSettings, onClose }:{ track?:Track, stepSettings
           </Box>
         </Box>
 
+        <Box width="100%" mb={2} borderTop={1} borderRight={1} pt={1} borderColor="#333" height={32} position="relative" bgcolor="secondary.dark">
+          {Boolean(selected) && <SelectedStepEditor step={selected} />}
+        </Box>
+        
         <DialogActionButtons
           confirmLabel="Save"
           onConfirm={() => {
