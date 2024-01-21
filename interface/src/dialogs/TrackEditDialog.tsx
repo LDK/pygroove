@@ -41,6 +41,7 @@ const TrackEditDialog = ({ track, setEditingTrack }:{ track?:Track, setEditingTr
     reverse, setReverse,
     trim, setTrim,
     normalize, setNormalize,
+    trackName, setTrackName,
     TrackSettings
   } = useTrackSettings({ track, filters: {
     filter1On, filter1Type, filter1Q, filter1Freq,
@@ -50,6 +51,7 @@ const TrackEditDialog = ({ track, setEditingTrack }:{ track?:Track, setEditingTr
   const { SampleBrowser, fetchSamples } = useSamples();
 
   const resetDefaults = useCallback(() => {
+    setTrackName(track?.name || track?.sample?.display || `Track ${track?.position}` || 'Track');
     setVolume(track?.volume || -6);
     setPan(track?.pan || 0);
     setDisabled((track?.disabled || track?.disabled === false) ? track.disabled : false);
@@ -98,8 +100,8 @@ const TrackEditDialog = ({ track, setEditingTrack }:{ track?:Track, setEditingTr
     let newTrack = {...track as Track, 
       volume, pan, disabled, rootPitch: `${rootNote}${rootOctave}`, 
       pitchShift, transpose, sample: sample || track.sample,
-      reverse, trim, normalize,
-    };
+      reverse, trim, normalize, name: trackName || track.name
+    } as Track;
 
     newTrack.filters = [];
 
@@ -153,7 +155,7 @@ const TrackEditDialog = ({ track, setEditingTrack }:{ track?:Track, setEditingTr
 
           <Grid item xs={4}>
             <Typography fontWeight={600} component="span">Track: </Typography>
-            <Typography fontWeight={400} component="span">{track.name}</Typography>
+            <Typography fontWeight={400} component="span">{trackName}</Typography>
           </Grid>
 
           <Grid item xs={4} sx={{ textAlign: 'center' }}>
@@ -192,6 +194,7 @@ const TrackEditDialog = ({ track, setEditingTrack }:{ track?:Track, setEditingTr
           <TabPanel value={tab} index={SAMPLES}>
             <SampleBrowser openCallback={(sample:SampleData) => {
               setSample(sample);
+              setTrackName(sample.display || sample.filename);
               setTab(SETTINGS);
             }} />
           </TabPanel>

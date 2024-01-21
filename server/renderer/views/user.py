@@ -102,7 +102,9 @@ class UserSongsView(APIView):
                 'reverse': step.reverse,
                 'velocity': step.velocity,
                 'pan': step.pan,
+                'index': step.index,
                 'on': step.on if step.on else False,
+                'duration': step.duration if step.duration else 1,
                 'filters': filterList,
                 'track': track,
               })

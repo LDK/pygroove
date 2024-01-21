@@ -40,7 +40,6 @@ const useSong = () => {
     await apiGet({
       uri: '/user/songs',
       onSuccess: (res) => {
-        console.log('User songs:', res.data);
         dispatch(setUserSongs(res.data));
       },
       onError: (err) => {
@@ -62,10 +61,56 @@ const useSong = () => {
 
     const {activePattern, loading, error, ...songData } = { ...activeSong, patterns };
 
+    const payloadPatterns = patterns.map((pattern) => {
+      const { id, position, name, bars, steps, pianoIndex } = pattern;
+
+      const payloadPattern = {
+        id, position, pianoIndex, name, bars, steps: [] as Step[],
+      };
+
+      if (!payloadPattern.pianoIndex) {
+        payloadPattern.pianoIndex = {};
+      }
+
+      let trackStepCount:{ [position:string]: number } = {};
+
+      steps.forEach((step:Step) => {
+        const { loc, pitch, velocity, filters, pan, duration, reverse, track, retrigger } = step;
+
+        if (!step.on) return;
+
+        const position = `${track.position}`;
+
+        if (!trackStepCount[position]) {
+          trackStepCount[position] = 0;
+        }
+
+        trackStepCount[position]++;
+
+        payloadPattern.steps.push({...{
+          loc,
+          pitch,
+          velocity,
+          filters,
+          pan,
+          duration,
+          track,
+          on: true,
+          retrigger: retrigger || 0,
+          reverse: reverse || false,
+          index: trackStepCount[position],
+        }});
+      });
+
+      return payloadPattern;
+    });
+
+    const payload = {...songData, patterns: payloadPatterns};
+
     await apiCall({
       uri: `/song/${songData.id ? songData.id + '/' : ''}`,
       method: songData.id ? 'put' : 'post',
-      payload: {...songData} as Song,
+      payload: payload,
       onSuccess: (res:AxiosResponse) => {
         if (res.data?.id) {
           dispatch(setSongId(res.data.id));
@@ -95,10 +140,6 @@ const useSong = () => {
       method: 'post',
       payload: {...songData} as Song,
       onSuccess: (res:AxiosResponse) => {
-        // if (res.data?.id) {
-        //   dispatch(setActiveSong(res.data));
-        // }
-        console.log('duplicate response', res.data);
         getUserSongs();
       },
       onError: (error:any) => {

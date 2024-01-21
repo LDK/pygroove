@@ -40,6 +40,7 @@ class Pattern(models.Model):
     name = models.CharField(max_length=100)
     bars = models.IntegerField(default=2)
     position = models.IntegerField(default=1)
+    pianoIndex = models.JSONField(default=list)
 
 class Step(models.Model):
     pattern = models.ForeignKey(Pattern, related_name='steps', on_delete=models.CASCADE)
@@ -50,6 +51,9 @@ class Step(models.Model):
     velocity = models.IntegerField(default=100)
     pan = models.FloatField(default=0)
     on = models.BooleanField(default=True)
+    duration = models.IntegerField(default=1)
+    index = models.IntegerField(default=0)
+    retrigger = models.PositiveSmallIntegerField(default=0)
 
 class Filter(models.Model):
     position = models.IntegerField(default=1)

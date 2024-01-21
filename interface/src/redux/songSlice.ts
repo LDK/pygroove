@@ -49,7 +49,13 @@ export type Step = {
   pitch: string;
   loc: Loc;
   track: Track;
+  reverse?: boolean;
+  retrigger?: number;
+  duration: number;
+  index: number;
 };
+
+
 
 export type Pattern = {
   name: string;
@@ -57,6 +63,9 @@ export type Pattern = {
   bars: number;
   position: number;
   id?: number;
+  pianoIndex: {
+    [key:string]: boolean;
+  };
 };
 
 export type PatternEntry = {
@@ -104,6 +113,7 @@ export const simplePattern = (position: number) => {
     steps: [],
     bars: 2,
     position: position,
+    pianoIndex: {},
   } as Pattern;
 }
 
@@ -169,6 +179,37 @@ const songSlice = createSlice({
     selectPattern: (state, action: PayloadAction<number>) => {
       state.selectedPatternPosition = action.payload;
     },
+    setPatternTrackSteps: (state, action: PayloadAction<{track: Track, steps: Step[], isPiano?:boolean}>) => {
+      const { track, steps } = action.payload;
+
+      const pattern = state.activePattern;
+
+      if (!pattern) return;
+
+      const otherSteps = pattern.steps.filter((step) => {
+        return step.track.position !== track.position;
+      });
+
+      const patternSteps = [...otherSteps, ...steps];
+
+      const patternIndex = state.patterns.findIndex((ptrn) => ptrn.position === pattern.position);
+      const newPattern = { ...pattern, steps: patternSteps };
+
+      console.log('newPattern', newPattern);
+
+      if (action.payload.isPiano) {
+        let newIndex = {...newPattern.pianoIndex};
+        newIndex[track.position] = true;
+        newPattern.pianoIndex = newIndex;
+      }
+
+      // If this is the active pattern, update active pattern
+      if (state.activePattern?.position === pattern.position) {
+        state.activePattern = newPattern;
+      }
+
+      state.patterns.splice(patternIndex, 1, newPattern);
+    },
     setStep: (state, action: PayloadAction<Step>) => {
       const { loc, track } = action.payload;
 
@@ -190,6 +231,7 @@ const songSlice = createSlice({
         step.filters = action.payload.filters || step.filters || [];
 
         const stepIndex = pattern?.steps.findIndex((stp) => stp.loc === step.loc && stp.track.position === track.position);
+        step.index = stepIndex || step.index || 0;
         pattern?.steps.splice(stepIndex!, 1, step);
       } else {
         pattern?.steps.push({
@@ -200,6 +242,9 @@ const songSlice = createSlice({
           filters: action.payload.filters || [],
           loc: loc,
           track: track,
+          duration: action.payload.duration || 1,
+          index: pattern.steps.length,
+          retrigger: action.payload.retrigger || 0,
         });
       }
 
@@ -324,6 +369,7 @@ const songSlice = createSlice({
       if (step) {
         step.on = !step.on;
         const stepIndex = pattern?.steps.findIndex((stp) => stp.loc === step.loc && stp.track.position === track.position);
+        step.index = stepIndex || step.index || 0;
         pattern?.steps.splice(stepIndex!, 1, step);
       } else {
         pattern?.steps.push({
@@ -332,6 +378,9 @@ const songSlice = createSlice({
           pitch: 'C3',
           loc: loc,
           track: track,
+          duration: 1,
+          retrigger: 0,
+          index: pattern.steps.filter((stp) => stp.track.position === track.position).length,
         });
       }
 
@@ -383,9 +432,30 @@ const songSlice = createSlice({
       state.loading = action.payload;
     },
     updateTrack: (state, action: PayloadAction<Track>) => {
+      const newPatterns:Pattern[] = [];
+
+      // For all patterns, check all steps and update track
+      state.patterns.forEach((pattern) => {
+        pattern.steps.forEach((step, i) => {
+          if (step.track.position === action.payload.position) {
+            const newStep:Step = { ...step, track: action.payload };
+            pattern.steps.splice(i, 1, newStep);
+          }
+        });
+
+        if (pattern.position === state.activePattern?.position) {
+          state.activePattern = pattern;
+        }
+
+        newPatterns.push(pattern);
+      });
+
+      console.log('new patterns', newPatterns);
+
       const track = state.tracks.find((trk) => trk.position === action.payload.position);
       if (!track) return;
       Object.assign(track, action.payload);
+      state.patterns = newPatterns;
     }
   },
 });
@@ -418,7 +488,8 @@ export const {
   setStep,
   updateTrack,
   toggleTrack,
-  selectPattern
+  selectPattern,
+  setPatternTrackSteps,
 } = songSlice.actions;
 
 // getActiveSong selector function

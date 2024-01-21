@@ -113,7 +113,6 @@ const useApi = () => {
       apiGet({
         uri: '/user/songs',
         onSuccess: (res) => {
-          console.log('User songs:', res.data);
           dispatch(setUserSongs(res.data));
         },
         onError: (err) => {

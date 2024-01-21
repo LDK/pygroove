@@ -105,6 +105,7 @@ class SongView(APIView):
                 patternToUpdate = Pattern.objects.get(song=song, position=pattern['position'])
                 patternToUpdate.name = pattern['name']
                 patternToUpdate.bars = pattern['bars']
+                patternToUpdate.pianoIndex = pattern['pianoIndex']
                 patternToUpdate.save()
                 patternIndex[pattern['position']] = patternToUpdate
             else:
@@ -113,6 +114,7 @@ class SongView(APIView):
                     song=song,
                     name=pattern['name'],
                     bars=pattern['bars'],
+                    pianoIndex=pattern['pianoIndex'],
                     position=pattern['position']
                 )
                 newPattern.save()
@@ -125,7 +127,7 @@ class SongView(APIView):
                 # If there is not, create a new Step with the new data
                 loc = '.'.join([str(step['loc']['bar']), str(step['loc']['beat']), str(step['loc']['tick'])])    
 
-                if Step.objects.filter(pattern=patternIndex[pattern['position']], track=trackIndex[step['track']['position']], loc=loc).exists():
+                if Step.objects.filter(pattern=patternIndex[pattern['position']], track=trackIndex[step['track']['position']], index=step['index'] if 'index' in step else -1).exists():
                     # Update that row with Step data
                     stepToUpdate = Step.objects.get(pattern=patternIndex[pattern['position']], track=trackIndex[step['track']['position']], loc=loc)
                     stepToUpdate.pitch = step['pitch'] if 'pitch' in step else 'C3'
@@ -133,6 +135,9 @@ class SongView(APIView):
                     stepToUpdate.velocity = step['velocity'] if 'velocity' in step else 100
                     stepToUpdate.pan = step['pan'] if 'pan' in step else 0
                     stepToUpdate.on = step['on'] if 'on' in step else False
+                    stepToUpdate.duration = step['duration'] if 'duration' in step else 1
+                    stepToUpdate.index = step['index'] if 'index' in step else 0
+                    stepToUpdate.retrigger = step['retrigger'] if 'retrigger' in step else 0
                     stepToUpdate.save()
                 else:
                     patternToUpdate = Pattern.objects.get(song=song, position=pattern['position'])
@@ -147,12 +152,15 @@ class SongView(APIView):
                         reverse=step['reverse'] if 'reverse' in step else False,
                         velocity=step['velocity'] if 'velocity' in step else 100,
                         pan=step['pan'] if 'pan' in step else 0,
-                        on=step['on'] if 'on' in step else False
+                        on=step['on'] if 'on' in step else False,
+                        duration=step['duration'] if 'duration' in step else 1,
+                        index=step['index'] if 'index' in step else 0,
+                        retrigger=step['retrigger'] if 'retrigger' in step else 0
                     )
                     newStep.save()
 
                 if 'filters' in step:
-                    dbStep = Step.objects.get(pattern=patternIndex[pattern['position']], loc=loc, track=trackIndex[step['track']['position']])
+                    dbStep = Step.objects.get(pattern=patternIndex[pattern['position']], index=step['index'] if 'index' in step else -1, track=trackIndex[step['track']['position']])
 
                     # For each Filter override on the current Step:
                     for filter in step['filters']:
@@ -396,6 +404,9 @@ class CreateSongView(APIView):
                     stepToUpdate.velocity = step['velocity'] if 'velocity' in step else 100
                     stepToUpdate.pan = step['pan'] if 'pan' in step else 0
                     stepToUpdate.on = step['on'] if 'on' in step else False
+                    stepToUpdate.duration = step['duration'] if 'duration' in step else 1
+                    stepToUpdate.index = step['index'] if 'index' in step else 0
+                    stepToUpdate.retrigger = step['retrigger'] if 'retrigger' in step else 0
                     stepToUpdate.save()
                 else:
                     patternToUpdate = Pattern.objects.get(song=song, position=pattern['position'])
@@ -410,7 +421,10 @@ class CreateSongView(APIView):
                         reverse=step['reverse'] if 'reverse' in step else False,
                         velocity=step['velocity'] if 'velocity' in step else 100,
                         pan=step['pan'] if 'pan' in step else 0,
-                        on=step['on'] if 'on' in step else False
+                        on=step['on'] if 'on' in step else False,
+                        duration=step['duration'] if 'duration' in step else 1,
+                        index=step['index'] if 'index' in step else 0,
+                        retrigger=step['retrigger'] if 'retrigger' in step else 0
                     )
                     newStep.save()
 
