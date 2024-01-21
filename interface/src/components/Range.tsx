@@ -21,9 +21,10 @@ interface RangeProps {
   labelVariant?: TypeVariants;
   labelColor?: string;
   onChange?: (e:React.ChangeEvent<HTMLInputElement>) => void;
+  inputProps?: React.DetailedHTMLProps<React.InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>;
 }
 
-const Range = ({ min, max, panDisplay, onChange, step=1, labelVariant, labelColor, labelSuffix = '', labelPrefix = '', percentage, callback, defaultValue, height, width, onBlur, label, orientation }: RangeProps) => {
+const Range = ({ inputProps = {}, min, max, panDisplay, onChange, step=1, labelVariant, labelColor, labelSuffix = '', labelPrefix = '', percentage, callback, defaultValue, height, width, onBlur, label, orientation }: RangeProps) => {
   const [workingValue, setWorkingValue] = useState(defaultValue);
   const [editing, setEditing] = useState(false);
 
@@ -68,7 +69,7 @@ const Range = ({ min, max, panDisplay, onChange, step=1, labelVariant, labelColo
   return (
     <>
       <input type="range"
-      value={workingValue}
+        value={workingValue}
         {...{ onBlur, min, max, step, defaultValue, orient: orientation, appearance: `slider-${orientation}` }}
         style={inputStyle}
         aria-orientation={orientation}
@@ -96,6 +97,7 @@ const Range = ({ min, max, panDisplay, onChange, step=1, labelVariant, labelColo
           setWorkingValue((valueToSet || valueToSet === 0) ? valueToSet : defaultValue);
           setEditing(false);
         }}
+        {...inputProps}
       />
       {labelText && 
         <Typography variant={labelVariant} color={labelColor} display="block">
