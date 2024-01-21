@@ -49,6 +49,8 @@ export type Step = {
   pitch: string;
   loc: Loc;
   track: Track;
+  reverse?: boolean;
+  retrigger?: number;
   duration: number;
   index: number;
 };
@@ -238,6 +240,7 @@ const songSlice = createSlice({
           track: track,
           duration: action.payload.duration || 1,
           index: pattern.steps.length,
+          retrigger: action.payload.retrigger || 0,
         });
       }
 
@@ -372,6 +375,7 @@ const songSlice = createSlice({
           loc: loc,
           track: track,
           duration: 1,
+          retrigger: 0,
           index: pattern.steps.filter((stp) => stp.track.position === track.position).length,
         });
       }
@@ -424,28 +428,30 @@ const songSlice = createSlice({
       state.loading = action.payload;
     },
     updateTrack: (state, action: PayloadAction<Track>) => {
-      const nameChange = action.payload.name !== state.tracks[action.payload.position - 1].name;
+      const newPatterns:Pattern[] = [];
 
-      if (nameChange) {
-        // For all patterns, check all steps and update track
-        state.patterns.forEach((pattern) => {
-          pattern.steps.forEach((step, i) => {
-            if (step.track.position === action.payload.position) {
-              const newStep:Step = { ...step, track: action.payload };
-              pattern.steps.splice(i, 1, newStep);
-              console.log('newStep', newStep);
-            }
-          });
-
-          if (pattern.steps.length) {
-            console.log('pattern', pattern);
+      // For all patterns, check all steps and update track
+      state.patterns.forEach((pattern) => {
+        pattern.steps.forEach((step, i) => {
+          if (step.track.position === action.payload.position) {
+            const newStep:Step = { ...step, track: action.payload };
+            pattern.steps.splice(i, 1, newStep);
           }
         });
-      }
+
+        if (pattern.position === state.activePattern?.position) {
+          state.activePattern = pattern;
+        }
+
+        newPatterns.push(pattern);
+      });
+
+      console.log('new patterns', newPatterns);
 
       const track = state.tracks.find((trk) => trk.position === action.payload.position);
       if (!track) return;
       Object.assign(track, action.payload);
+      state.patterns = newPatterns;
     }
   },
 });
