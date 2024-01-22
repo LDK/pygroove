@@ -1,8 +1,9 @@
-import { Grid, Typography, Select, Divider, Checkbox } from "@mui/material";
+import { Grid, Typography, Select, Divider, Checkbox, FormControl, NativeSelect } from "@mui/material";
 import { FolderTwoTone as BrowseIcon, HeadphonesTwoTone as PlayIcon } from "@mui/icons-material";
 import { Track } from "../redux/songSlice";
 import useControls from "./useControls";
-import { useEffect, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
+import { reverse } from "dns";
 
 type FilterInfo = {
   filter1On: boolean;
@@ -30,6 +31,7 @@ const useTrackSettings = ({track, filters}:{track?: Track, filters: FilterInfo})
   const [reverse, setReverse] = useState(track?.disabled || false);
   const [trim, setTrim] = useState(track?.disabled || false);
   const [normalize, setNormalize] = useState(track?.disabled || false);
+  const [playMode, setPlayMode] = useState(track?.playMode || 'oneshot');
   
   // Holds MP3 binary data
   const [trackAudio, setTrackAudio] = useState<HTMLAudioElement | null>(null);
@@ -79,6 +81,12 @@ const useTrackSettings = ({track, filters}:{track?: Track, filters: FilterInfo})
   const TrackSettings = ({ browseCallback }:{ browseCallback:() => void, }) => {
     if (!track) return null;
 
+    const playModes = {
+      oneshot: 'One Shot',
+      hold: 'Hold',
+      loop: 'Loop',
+      pingpong: 'Ping Pong',
+    };
     return (
       <Grid container spacing={0}>
         <Grid item xs={12} md={2}>
@@ -190,7 +198,7 @@ const useTrackSettings = ({track, filters}:{track?: Track, filters: FilterInfo})
                     <Divider sx={{ mx: 'auto', my: 1, bgcolor: 'white' }} />
                   </Grid>
 
-                  <Grid item xs={12} sx={{ textAlign: 'left' }}>
+                  <Grid item xs={12} sx={{ textAlign: 'left', paddingTop: '0 !important' }}>
                     <Typography color="white" variant="caption" fontWeight={600} component="span">Reverse</Typography>
 
                     <Checkbox sx={{ py: 0 }} defaultChecked={reverse} onChange={() => {
@@ -198,7 +206,7 @@ const useTrackSettings = ({track, filters}:{track?: Track, filters: FilterInfo})
                     }} />
                   </Grid>
 
-                  <Grid item xs={12} sx={{ textAlign: 'left' }}>
+                  <Grid item xs={12} sx={{ textAlign: 'left', paddingTop: '0 !important' }}>
                     <Typography color="white" variant="caption" fontWeight={600} component="span">Normalize</Typography>
 
                     <Checkbox sx={{ py: 0 }} defaultChecked={normalize} onChange={() => {
@@ -206,12 +214,36 @@ const useTrackSettings = ({track, filters}:{track?: Track, filters: FilterInfo})
                     }} />
                   </Grid>
 
-                  <Grid item xs={12} sx={{ textAlign: 'left' }}>
+                  <Grid item xs={12} sx={{ textAlign: 'left', paddingTop: '0 !important' }}>
                     <Typography color="white" variant="caption" fontWeight={600} component="span">Trim</Typography>
 
                     <Checkbox sx={{ py: 0 }} defaultChecked={trim} onChange={() => {
                       setTrim(!trim);
                     }} />
+                  </Grid>
+
+                  <Grid item xs={12} sx={{ textAlign: 'left' }}>
+                    <FormControl>
+                      <Typography color="white" variant="caption" fontWeight={600} component="span">Play Mode</Typography>  
+                      <NativeSelect
+                        defaultValue={playMode}
+                        onChange={(e:ChangeEvent<HTMLSelectElement>) => {
+                          setPlayMode(e.target.value as keyof typeof playModes);
+                        }}
+                        inputProps={{
+                          style: {backgroundColor: 'white', paddingLeft: 8, paddingTop: 1, paddingBottom: 1, height: 22, fontSize: '.8rem'},
+                          name: 'track-playMode',
+                          id: 'track-playMode-native',
+                        }}
+                      >
+                        {Object.keys(playModes).map(key => {
+                          return (
+                            <option value={key}>{playModes[key as keyof typeof playModes]}</option>
+                          );
+                        })}
+                      </NativeSelect>
+                    </FormControl>
+  
                   </Grid>
 
                 </Grid>
@@ -236,6 +268,7 @@ const useTrackSettings = ({track, filters}:{track?: Track, filters: FilterInfo})
     trim, setTrim,
     normalize, setNormalize,
     trackName, setTrackName,
+    playMode, setPlayMode,
     TrackSettings
   };
 };

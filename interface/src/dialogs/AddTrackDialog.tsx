@@ -65,6 +65,7 @@ const AddTrackDialog = ({ open, handleClose }: { open: boolean, handleClose: () 
               pitchShift: 0,
               transpose: 0,
               reverse: false,
+              playMode: 'oneshot'
             };
 
             console.log('add track, newTrack:', newTrack);
