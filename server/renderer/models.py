@@ -34,6 +34,7 @@ class Track(models.Model):
     fadeOut = models.PositiveSmallIntegerField(default=0)
     startOffset = models.PositiveIntegerField(default=0)
     endOffset = models.PositiveIntegerField(default=0)
+    playMode = models.CharField(max_length=8, default='oneshot')
 
 class Pattern(models.Model):
     song = models.ForeignKey(Song, on_delete=models.CASCADE, related_name='patterns')

@@ -44,6 +44,7 @@ class SongView(APIView):
                 trackToUpdate.fadeIn = track['fadeIn'] if 'fadeIn' in track else 0
                 trackToUpdate.fadeOut = track['fadeOut'] if 'fadeOut' in track else 0
                 trackToUpdate.normalize = track['normalize'] if 'normalize' in track else False
+                trackToUpdate.playMode = track['playMode'] if 'playMode' in track else 'oneshot'
                 trackToUpdate.trim = track['trim'] if 'trim' in track else False
                 trackToUpdate.save()
                 trackIndex[track['position']] = trackToUpdate
@@ -315,6 +316,7 @@ class CreateSongView(APIView):
                 trackToUpdate.fadeIn = track['fadeIn'] if 'fadeIn' in track else 0
                 trackToUpdate.fadeOut = track['fadeOut'] if 'fadeOut' in track else 0
                 trackToUpdate.normalize = track['normalize'] if 'normalize' in track else False
+                trackToUpdate.playMode = track['playMode'] if 'playMode' in track else 'oneshot'
                 trackToUpdate.trim = track['trim'] if 'trim' in track else False
                 trackToUpdate.save()
                 trackIndex[track['position']] = trackToUpdate
