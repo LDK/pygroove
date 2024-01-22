@@ -168,10 +168,14 @@ def getStepSound(step, track):
     trackWav = './audio/' + track['sample']['filename']
     stepSound = AudioSegment.from_wav(trackWav) - 12
 
+    origLen = len(stepSound)
+
     shiftSteps = 0
     transposeSteps = 0
 
     rootPitch = track['rootPitch'] if 'rootPitch' in track else 'C3'
+
+    playMode = track['playMode'] if 'playMode' in track else 'oneshot'
 
     if 'pitch' in step:
         transposeSteps += pitch_diff(rootPitch, step['pitch'])
@@ -188,6 +192,9 @@ def getStepSound(step, track):
 
         stepSound = librosaToPydub((y_pitch, sr))
 
+    duration = step['duration'] if 'duration' in step else 1
+    stepLen = beatLen() * (duration / beatDiv)
+    
     if 'normalize' in track:
         if (track['normalize'] == True):
             stepSound = stepSound.normalize()
@@ -200,9 +207,13 @@ def getStepSound(step, track):
         if (track['reverse'] == True):
             stepSound = stepSound.reverse()
 
+    if 'reverse' in step:
+        if (step['reverse'] == True):
+            stepSound = stepSound.reverse()
+
     if 'pan' in step and step['pan'] != 0:
         stepSound = stepSound.pan(step['pan']/100)
-        print ("Panning step to {}".format(step['pan'] / 100))
+        # print ("Panning step to {}".format(step['pan'] / 100))
     else:
         if 'pan' in track and track['pan'] != 0:
             # print ("Panning track {} to {}".format(track['name'],track['pan'] / 100))
@@ -217,7 +228,6 @@ def getStepSound(step, track):
     if 'filters' in step and len(step['filters']) > 0:
         print ("Applying filters to step")
         print (step['filters'])
-
 
         for filter in step['filters']:
             if filter['on'] == True:
@@ -238,6 +248,64 @@ def getStepSound(step, track):
                     # if filter['filter_type'] == 'bp':
                     #     trackSound = trackSound.band_pass_filter(low_cutoff_freq=int(filter['frequency']), high_cutoff_freq=int(filter['frequency2']), order=3)
 
+    if 'retrigger' in step:
+        retrigCount = int(step['retrigger'])
+        if retrigCount > 0:
+            print ("Retriggering step {} times per beat (duration: {} beats)".format(retrigCount, duration))
+            retrigCount = int(step['retrigger'])
+            retrigLen = beatLen() / retrigCount
+            retrigSound = AudioSegment.silent(beatLen() * duration / beatDiv)
+            retrigClip = AudioSegment.silent(retrigLen)
+            retrigClip = retrigClip.overlay(stepSound, position=0)
+
+            print("retrigSound length is {}".format(len(retrigSound)))
+            print("retrigClip length is {}".format(len(retrigClip)))
+            print("stepSound length is {}".format(len(stepSound)))
+
+            stepSound = retrigSound.overlay(retrigClip, position=0, times=retrigCount * duration)
+
+    if playMode == 'hold':
+        stepSound = stepSound[0:stepLen]
+    elif playMode == 'loop':
+        newSound = AudioSegment.silent(stepLen)
+
+        framesAdded = 0
+
+        while (framesAdded < stepLen):
+            newSound = newSound.overlay(stepSound, position=framesAdded, times=1)
+            framesAdded += len(stepSound)
+
+        stepSound = newSound[0:stepLen]
+    elif playMode == 'oneshot':
+        stepSound = stepSound[0:origLen]
+    elif playMode == 'pingpong':
+        newSound = AudioSegment.silent(stepLen)
+
+        i = 0
+        framesAdded = 0
+
+        while (framesAdded < stepLen):
+            if (i % 2 == 0):
+                newSound = newSound.overlay(stepSound, position=framesAdded, times=1)
+            else:
+                newSound = newSound.overlay(stepSound.reverse(), position=framesAdded, times=1)
+
+            framesAdded += len(stepSound)
+            i += 1
+
+        stepSound = newSound[0:stepLen]
+
+    # if 'fadeIn' in track:
+    #     stepSound = stepSound.fade_in(beatLen() * track['fadeIn'])
+
+    # if 'fadeOut' in track:
+    #     stepSound = stepSound.fade_out(beatLen() * track['fadeOut'])
+    
+    # If sound was trimmed, and not already faded...
+    if origLen > len(stepSound) and not 'fadeOut' in track:
+        # Do a slight fade-out to avoid any clicks
+        stepSound = stepSound.fade_out(10)
+
     return stepSound
 
 def renderStep(track, trackSound, step, startingBar = 1):
@@ -247,8 +315,8 @@ def renderStep(track, trackSound, step, startingBar = 1):
     beat = int(loc[1])
     tick = int(loc[2])
     
-    print ("Rendering step {} at bar {} beat {} tick {}".format(trackName,bar,beat,tick))
-    print ("Pattern starts at bar {}".format(startingBar))
+    # print ("Rendering step {} at bar {} beat {} tick {}".format(trackName,bar,beat,tick))
+    # print ("Pattern starts at bar {}".format(startingBar))
 
     if trackSound == None:
         return
