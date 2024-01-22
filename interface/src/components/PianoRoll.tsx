@@ -377,9 +377,15 @@ const PianoRoll = ({ track, stepSettings, onClose }:PianoRollProps) => {
           onConfirm={() => {
             console.log('save these steps', steps);
             dispatch(setPatternTrackSteps({ track, steps, isPiano: true }));
+            setSelected(undefined);
+            setMode('select');
             onClose();
           }}
-          onCancel={onClose}
+          onCancel={() => {
+            setSelected(undefined);
+            setMode('select');
+            onClose();
+          }}
         />
       </DialogContent>
     </Dialog>    
