@@ -39,6 +39,7 @@ export type Track = {
   reverse?: boolean;
   normalize?: boolean;
   trim?: boolean;
+  playMode: 'loop' | 'oneshot' | 'hold' | 'pingpong';
 };
 
 export type Step = {
@@ -103,6 +104,7 @@ export const simpleTrack = ({ song, name: trackName, sample }:{ song: SongState,
     disabled: false,
     transpose: 0,
     sample: sample,
+    playMode: 'oneshot',
     position: song.tracks.length + 1,
   } as Track
 };

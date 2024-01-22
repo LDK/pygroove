@@ -42,6 +42,7 @@ const TrackEditDialog = ({ track, setEditingTrack }:{ track?:Track, setEditingTr
     trim, setTrim,
     normalize, setNormalize,
     trackName, setTrackName,
+    playMode, setPlayMode,
     TrackSettings
   } = useTrackSettings({ track, filters: {
     filter1On, filter1Type, filter1Q, filter1Freq,
@@ -60,6 +61,7 @@ const TrackEditDialog = ({ track, setEditingTrack }:{ track?:Track, setEditingTr
     setPitchShift(track?.pitchShift || 0);
     setTranspose(track?.transpose || 0);
     setSample(track?.sample || null);
+    setPlayMode(track?.playMode || 'oneshot');
 
     // Sample controls
     setReverse(track?.reverse || false);
@@ -100,7 +102,8 @@ const TrackEditDialog = ({ track, setEditingTrack }:{ track?:Track, setEditingTr
     let newTrack = {...track as Track, 
       volume, pan, disabled, rootPitch: `${rootNote}${rootOctave}`, 
       pitchShift, transpose, sample: sample || track.sample,
-      reverse, trim, normalize, name: trackName || track.name
+      reverse, trim, normalize, name: trackName || track.name,
+      playMode
     } as Track;
 
     newTrack.filters = [];

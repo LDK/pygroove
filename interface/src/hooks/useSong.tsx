@@ -32,6 +32,7 @@ const useSong = () => {
         pan?: number;
         reverse?: boolean;
         retrigger?: number;
+        duration?: number;
        }[]; 
       };
     }[];
@@ -172,7 +173,7 @@ const useSong = () => {
       steps.forEach((step:Step) => {
         // Each step will contain a reference to a track
         // We need to key the pattern.steps array by track name and include the step's loc, pitch, and velocity
-        const { loc, pitch, velocity, filters, pan, reverse, retrigger } = step;
+        const { loc, pitch, velocity, filters, pan, reverse, retrigger, duration } = step;
   
         if (!step.on) return;
   
@@ -187,6 +188,7 @@ const useSong = () => {
           filters,
           reverse,
           retrigger,
+          duration,
           pan,
         });
       });
