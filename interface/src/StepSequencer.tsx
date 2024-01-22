@@ -1,4 +1,5 @@
-import { Box, Button, Grid, Typography } from "@mui/material";
+import { Dispatch, SetStateAction } from "react";
+import { Box, Button, Grid, Menu, MenuItem, Typography } from "@mui/material";
 import { MoreHorizTwoTone, PianoTwoTone } from "@mui/icons-material";
 import { useEffect, useState } from "react";
 import { Step, Track, getActivePattern, getActiveSong, getTrackSteps, toggleTrack } from "./redux/songSlice";
@@ -7,6 +8,8 @@ import useSteps, { getLoc, getOverallStep, getTicks } from "./hooks/useSteps";
 import TrackEditDialog from "./dialogs/TrackEditDialog";
 import useControls from "./hooks/useControls";
 import PianoRoll from "./components/PianoRoll";
+import { TextLink } from "./components/PatternManagement";
+import RemoveTrackDialog from "./dialogs/RemoveTrackDialog";
 
 export type StepSettings = {
   barDiv: number;
@@ -45,7 +48,9 @@ const StepSequencer = () => {
 
   const SequencerTrack = ({ track }:{ track:Track }) => {
     const [ on, setOn ] = useState(!track.disabled);
+    const [removeTrackOpen, setRemoveTrackOpen] = useState(false);
     const [patternSteps, setPatternSteps] = useState<Step[]>(activePattern ? getTrackSteps(activePattern, track) : []);
+    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
     const handleTrackToggle = () => {
       dispatch(toggleTrack(track.position));
@@ -61,7 +66,23 @@ const StepSequencer = () => {
     }, [track, patternSteps]);
   
     if (!activePattern) return null;
+
+    const handleActionsClick = (event?: React.MouseEvent) => {
+      if (event) {
+        event.stopPropagation();
+        setAnchorEl(event.currentTarget as HTMLElement);
+      }
+    };
+
+    const handleMenuClose = () => {
+      setAnchorEl(null);
+    };
   
+    const handleRemoveClick = () => {
+      setRemoveTrackOpen(true);
+      // handleMenuClose();
+    };
+
     const StepMarkers = () => {
       const steps = getPatternStepMarkers(activePattern, track);
   
@@ -152,7 +173,7 @@ const StepSequencer = () => {
       })
 
       const { lowest, highest, range } = getNoteRange(pitches);
-      const rowHeightPct = 100 / (range + 1);
+      const rowHeightPct = 100 / (Math.max(4, range + 1));
       const beatWidthPct = 100 / (bars * beatDiv * beatStep);
 
       return (
@@ -198,7 +219,7 @@ const StepSequencer = () => {
             <Grid item xs={3}>
               <Button
                 onClick={() => setEditingTrack(track)}
-                sx={{ mt: 2, textWrap: 'nowrap', width: '80px', overflowX: 'ellipsis' }}
+                sx={{ mt: 2, mb: 1, textWrap: 'nowrap', width: '80px', overflowX: 'ellipsis' }}
                 variant="contained" color="primary"
               >
                 <Typography fontWeight={600} variant="caption" component="div" color="primary.contrast" width="64px" textAlign="center">
@@ -206,10 +227,54 @@ const StepSequencer = () => {
                   {track.name.length > 7 ? `${track.name.substring(0, 7)}…` : track.name}
                 </Typography>
               </Button>
+
+              <Box mx="auto" my={0} p={0} pl={1} pr={2} textAlign={"center"}>
+                <TextLink text="Actions" onClick={handleActionsClick} variant="caption" />
+
+                <Menu
+                  anchorEl={anchorEl}
+                  open={Boolean(anchorEl)}
+                  onClose={handleMenuClose}
+                  onClick={handleMenuClose}
+                  PaperProps={{
+                    elevation: 0,
+                    sx: {
+                      overflow: 'visible',
+                      filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
+                      mt: 1.5,
+                      '& .MuiAvatar-root': {
+                        width: 32,
+                        height: 32,
+                        ml: -0.5,
+                        mr: 1,
+                      },
+                      '&:before': {
+                        content: '""',
+                        display: 'block',
+                        position: 'absolute',
+                        top: 0,
+                        right: 14,
+                        width: 10,
+                        height: 10,
+                        bgcolor: 'background.paper',
+                        zIndex: 0,
+                        transform: 'translateY(-50%) rotate(45deg)',
+                      },
+                    },
+                  }}
+                  transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                  anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                >
+                  <MenuItem onClick={handleRemoveClick}>Remove Track</MenuItem>
+                  {/* <MenuItem onClick={handleDuplicate}>Duplicate Track</MenuItem> */}
+                  {/* <MenuItem onClick={handleMoveTo}>Fill Each...</MenuItem> */}
+                </Menu>
+
+              </Box>
             </Grid>
 
             <Grid item xs={3}>
-              <Box width="100%" textAlign={"center"} maxHeight={"64px"} mx="auto">
+              <Box width="100%" textAlign={"center"} maxHeight={"64px"} mx="auto" display={{xs: 'none', lg: 'block'}}>
                 <VolumeSlider
                   target={track}
                   model="Track"
@@ -222,7 +287,7 @@ const StepSequencer = () => {
             </Grid>
   
             <Grid item xs={3}>
-              <Box width="100%" textAlign={"center"} maxHeight={"64px"} maxWidth="64px" mx="auto">
+              <Box width="100%" textAlign={"center"} maxHeight={"64px"} maxWidth="64px" mx="auto" display={{xs: 'none', lg: 'block'}}>
                 <PanSlider
                   target={track}
                   model="Track"
@@ -253,8 +318,6 @@ const StepSequencer = () => {
                 <Typography sx={{ cursor: 'pointer' }} onClick={() => { setPianoRollOpen(track) }} variant="caption" component="div" color="text.secondary">
                   <PianoTwoTone sx={{ p: 0, m:0 }} />
                 </Typography>
-
-                {/* <MoreHorizTwoTone sx={{ color:'black', p:0, m:0 }} /> */}
               </Box>
             </Grid>
           </Grid>
@@ -262,7 +325,7 @@ const StepSequencer = () => {
   
         <Grid item xs={9}>
           { Boolean(activePattern.pianoIndex && activePattern.pianoIndex[`${track.position}`]) ? <PianoDisplay /> : <StepMarkers /> }
-          {/* <StepMarkers /> */}
+          <RemoveTrackDialog track={track} open={removeTrackOpen} handleClose={() => { setRemoveTrackOpen(false); }} />
         </Grid>
       </Grid>
     );

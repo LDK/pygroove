@@ -288,10 +288,38 @@ const songSlice = createSlice({
       state.patterns.push(action.payload);
     },
     addTrack: (state, action: PayloadAction<Track>) => {
-      state.tracks.push(action.payload);
+      // Find highest position and top it by 1
+
+      let highest = 0;
+      state.tracks.forEach((track) => {
+        if (track.position > highest) {
+          highest = track.position;
+        }
+      });
+
+      const track = { ...action.payload, position: highest + 1 };
+
+      state.tracks.push(track);
     },
     removeTrack: (state, action: PayloadAction<number>) => {
-      state.tracks.splice(action.payload, 1);
+      console.log('remove track', action.payload);
+      const position = action.payload;
+      const index = state.tracks.findIndex((trk) => trk.position === position);
+      state.tracks.splice(index, 1);
+
+      // For all patterns, check all steps and delete them if they're on the track
+      state.patterns.forEach((pattern) => {
+        const newSteps = pattern.steps.filter((step) => {
+          return step.track.position !== position;
+        });
+
+        pattern.steps = newSteps;
+
+        // Update active pattern when we stumble upon it
+        if (pattern.position === state.activePattern?.position) {
+          state.activePattern = pattern;
+        }
+      });
     },
     renamePattern: (state, action: PayloadAction<{ position: number, name: string }>) => {
       const patternIndex = state.patterns.findIndex((ptrn) => ptrn.position === action.payload.position);
