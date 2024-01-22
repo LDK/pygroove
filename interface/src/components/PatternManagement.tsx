@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import useDialogUI from "../theme/useDialogUI";
 import { Variant } from "@mui/material/styles/createTypography";
 
-export const TextLink = ({ text, onClick, variant, color }:{ color?: string, text: string, variant?: Variant, onClick: () => void }) => (
+export const TextLink = ({ text, onClick, variant, color }:{ color?: string, text: string, variant?: Variant, onClick: (e?:React.MouseEvent) => void }) => (
   <Typography fontWeight={600} color={color || "primary.dark"} display="inline" sx={{ cursor: 'pointer' }} variant={`${variant || 'caption'}`} component="span" onClick={onClick}>
     {text}
   </Typography>

@@ -6,7 +6,12 @@ import { useEffect, useMemo, useState } from "react";
 import Range from "./Range";
 import PatternManagement, { TextLink } from "./PatternManagement";
 
-const SongDetailsBar = ({ openArranger }:{ openArranger: () => void }) => {
+type SongDetailsProps = {
+  openArranger: () => void;
+  openAddTrack: () => void;
+};
+
+const SongDetailsBar = ({ openArranger, openAddTrack }:SongDetailsProps) => {
   const { title, author, bpm, swing, loading } = useSelector(getActiveSong);
 
   const [editTitle, setEditTitle] = useState(false);
@@ -177,6 +182,12 @@ const SongDetailsBar = ({ openArranger }:{ openArranger: () => void }) => {
           <Grid item xs={12} xl={5} sx={{ pt: 1 }}>
             <TextLink text="Pattern Sequence" variant="subtitle2" onClick={() => {
               openArranger();
+            }} />
+
+            <br />
+
+            <TextLink text="Add Track" variant="subtitle2" onClick={() => {
+              openAddTrack();
             }} />
           </Grid>
 

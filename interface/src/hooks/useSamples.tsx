@@ -32,7 +32,7 @@ const useSamples = () => {
       <Grid item xs={12} sx={{ height: '314px' }}>
         <Typography fontWeight={600} variant="body1" component="p">Samples:</Typography>
 
-        <Grid container spacing={0} bgcolor="primary.dark" px={1} pt={2} pb={1} sx={{ maxHeight: '250px', overflowY: 'scroll' }}>
+        <Grid container spacing={0} bgcolor="primary.dark" px={1} pt={2} pb={1} sx={{ maxHeight: '290px', overflowY: 'scroll' }}>
           {samples.map((sample) => {
             return (
               <Grid item xs={12} key={`sample-${sample.filename}`} mb={2}>

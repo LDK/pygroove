@@ -9,12 +9,16 @@ import useApi from './hooks/useApi';
 import useArranger from './components/SongArranger';
 import { useMemo, useState } from 'react';
 import SongArranger from './components/SongArranger';
+import AddTrackDialog from './dialogs/AddTrackDialog';
+import RemoveTrackDialog from './dialogs/RemoveTrackDialog';
 
 function App() {
   const bgTexture = `linear-gradient(to right bottom, #fdfdff, #f9f9ff, #f6f6ff, #f2f2ff, #efefff, #ececff, #e8e8fe, #e5e5fe, #e2e2fd, #dedefc, #dbdbfb, #d8d8fa);`;
 
   const { user, UserMenu, handleOpenUserMenu, setTokenExpired, tokenExpired, apiCall } = useApi();
   const [arrangerOpen, setArrangerOpen] = useState(false);
+  const [addTrackOpen, setAddTrackOpen] = useState(false);
+  const [removeTrackOpen, setRemoveTrackOpen] = useState(false);
 
   // const SongArranger = useArranger();
 
@@ -48,7 +52,10 @@ function App() {
             setTokenExpired,
             tokenExpired
           }} />
-          <SongDetailsBar openArranger={() => { setArrangerOpen(true); }} />
+          <SongDetailsBar 
+            openArranger={() => { setArrangerOpen(true); }} 
+            openAddTrack={() => { setAddTrackOpen(true); }}
+          />
           <StepSequencer />
           <ActionButtons {...{ user, apiCall }} />
 
@@ -56,6 +63,7 @@ function App() {
       </Box>
 
       <SongArranger open={arrangerOpen} handleClose={() => { setArrangerOpen(false); }} />
+      <AddTrackDialog open={addTrackOpen} handleClose={() => { setAddTrackOpen(false); }} />
     </ThemeProvider>
   );
 }
