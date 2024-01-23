@@ -23,6 +23,7 @@ export type SampleData = {
   url?: string;
   waveform?: string;
   id?: number;
+  frames?: number;
 };
 
 export type Track = {
@@ -40,6 +41,10 @@ export type Track = {
   normalize?: boolean;
   trim?: boolean;
   playMode: 'loop' | 'oneshot' | 'hold' | 'pingpong';
+  startOffset?: number;
+  endOffset?: number;
+  fadeIn?: number;
+  fadeOut?: number;
 };
 
 export type Step = {

@@ -1,13 +1,15 @@
-import { Dialog, DialogContent, Grid, Typography, Checkbox, Divider, Tabs, Tab } from "@mui/material";
+import { Dialog, DialogContent, Grid, Typography, Checkbox, Divider, Tabs, Tab, TextField, Box, FormControl, Button } from "@mui/material";
 import { useState, useEffect, useCallback } from "react";
 import { SampleData, Track, updateTrack } from "../redux/songSlice";
 import useDialogUI from '../theme/useDialogUI';
 import { useDispatch } from "react-redux";
+import { EditTwoTone } from "@mui/icons-material";
 
 import TabPanel from "../components/TabPanel";
 import useFilters from "../hooks/useFilters";
 import useSamples from "../hooks/useSamples";
 import useTrackSettings from "../hooks/useTrackSettings";
+import { set } from "react-hook-form";
 
 const SETTINGS = 0;
 const SAMPLES = 1;
@@ -17,6 +19,7 @@ const TrackEditDialog = ({ track, setEditingTrack }:{ track?:Track, setEditingTr
   const [disabled, setDisabled] = useState((track?.disabled || track?.disabled === false) ? track.disabled : false);
 
   const [tab, setTab] = useState<number>(SETTINGS);
+  const [renaming, setRenaming] = useState(false);
 
   const dispatch = useDispatch();
 
@@ -43,6 +46,8 @@ const TrackEditDialog = ({ track, setEditingTrack }:{ track?:Track, setEditingTr
     normalize, setNormalize,
     trackName, setTrackName,
     playMode, setPlayMode,
+    startOffset, setSampleStart, endOffset, setSampleEnd,
+    fadeIn, setFadeIn, fadeOut, setFadeOut,
     TrackSettings
   } = useTrackSettings({ track, filters: {
     filter1On, filter1Type, filter1Q, filter1Freq,
@@ -67,6 +72,10 @@ const TrackEditDialog = ({ track, setEditingTrack }:{ track?:Track, setEditingTr
     setReverse(track?.reverse || false);
     setTrim(track?.trim || false);
     setNormalize(track?.normalize || false);
+    setSampleStart(track?.startOffset || 0);
+    setSampleEnd(track?.endOffset || 0);
+    setFadeIn(track?.fadeIn || 0);
+    setFadeOut(track?.fadeOut || 0);
 
     // Filter controls
     setFilter1Type(track?.filters?.length ? track.filters[0].filter_type : 'lp');
@@ -80,7 +89,7 @@ const TrackEditDialog = ({ track, setEditingTrack }:{ track?:Track, setEditingTr
     setFilter2On((track?.filters?.length && track.filters.length > 1) ? track.filters[1].on : false);
 
     setTab(SETTINGS);
-  }, [track, setVolume, setPan, setDisabled, setRootNote, setRootOctave, setPitchShift, setTranspose, setSample, setReverse, setTrim, setNormalize, setFilter1Type, setFilter1Q, setFilter1Freq, setFilter1On, setFilter2Type, setFilter2Q, setFilter2Freq, setFilter2On]);
+  }, [track, setVolume, setPan, setDisabled, setRootNote, setRootOctave, setPitchShift, setTranspose, setSample, setReverse, setTrim, setNormalize, setFilter1Type, setFilter1Q, setFilter1Freq, setFilter1On, setFilter2Type, setFilter2Q, setFilter2Freq, setFilter2On, setPlayMode, setSampleStart, setSampleEnd, setFadeIn, setFadeOut, setTrackName]);
   
   const handleClose = () => {
     setEditingTrack(undefined);
@@ -103,7 +112,7 @@ const TrackEditDialog = ({ track, setEditingTrack }:{ track?:Track, setEditingTr
       volume, pan, disabled, rootPitch: `${rootNote}${rootOctave}`, 
       pitchShift, transpose, sample: sample || track.sample,
       reverse, trim, normalize, name: trackName || track.name,
-      playMode
+      playMode, startOffset, endOffset, fadeIn, fadeOut
     } as Track;
 
     newTrack.filters = [];
@@ -150,15 +159,58 @@ const TrackEditDialog = ({ track, setEditingTrack }:{ track?:Track, setEditingTr
   };
   
   return (
-    <Dialog open={true} onClose={handleClose} maxWidth="sm" fullWidth>
+    <Dialog open={true} onClose={handleClose} maxWidth="md" fullWidth>
       <DialogContent>
         <Grid container py={0}>
 
           {/* Track Edit Header: allows enabling/disabling/renaming track */}
 
           <Grid item xs={4}>
-            <Typography fontWeight={600} component="span">Track: </Typography>
-            <Typography fontWeight={400} component="span">{trackName}</Typography>
+            { (!renaming) && 
+              <Box p={0} m={0} display="inline-block">
+                <Typography fontWeight={600} component="span">Track: </Typography>
+                <Typography fontWeight={400} component="span">{trackName}</Typography>
+                <EditTwoTone sx={{ pl: 1, fontSize: '1rem', verticalAlign: 'middle', cursor: 'pointer' }} onClick={() => {
+                  setRenaming(true);
+                }} />
+              </Box>
+            }
+            {
+              (renaming) &&
+                <Box p={0} m={0} display="inline-block">
+                  <Grid container spacing={0}>
+                    <Grid item xs={9}>
+                      <TextField
+                        id="trackName"
+                        autoFocus={true}
+                        label="Track Name"
+                        defaultValue={trackName}
+                        value={trackName}
+                        variant="standard"
+                        sx={{ width: '100%', mb: 2, display: "inline-block" }}
+                        onKeyDown={(e) => {
+                          // If enter is pressed, set editing to false
+                          if (e.key === 'Enter') {
+                            setRenaming(false);
+                          }
+                        }}
+                        onChange={(e) => {
+                          setTrackName(e.target.value);
+                        }}
+                      />
+                    </Grid>
+
+                    <Grid item xs={3}>
+                      <Button variant="outlined" sx={{ display: 'inline', height: '50%', top: '25%', ml: 2 }}
+                        onClick={() => {
+                          setRenaming(false);
+                        }}>
+                          Done
+                      </Button>
+                    </Grid>
+                  </Grid> 
+                </Box>
+            }
           </Grid>
 
           <Grid item xs={4} sx={{ textAlign: 'center' }}>
