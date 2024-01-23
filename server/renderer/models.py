@@ -15,6 +15,7 @@ class Sample(models.Model):
     filename = models.CharField(max_length=100)
     display = models.CharField(max_length=100, null=True)
     waveform = models.ImageField(upload_to='waveforms', null=True)
+    frames = models.BigIntegerField(default=0)
 
 class Track(models.Model):
     song = models.ForeignKey(Song, on_delete=models.CASCADE, related_name='tracks')

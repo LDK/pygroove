@@ -149,6 +149,25 @@ def addNote(trackName,sound,bar,beat,tick,options = {}):
 
     channels[trackName] = channel
 
+def chop(sound:AudioSegment, startPct:float, endPct:float):
+    slices = []
+
+    # We will be cutting the AudioSegment into 3 pieces.
+    # The first slice will be the first (startPct * 100)% of the original
+    # The second slice will be the following ((1 - startPct - endPct) * 100)% of the original
+    # The third slice will be the last (endPct * 100)% of the original
+    
+    # The first slice
+    slices.append(sound[:int(round(startPct * len(sound)))])
+
+    # The second slice
+    slices.append(sound[int(round(startPct * len(sound))):int(round((1 - endPct) * len(sound)))])
+
+    # The third slice
+    slices.append(sound[int(round((1 - endPct) * len(sound))):])
+
+    return slices[1]
+
 def split(wavFile,pieces):
     soundLoc = './audio/uploaded/'+wavFile
     sound = AudioSegment.from_wav(soundLoc)
@@ -203,14 +222,6 @@ def getStepSound(step, track):
         if (track['trim'] == True):
             stepSound = trim(stepSound)
 
-    if 'reverse' in track:
-        if (track['reverse'] == True):
-            stepSound = stepSound.reverse()
-
-    if 'reverse' in step:
-        if (step['reverse'] == True):
-            stepSound = stepSound.reverse()
-
     if 'pan' in step and step['pan'] != 0:
         stepSound = stepSound.pan(step['pan']/100)
         # print ("Panning step to {}".format(step['pan'] / 100))
@@ -248,21 +259,29 @@ def getStepSound(step, track):
                     # if filter['filter_type'] == 'bp':
                     #     trackSound = trackSound.band_pass_filter(low_cutoff_freq=int(filter['frequency']), high_cutoff_freq=int(filter['frequency2']), order=3)
 
-    if 'retrigger' in step:
-        retrigCount = int(step['retrigger'])
-        if retrigCount > 0:
-            print ("Retriggering step {} times per beat (duration: {} beats)".format(retrigCount, duration))
-            retrigCount = int(step['retrigger'])
-            retrigLen = beatLen() / retrigCount
-            retrigSound = AudioSegment.silent(beatLen() * duration / beatDiv)
-            retrigClip = AudioSegment.silent(retrigLen)
-            retrigClip = retrigClip.overlay(stepSound, position=0)
+    if 'reverse' in track:
+        if (track['reverse'] == True):
+            stepSound = stepSound.reverse()
 
-            print("retrigSound length is {}".format(len(retrigSound)))
-            print("retrigClip length is {}".format(len(retrigClip)))
-            print("stepSound length is {}".format(len(stepSound)))
+    if 'reverse' in step:
+        if (step['reverse'] == True):
+            stepSound = stepSound.reverse()
 
-            stepSound = retrigSound.overlay(retrigClip, position=0, times=retrigCount * duration)
+    if 'startOffset' in track or 'endOffset' in track:
+        startOffset = int(track['startOffset'] if 'startOffset' in track else 0)
+        endOffset = int(track['endOffset'] if 'endOffset' in track else 0)
+        origFrames = int(track['sample']['frames'] if 'frames' in track['sample'] else 0)
+
+        if 'reverse' in step and step['reverse'] == True:
+            startOffset, endOffset = endOffset, startOffset
+
+        if origFrames > 0 and origFrames - endOffset > startOffset:
+            # the percentage that is cut off from the start
+            startPct = startOffset / origFrames
+            # the percentage that is cut off from the end
+            endPct = endOffset / origFrames
+
+            stepSound = chop(stepSound, startPct, endPct)
 
     if playMode == 'hold':
         stepSound = stepSound[0:stepLen]
@@ -295,11 +314,35 @@ def getStepSound(step, track):
 
         stepSound = newSound[0:stepLen]
 
-    # if 'fadeIn' in track:
-    #     stepSound = stepSound.fade_in(beatLen() * track['fadeIn'])
+    if 'retrigger' in step:
+        retrigCount = int(step['retrigger'])
+        if retrigCount > 0:
+            print ("Retriggering step {} times per beat (duration: {} beats)".format(retrigCount, duration))
+            retrigCount = int(step['retrigger'])
+            retrigLen = beatLen() / retrigCount
+            retrigSound = AudioSegment.silent(beatLen() * duration / beatDiv)
+            retrigClip = AudioSegment.silent(retrigLen)
+            retrigClip = retrigClip.overlay(stepSound, position=0)
 
-    # if 'fadeOut' in track:
-    #     stepSound = stepSound.fade_out(beatLen() * track['fadeOut'])
+            print("retrigSound length is {}".format(len(retrigSound)))
+            print("retrigClip length is {}".format(len(retrigClip)))
+            print("stepSound length is {}".format(len(stepSound)))
+
+            stepSound = retrigSound.overlay(retrigClip, position=0, times=retrigCount * duration)
+
+    if 'fadeIn' in track:
+        fadeInPct = int(track['fadeIn'])
+
+        if fadeInPct > 0:
+            fadeIn = int(len(stepSound) * (int(track['fadeIn']) / 100))
+            stepSound = stepSound.fade_in(fadeIn)
+
+    if 'fadeOut' in track:
+        fadeOutPct = int(track['fadeOut'])
+
+        if fadeOutPct > 0:
+            fadeOut = int(len(stepSound) * (int(track['fadeOut']) / 100))
+            stepSound = stepSound.fade_out(fadeOut)
     
     # If sound was trimmed, and not already faded...
     if origLen > len(stepSound) and not 'fadeOut' in track:

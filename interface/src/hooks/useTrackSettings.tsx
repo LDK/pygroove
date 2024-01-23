@@ -1,9 +1,13 @@
-import { Grid, Typography, Select, Divider, Checkbox, FormControl, NativeSelect } from "@mui/material";
+import { Grid, Typography, Select, Divider, Checkbox, FormControl, NativeSelect, Box } from "@mui/material";
 import { FolderTwoTone as BrowseIcon, HeadphonesTwoTone as PlayIcon } from "@mui/icons-material";
 import { Track } from "../redux/songSlice";
 import useControls from "./useControls";
-import { ChangeEvent, useEffect, useState } from "react";
+import { ChangeEvent, useEffect, useMemo, useState } from "react";
 import { reverse } from "dns";
+import Range from "../components/Range";
+import StartEndRange from "../components/StartEndRange";
+import { set } from "react-hook-form";
+import useApi from "./useApi";
 
 type FilterInfo = {
   filter1On: boolean;
@@ -32,9 +36,18 @@ const useTrackSettings = ({track, filters}:{track?: Track, filters: FilterInfo})
   const [trim, setTrim] = useState(track?.disabled || false);
   const [normalize, setNormalize] = useState(track?.disabled || false);
   const [playMode, setPlayMode] = useState(track?.playMode || 'oneshot');
-  
+  const [sampleStart, setSampleStart] = useState(track?.startOffset || 0);
+  const [sampleEnd, setSampleEnd] = useState(track?.endOffset || 0);
+  const [fadeIn, setFadeIn] = useState(track?.fadeIn || 0);
+  const [fadeOut, setFadeOut] = useState(track?.fadeOut || 0);
+
   // Holds MP3 binary data
   const [trackAudio, setTrackAudio] = useState<HTMLAudioElement | null>(null);
+
+  const frames = useMemo(() => {
+    if (!sample) return 0;
+    return sample.frames;
+  }, [sample]);
 
   const {
     filter1On, filter1Type, filter1Q, filter1Freq, 
@@ -57,23 +70,82 @@ const useTrackSettings = ({track, filters}:{track?: Track, filters: FilterInfo})
     filter2Freq: 'fq2',
     filter2Q: 'q2',
     filter2Type: 'ft2',
+    sampleStart: 'sst',
+    sampleEnd: 'sen',
+    sampleId: 'sampleId',
+    fadeIn: 'fi',
+    fadeOut: 'fo',
   };
 
   const audioQueryString = `?${Object.entries({ 
     reverse, trim, normalize, pan, volume, pitchShift, transpose,
     filter1On, filter1Type, filter1Q, filter1Freq,
-    filter2On, filter2Type, filter2Q, filter2Freq
+    filter2On, filter2Type, filter2Q, filter2Freq,
+    fadeIn, fadeOut,
+    sampleStart, sampleEnd, sampleId: sample?.id
   }).map(([key, val]) => `${queryKeyMap[key as keyof typeof queryKeyMap]}=${val}`).join('&')}`;
+
+  const StartSlider = () => {
+    if (!frames) return null;
+
+    return (
+      <StartEndRange 
+        min={0} max={frames}
+        defaultValue={[sampleStart, frames-sampleEnd]} callback={([start, end]) => {
+        setSampleStart(start);
+        setSampleEnd(frames - end);
+       }} />
+    );
+  };
+
+  const FadeInSlider = () => {
+    return (
+      <Range 
+        min={0} max={100}
+        labelColor="white"
+        labelPrefix="Fade In:"
+        labelSuffix='%'
+        defaultValue={fadeIn} callback={(val) => {
+          setFadeIn(val);
+       }} />
+    );
+  }
+
+  const FadeOutSlider = () => {
+    return (
+      <Range 
+        min={0} max={100}
+        labelColor="white"
+        labelPrefix="Fade Out:"
+        labelSuffix='%'
+        defaultValue={fadeOut} callback={(val) => {
+          setFadeOut(val);
+        }} />
+    );
+  }
+
+  const { apiGet } = useApi();
 
   useEffect(() => {
     setTrackAudio(null);
-    if (sample){
+    if (sample) {
       const audio = new Audio(`${process.env.REACT_APP_API_URL}/sample/${sample.id}/preview${audioQueryString}`);
 
       if (audio) {
         setTrackAudio(audio);
       }
-}
+
+      apiGet({
+        uri: `/track/sample${audioQueryString}`,
+        onSuccess: (data) => {
+          console.log('sample info data', data);
+        },
+        onError: (err) => {
+          console.error('Error getting sample data:', err);
+        }
+      });
+
+    }
   }, [audioQueryString, sample]);
 
   const imageQueryString = `?${Object.entries({ reverse, trim, normalize }).map(([key, val]) => `${queryKeyMap[key as keyof typeof queryKeyMap]}=${val}`).join('&')}`;
@@ -87,6 +159,19 @@ const useTrackSettings = ({track, filters}:{track?: Track, filters: FilterInfo})
       loop: 'Loop',
       pingpong: 'Ping Pong',
     };
+
+    const RangeOverlay = () => {
+      if (!sample?.frames) return null;
+
+      return (
+        <Box p={0} m={0} bgcolor="rgba(50,200,0,.3)" position="absolute" top={0}
+          height="100%" 
+          left={`${(sampleStart / sample.frames) * 100}%`}
+          width={`${(1 - (sampleStart / sample.frames) - (sampleEnd / sample.frames)) * 100}%`}
+        />
+      );
+    };
+
     return (
       <Grid container spacing={0}>
         <Grid item xs={12} md={2}>
@@ -168,8 +253,10 @@ const useTrackSettings = ({track, filters}:{track?: Track, filters: FilterInfo})
         </Grid>
 
         <Grid item xs={12}>
-          <Grid container spacing={0} bgcolor="primary.dark" px={1} pt={2} pb={1}>
+          <Grid container spacing={0} bgcolor="primary.dark" px={1} pt={2} pb={6}>
             <Grid item xs={12} md={8} position={"relative"}>
+              <RangeOverlay />
+
               {Boolean(sample && sample?.id)
                 ? <img alt={sample?.name || ''} src={`${process.env.REACT_APP_API_URL}/sample/${sample?.id}/waveform${imageQueryString}`} style={{ height: '10rem', width: '100%' }} />
                 : null}
@@ -203,6 +290,15 @@ const useTrackSettings = ({track, filters}:{track?: Track, filters: FilterInfo})
 
                     <Checkbox sx={{ py: 0 }} defaultChecked={reverse} onChange={() => {
                       setReverse(!reverse);
+                      if (frames) {
+                        console.log('frames', frames);
+                        console.log('sampleStart', sampleStart);
+                        console.log('sampleEnd', sampleEnd);
+                        const newStart = sampleEnd;
+                        const newEnd = sampleStart;
+                        setSampleEnd(newEnd);
+                        setSampleStart(newStart);
+                      }
                     }} />
                   </Grid>
 
@@ -250,6 +346,20 @@ const useTrackSettings = ({track, filters}:{track?: Track, filters: FilterInfo})
               }
 
             </Grid>
+
+            <Grid item xs={12} md={8} px={0} py={1}>
+              <StartSlider />
+            </Grid>
+
+            <Grid item xs={12} md={8} px={0} py={0}>
+              <Box p={0} m={0} display="inline-block" width="48%" pr={"2%"}>
+                <FadeInSlider />
+              </Box>
+
+              <Box p={0} m={0} display="inline-block" width="48%" pl={"2%"}>
+                <FadeOutSlider />
+              </Box>
+            </Grid>
           </Grid>
         </Grid>
       </Grid>
@@ -269,6 +379,10 @@ const useTrackSettings = ({track, filters}:{track?: Track, filters: FilterInfo})
     normalize, setNormalize,
     trackName, setTrackName,
     playMode, setPlayMode,
+    startOffset: sampleStart, setSampleStart,
+    endOffset: sampleEnd, setSampleEnd,
+    fadeIn, setFadeIn,
+    fadeOut, setFadeOut,
     TrackSettings
   };
 };

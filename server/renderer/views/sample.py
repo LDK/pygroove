@@ -19,6 +19,7 @@ from os.path import join as pjoin
 from django.conf import settings
 
 from renderer.sample_process import SampleProcess
+from renderer.sample_data import SampleData
 
 class SampleViewSet(viewsets.ModelViewSet):
     permission_classes = (AllowAny,)
@@ -47,6 +48,7 @@ class SampleListSet(viewsets.ModelViewSet):
                 'id': serializer.data['id'],
                 'filename': serializer.data['filename'],
                 'display': serializer.data['display'],
+                'frames': serializer.data['frames'],
                 'waveform': None,
             }
 
@@ -72,7 +74,6 @@ def saveSampleImage(data):
 
     rename(waveImg,imgLoc)
     return { "location": imgLoc, "image": imgLoc }
-
 
 class CreateSampleView(APIView):
     permission_classes = (AllowAny,)
@@ -169,7 +170,7 @@ class SampleImageView(APIView):
 
 class SampleAudioView(APIView):
     permission_classes = (AllowAny,)
-    queryset = Track.objects.all()
+    queryset = Sample.objects.all()
     serializer_class = SampleSerializer
 
     def get(self, request, pk=None):
@@ -197,6 +198,13 @@ class SampleAudioView(APIView):
         filter2Freq:float = float(fq2 * 22000)
         filter2Q:float = float(request.GET.get('q2', 0))
         
+        sampleStart = request.GET.get('sst', 0)
+        sampleEnd = request.GET.get('sen', 0)
+
+        frames:int = sample.frames
+
+        fadeIn = request.GET.get('fi', 0)
+        fadeOut = request.GET.get('fo', 0)
 
         processed = SampleProcess(fLoc, {
             'normalize': normalize,
@@ -214,6 +222,12 @@ class SampleAudioView(APIView):
             'filter2Type': filter2Type,
             'filter2Freq': filter2Freq,
             'filter2Q': filter2Q,
+            'startOffset': sampleStart,
+            'endOffset': sampleEnd,
+            'frames': frames,
+            'fadeIn': fadeIn,
+            'fadeOut': fadeOut,
+            
         }).audio()
 
         # Create a FileResponse with MP3 data
@@ -238,4 +252,108 @@ class SampleAudioView(APIView):
                 print("Error opening waveform image for sample id:", pk)
                 return Response(None, status=status.HTTP_400_BAD_REQUEST)
 
+        # return Response(serializer.data, status=status.HTTP_200_OK)
+
+class SampleProcessView(APIView):
+    permission_classes = (AllowAny,)
+    queryset = Sample.objects.all()
+    serializer_class = SampleSerializer
+
+    def get(self, request, pk=None):
+        # For each sample in the DB...
+        samples = Sample.objects.all()
+
+        for sample in samples:
+            serializer = SampleSerializer(sample)
+            fLoc = pjoin("./audio", sample.filename)
+            imgData = saveSampleImage(serializer.data)
+            print(imgData)
+            sample.waveform = imgData['image']
+
+            sample.frames = SampleData(fLoc).length()
+            sample.save()
+        
+        serializer = SampleSerializer(samples, many=True)
+
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+class TrackSampleView(APIView):
+    permission_classes = (AllowAny,)
+    queryset = Track.objects.all()
+    serializer_class = TrackSerializer
+
+    def get(self, request, pk=None):
+        sampleId = request.GET.get('sampleId', None)
+        sample = Sample.objects.get(pk=sampleId)
+        serializer = SampleSerializer(sample)
+
+        if not sample:
+            return Response(None, status=status.HTTP_400_BAD_REQUEST)
+
+        reverse:bool = (request.GET.get('rv', False) in ['true', 'True', True])
+        trim:bool = (request.GET.get('tr', False) in ['true', 'True', True])
+        normalize:bool = (request.GET.get('nm', False) in ['true', 'True', True])
+        transpose:int = int(request.GET.get('ts', 0))
+        pitchShift:int = int(request.GET.get('ps', 0))
+        pan:int = int(request.GET.get('pn', 0))
+        volume:float = float(request.GET.get('vl', 0))
+
+        filter1On:bool = (request.GET.get('f1', False) in ['true', 'True', True])
+        filter1Type:str = request.GET.get('ft1', 'lowpass')
+        fq1:float = float(request.GET.get('fq1', 0))
+        filter1Freq:float = float(fq1 * 22000)
+        filter1Q:float = float(request.GET.get('q1', 0))
+
+        filter2On:bool = (request.GET.get('f2', False) in ['true', 'True', True])
+        filter2Type:str = request.GET.get('ft2', 'lowpass')
+        fq2:float = float(request.GET.get('fq2', 0))
+        filter2Freq:float = float(fq2 * 22000)
+        filter2Q:float = float(request.GET.get('q2', 0))
+
+        sampleStart = request.GET.get('sst', 0)
+        sampleEnd = request.GET.get('sen', 0)
+
+        frames:int = sample.frames
+
+        fadeIn = request.GET.get('fi', 0)
+        fadeOut = request.GET.get('fo', 0)
+
+        print("frames", frames)
+        print("sampl", sample)
+
+        fLoc = pjoin("./audio", sample.filename)
+
+        sampleOptions = {
+            'normalize': normalize,
+            'trim': trim,
+            'reverse': reverse,
+            'transpose': transpose,
+            'pitchShift': pitchShift,
+            'pan': pan,
+            'volume': volume,
+            'filter1On': filter1On,
+            'filter1Type': filter1Type,
+            'filter1Freq': filter1Freq,
+            'filter1Q': filter1Q,
+            'filter2On': filter2On,
+            'filter2Type': filter2Type,
+            'filter2Freq': filter2Freq,
+            'filter2Q': filter2Q,
+            'startOffset': sampleStart,
+            'endOffset': sampleEnd,
+            'frames': frames,
+            'fadeIn': fadeIn,
+            'fadeOut': fadeOut,
+        }
+
+
+        try:
+            info = SampleProcess(fLoc, sampleOptions).info()
+            print("info", info)
+            response = Response(info, status=status.HTTP_200_OK)
+
+            return response
+
+        except IOError:
+            return Response(None, status=status.HTTP_400_BAD_REQUEST)
+    

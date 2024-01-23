@@ -32,7 +32,7 @@ class SampleSerializer(serializers.ModelSerializer):
     # For waveform image, return the base64 encoded image
     class Meta:
         model = Sample
-        fields = ['id', 'filename', 'display', 'waveform']
+        fields = ['id', 'filename', 'display', 'waveform', 'frames']
 
 class SongSerializer(serializers.ModelSerializer):
     tracks = TrackSerializer(many=True, read_only=True)

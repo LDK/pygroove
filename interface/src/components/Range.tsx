@@ -24,7 +24,7 @@ interface RangeProps {
   inputProps?: React.DetailedHTMLProps<React.InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>;
 }
 
-const Range = ({ inputProps = {}, min, max, panDisplay, onChange, step=1, labelVariant, labelColor, labelSuffix = '', labelPrefix = '', percentage, callback, defaultValue, height, width, onBlur, label, orientation }: RangeProps) => {
+const Range = ({ inputProps = {}, min, max, panDisplay, onChange, step=1, labelVariant = 'caption', labelColor, labelSuffix = '', labelPrefix = '', percentage, callback, defaultValue, height, width, onBlur, label, orientation }: RangeProps) => {
   const [workingValue, setWorkingValue] = useState(defaultValue);
   const [editing, setEditing] = useState(false);
 
@@ -62,8 +62,9 @@ const Range = ({ inputProps = {}, min, max, panDisplay, onChange, step=1, labelV
     } else if (panDisplay) {
       labelText = workingValue > 0 ? `${workingValue}% R` : workingValue < 0 ? `${workingValue * -1}% L` : 'C';
     } else {
-      labelText = `${workingValue}${labelSuffix}`;
+      labelText = `${workingValue}`;
     }
+    labelText = `${labelPrefix}${labelText}${labelSuffix}`;
   }
 
   return (
@@ -101,9 +102,7 @@ const Range = ({ inputProps = {}, min, max, panDisplay, onChange, step=1, labelV
       />
       {labelText && 
         <Typography variant={labelVariant} color={labelColor} display="block">
-          {labelPrefix}
           {labelText}
-          {labelSuffix}
         </Typography>
       }
     </>
