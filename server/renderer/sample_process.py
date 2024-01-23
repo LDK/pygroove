@@ -14,6 +14,7 @@ import soundfile as sf
 import librosa
 
 from renderer.groove import librosaToPydub
+from renderer.groove import chop
 from renderer.custom_effects import resonant_high_pass_filter, resonant_low_pass_filter
 
 class SampleProcess(object):
@@ -26,7 +27,10 @@ class SampleProcess(object):
         trim_leading_silence = lambda x: x[detect_leading_silence(x) :]
         trim_trailing_silence = lambda x: trim_leading_silence(x.reverse()).reverse()
         strip_silence = lambda x: trim_trailing_silence(trim_leading_silence(x))
-        
+        origDuration = audio_file.duration_seconds * audio_file.frame_rate
+        origSampleRate = audio_file.frame_rate
+        frameCount = len(audio_file.get_array_of_samples())
+
         if options:
             if options['transpose'] or options['pitchShift']:
                 # audio_file = audio_file.transpose(options['transpose'])
@@ -39,8 +43,8 @@ class SampleProcess(object):
                 if options['pitchShift']:
                     shiftSteps += options['pitchShift']
                 
-                y_pitch = librosa.effects.pitch_shift(y, sr=sr, n_steps=shiftSteps, bins_per_octave=1200)
-                audio_file = librosaToPydub((y_pitch, sr))
+                y_pitch = librosa.effects.pitch_shift(y, sr=origSampleRate, n_steps=shiftSteps, bins_per_octave=1200)
+                audio_file = librosaToPydub((y_pitch, origSampleRate))
 
             if options['normalize']:
                 audio_file = audio_file.normalize()
@@ -65,13 +69,41 @@ class SampleProcess(object):
                 if options['filter2Type'] == 'hp':
                     audio_file = audio_file.resonant_high_pass_filter(cutoff_freq=options['filter2Freq'], order=5, q=options['filter2Q'])
 
+            processedDuration = audio_file.duration_seconds * audio_file.frame_rate
+
+            if 'startOffset' in options or 'endOffset' in options:
+                startOffset = int(options['startOffset'] if options['startOffset'] else 0)
+                endOffset = int(options['endOffset'] if options['endOffset'] else 0)
+                origFrames = int(options['frames'] if 'frames' in options else 0)
+
+                if origFrames > 0 and origFrames - endOffset > startOffset:
+                    # the percentage that is cut off from the start
+                    startPct = startOffset / origFrames
+                    # the percentage that is cut off from the end
+                    endPct = endOffset / origFrames
+
+                    newAudio = chop(audio_file, startPct, endPct)
+                    audio_file = newAudio
+
+            if 'fadeIn' in options:
+                fadeInPct = int(options['fadeIn'])
+
+                if fadeInPct > 0:
+                    fadeIn = int(len(audio_file) * (int(options['fadeIn']) / 100))
+                    audio_file = audio_file.fade_in(fadeIn)
+
+            if 'fadeOut' in options:
+                fadeOutPct = int(options['fadeOut'])
+
+                if fadeOutPct > 0:
+                    audio_file = audio_file.fade_out(int(len(audio_file) * (fadeOutPct / 100)))
+
         self.audio_file = audio_file
 
     def audio(self):
         return self.audio_file
 
     def export(self):
-        print("sample_process.save")
         """ Save the processed sample as an mp3 file """
 
         buffer = io.BytesIO()
@@ -79,9 +111,17 @@ class SampleProcess(object):
         mp3_data = buffer.getvalue()
 
         return mp3_data
-
-        
-
+    
+    def info(self):
+        """ Return a dict of information about the sample """
+        return {
+            'length': int(round(self.audio_file.duration_seconds * 1000)),
+            'channels': self.audio_file.channels,
+            'frame_rate': self.audio_file.frame_rate,
+            'sample_width': self.audio_file.sample_width,
+            'frame_width': self.audio_file.frame_width,
+            'rms': self.audio_file.rms
+        }
 
 if __name__ == '__main__':
     filename = sys.argv[1]
