@@ -201,9 +201,9 @@ const useSong = () => {
   };
 
   const handleRender = async (filename?:string) => {
-    if (!user?.token) {
-      return;
-    }
+    // if (!user?.token) {
+    //   return;
+    // }
 
     const payload = prepareRenderPayload();
 
@@ -211,6 +211,7 @@ const useSong = () => {
       uri: '/render/',
       method: 'post',
       payload,
+      sendAuth: false,
       config: { responseType: 'blob' }, // Set responseType to 'blob'
       onSuccess: (res:AxiosResponse) => {
         // Create a URL for the blob

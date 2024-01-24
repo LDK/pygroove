@@ -35,10 +35,23 @@ const useApi = () => {
   const apiCall = useCallback(async ({ uri, method, payload, config, onSuccess, onError, sendAuth = true }:ApiCallProps) => {
     let callFunction: typeof axios.post | typeof axios.get;
 
+    console.log('sendAuth', sendAuth, user?.token);
+
     if (sendAuth && !user?.token) {
       // console.error(`Token is required for ${method.toUpperCase()} ${uri}`);
       return;
     }
+
+    let useConfig = config;
+
+    if (!sendAuth) {
+      const { headers, ...rest } = config || {};
+      useConfig = rest;
+      console.log('useConfig', useConfig);
+    } else {
+      console.log('useConfig', useConfig);
+    }
+    
     switch (method) {
       case 'get':
         callFunction = axios.get;
@@ -57,7 +70,7 @@ const useApi = () => {
     switch (method) {
       case 'post':
       case 'put':
-        (callFunction as typeof axios.post)(`${uri}`, payload, config)
+        (callFunction as typeof axios.post)(`${uri}`, payload, useConfig)
           .then(res => {
             if (res?.data) {
               onSuccess && onSuccess(res);
@@ -72,7 +85,7 @@ const useApi = () => {
       
       case 'get':
       case 'delete':
-        (callFunction as typeof axios.get)(`${uri}`, config)
+        (callFunction as typeof axios.get)(`${uri}`, useConfig)
           .then(res => {
             if (res?.data) {
               onSuccess && onSuccess(res);
