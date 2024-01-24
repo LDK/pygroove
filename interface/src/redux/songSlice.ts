@@ -1,6 +1,7 @@
 // src/userSlice.ts
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { RootState } from './store';
+import { AppUser } from './userSlice';
 
 export type Filter = {
   filter_type: string;
@@ -46,6 +47,10 @@ export type Track = {
   fadeIn?: number;
   fadeOut?: number;
 };
+
+export type Patch = Omit<Track, 'position'> & {
+  user?: AppUser;
+}
 
 export type Step = {
   on: boolean;

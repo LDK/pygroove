@@ -37,6 +37,25 @@ class Track(models.Model):
     endOffset = models.PositiveIntegerField(default=0)
     playMode = models.CharField(max_length=8, default='oneshot')
 
+class Patch(models.Model):
+    name = models.CharField(max_length=100)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    pan = models.FloatField(default=0)
+    volume = models.FloatField(default=-6)
+    sample = models.ForeignKey(Sample, on_delete=models.SET_NULL, null=True)
+    transpose = models.IntegerField(default=0)
+    position = models.IntegerField(default=1)
+    rootPitch = models.CharField(max_length=5, default='C3')
+    pitchShift = models.IntegerField(default=0)
+    reverse = models.BooleanField(default=False)
+    normalize = models.BooleanField(default=False)
+    trim = models.BooleanField(default=False)
+    fadeIn = models.PositiveSmallIntegerField(default=0)
+    fadeOut = models.PositiveSmallIntegerField(default=0)
+    startOffset = models.PositiveIntegerField(default=0)
+    endOffset = models.PositiveIntegerField(default=0)
+    playMode = models.CharField(max_length=8, default='oneshot')
+
 class Pattern(models.Model):
     song = models.ForeignKey(Song, on_delete=models.CASCADE, related_name='patterns')
     name = models.CharField(max_length=100)
@@ -61,6 +80,7 @@ class Filter(models.Model):
     position = models.IntegerField(default=1)
     track = models.ForeignKey(Track, on_delete=models.CASCADE, related_name='filters', null=True)
     step = models.ForeignKey(Step, on_delete=models.CASCADE, related_name='filters', null=True)
+    patch = models.ForeignKey(Patch, on_delete=models.CASCADE, related_name='filters', null=True)
     on = models.BooleanField(default=False)
     filter_type = models.CharField(max_length=8, default='lp')
     frequency = models.FloatField(default=2500)

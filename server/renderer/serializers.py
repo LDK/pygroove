@@ -1,6 +1,6 @@
 # serializers.py
 from rest_framework import serializers
-from .models import Song, Pattern, Step, Sample, Filter, Track
+from .models import Patch, Pattern, Step, Sample, Filter, Track, Song
 from django.contrib.auth.models import User
 
 class StepSerializer(serializers.ModelSerializer):
@@ -19,7 +19,14 @@ class TrackSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Track
-        fields = ['name', 'pan', 'volume', 'sample', 'disabled', 'transpose', 'position', 'filters', 'isPiano']
+        fields = ['name', 'pan', 'volume', 'sample', 'disabled', 'transpose', 'position', 'filters', 'startOffset', 'endOffset', 'playMode', 'fadeIn', 'fadeOut', 'rootPitch', 'pitchShift', 'reverse', 'normalize', 'trim']
+
+class PatchSerializer(serializers.ModelSerializer):
+    filters = FilterSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Patch
+        fields = ['name', 'pan', 'volume', 'sample', 'disabled', 'filters', 'pianoIndex', 'startOffset', 'endOffset', 'playMode', 'fadeIn', 'fadeOut', 'rootPitch', 'pitchShift', 'reverse', 'normalize', 'trim']
 
 class PatternSerializer(serializers.ModelSerializer):
     steps = StepSerializer(many=True, read_only=True)
