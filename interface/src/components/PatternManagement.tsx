@@ -19,8 +19,6 @@ const PatternManagement = () => {
   
   const activePattern = useSelector(getActivePattern);
 
-  console.log('activePattern', activePattern);
-
   const { name: patternName, position } = activePattern || { name: '', position: 0 };
 
   const firstEmptyPatternPosition = useSelector(firstEmptyPattern);
