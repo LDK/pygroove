@@ -121,15 +121,17 @@ const useApi = () => {
     if (user?.token && user.token.access !== token?.access) {
       setToken(user?.token);
 
-      apiGet({
-        uri: '/user/songs',
-        onSuccess: (res) => {
-          dispatch(setUserSongs(res.data));
-        },
-        onError: (err) => {
-          console.error('Error getting user data:', err);
-        }
-      });
+      if (!user.songs.length) {
+        apiGet({
+          uri: '/user/songs',
+          onSuccess: (res) => {
+            dispatch(setUserSongs(res.data));
+          },
+          onError: (err) => {
+            console.error('Error getting user data:', err);
+          }
+        });
+      }
     }
   }, [user.token, token?.access, apiGet, dispatch]);
 

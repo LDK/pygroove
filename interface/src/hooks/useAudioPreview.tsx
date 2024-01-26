@@ -22,7 +22,6 @@ const useAudioPreview = (changeDeps:any[], uri:string, preparePayload: () => Ren
   }, []);
 
   const updatePreviewAudio = (result: ArrayBuffer) => {
-    console.log('updatePreviewAudio', audioContext);
     if (!audioContext) return;
 
     audioContext.decodeAudioData(result as ArrayBuffer, (buffer) => {
@@ -30,7 +29,7 @@ const useAudioPreview = (changeDeps:any[], uri:string, preparePayload: () => Ren
       source.buffer = buffer;
       source.connect(audioContext.destination);
       source.loop = true;
-      console.log('set preview audio', source);
+
       setPreviewAudio(source);
       setPreviewPlaying(true);
       // previewAudio?.start();
@@ -68,7 +67,6 @@ const useAudioPreview = (changeDeps:any[], uri:string, preparePayload: () => Ren
           payload,
           config: { responseType: 'blob' }, // Set responseType to 'blob'
           onSuccess: (res) => {
-            console.log('preview res', res);
             setPreviewLoading(false);
             setPreviewResult(res);
             setPreviewPlaying(true);
@@ -79,7 +77,6 @@ const useAudioPreview = (changeDeps:any[], uri:string, preparePayload: () => Ren
           }
         });
       } else {
-        console.log('readAsArrayBuffer 1', previewResult.data);
         reader.readAsArrayBuffer(previewResult.data);
         reader.onloadend = () => {
           updatePreviewAudio(reader.result as ArrayBuffer);
@@ -97,16 +94,10 @@ const useAudioPreview = (changeDeps:any[], uri:string, preparePayload: () => Ren
   };
 
   useEffect(() => {
-    console.log('preview playing useEffect', previewPlaying, previewAudio);
     if (previewPlaying) {
       previewAudio?.start();
-    } else if (previewAudio && !previewPlaying) {
-      console.log('stop 1');
-      // previewAudio.stop();
-      // setPreviewAudio(null);
     }
-
-  }, [previewAudio, previewPlaying, setPreviewPlaying]);
+  }, [previewAudio, previewPlaying]);
 
   useEffect(() => {
     if (previewPlaying && previewAudio) {
@@ -116,14 +107,12 @@ const useAudioPreview = (changeDeps:any[], uri:string, preparePayload: () => Ren
     setPreviewLoading(false);
     setPreviewResult(null);
     setPreviewPlaying(false);
-    console.log('nullify preview audio 1');
     setPreviewAudio(null);
   }, changeDeps);
 
   useEffect(() => {
     if (previewResult) {
       // Store the audio using AudioContext
-      console.log('readAsArrayBuffer 2', previewResult.data);
       reader.readAsArrayBuffer(previewResult.data);
       reader.onloadend = () => {
         // Next step: refactor so that audioContext is kept in state and reused

@@ -1,8 +1,9 @@
-import { Menu, Typography, Divider, MenuItem, useTheme } from "@mui/material";
+import { Typography, Divider, MenuItem, useTheme } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { UserToken, clearUser, getActiveUser, setUser } from "../redux/userSlice";
 import { setAxiosTokenCallback, setAxiosRefreshExpiredCallback, updateAxiosToken } from "../axiosWithIntercept";
+import Menu from "../components/CustomMenu";
 
 const useUser = () => {
   const user = useSelector(getActiveUser);
@@ -22,8 +23,9 @@ const useUser = () => {
     });
 
     updateAxiosToken(user.token);
+    console.log('User token updated:', user.token);
 
-  }, [user.token, dispatch, user]);
+  }, [user.token, dispatch]);
 
   const handleOpenUserMenu = (event:React.MouseEvent) => {
     setAnchorElUser(event.currentTarget as HTMLElement);
@@ -41,9 +43,9 @@ const useUser = () => {
 
   const UserMenu:React.FC<any> = () => {
     
-    const handleSettings = () => {
-      handleCloseUserMenu();
-    }
+    // const handleSettings = () => {
+    //   handleCloseUserMenu();
+    // }
   
     if (!user.id) return null;
 
@@ -53,26 +55,22 @@ const useUser = () => {
         anchorEl={anchorElUser}
         anchorOrigin={{
           vertical: 'bottom',
-          horizontal: 'left',
+          horizontal: 'right',
         }}
         keepMounted
         transformOrigin={{
           vertical: 'top',
-          horizontal: 'left',
+          horizontal: 'right',
         }}
         open={Boolean(anchorElUser)}
         onClose={handleCloseUserMenu}
-        sx={{
-          display: { xs: 'block' },
-          py: 0
-        }}
       >
-        <Typography variant="body2" sx={{ px: 2, py: 1, color: theme.palette.text.primary }}>Hello {user.username}!</Typography>
+        <Typography variant="body2" sx={{ px: 2, py: 1, color: theme.palette.primary.contrastText }}>Hello {user.username}!</Typography>
 
-        <Divider sx={{ my: 1 }} />
+        <Divider sx={{ my: 1, backgroundColor: 'white' }} />
 
         <MenuItem onClick={handleLogout}>Sign out</MenuItem>
-        <MenuItem onClick={handleSettings}>User Settings</MenuItem>
+        {/* <MenuItem onClick={handleSettings}>User Settings</MenuItem> */}
       </Menu>
     )
   };

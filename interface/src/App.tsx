@@ -54,13 +54,13 @@ function App() {
             openAddTrack={() => { setAddTrackOpen(true); }}
           />
           <StepSequencer />
-          <ActionButtons {...{ user, apiCall }} />
+          <ActionButtons />
 
         </Box>
       </Box>
 
-      <SongArranger open={arrangerOpen} handleClose={() => { setArrangerOpen(false); }} />
-      <AddTrackDialog open={addTrackOpen} handleClose={() => { setAddTrackOpen(false); }} />
+      {arrangerOpen && <SongArranger open={true} handleClose={() => { setArrangerOpen(false); }} />}
+      {addTrackOpen && <AddTrackDialog open={true} handleClose={() => { setAddTrackOpen(false); }} />}
     </ThemeProvider>
   );
 }
