@@ -2,7 +2,7 @@ import { useState, useMemo, ReactElement, useEffect, useCallback } from "react";
 import { useSelector } from "react-redux";
 import { BlackKey, WhiteKey } from "../components/PianoKey";
 import { PianoRollProps } from "../components/PianoRoll";
-import { getActivePattern, Loc, Step } from "../redux/songSlice";
+import { getActivePattern, getActiveSong, Loc, Step } from "../redux/songSlice";
 import { getTicks, getOverallStep, getLoc } from "./useSteps";
 
 const usePianoRoll = ({ track, stepSettings }:PianoRollProps) => {
@@ -52,6 +52,7 @@ const usePianoRoll = ({ track, stepSettings }:PianoRollProps) => {
   }, [pitchStart, notes, pitchRange, keyHeight]);
 
   const activePattern = useSelector(getActivePattern);
+  const activeSong = useSelector(getActiveSong);
 
   const originalSteps = useMemo(() => (!activePattern || !track) ? [] as Step[] : 
     activePattern.steps.filter(step => step.track.position === track.position),
@@ -214,6 +215,7 @@ const usePianoRoll = ({ track, stepSettings }:PianoRollProps) => {
     erasing, setErasing, drawing, setDrawing, sizing, setSizing,
     bars: activePattern?.bars || 2,
     patternName: activePattern?.name || '',
+    activePattern, activeSong
   };
 
 };
