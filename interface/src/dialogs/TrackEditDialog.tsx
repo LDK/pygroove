@@ -9,7 +9,6 @@ import TabPanel from "../components/TabPanel";
 import useFilters from "../hooks/useFilters";
 import useSamples from "../hooks/useSamples";
 import useTrackSettings from "../hooks/useTrackSettings";
-import { set } from "react-hook-form";
 
 const SETTINGS = 0;
 const SAMPLES = 1;
