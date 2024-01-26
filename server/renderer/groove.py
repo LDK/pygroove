@@ -13,9 +13,6 @@ from os.path import join as pjoin
 
 cgitb.enable()
 
-# Beats per minute
-bpm = 102
-
 # Beats per bar
 beatDiv = 4
 # Ticks per beat
@@ -24,8 +21,6 @@ tickDiv = 16
 songBars = 0
 # List of patterns to play, in order
 songPatterns = []
-# Dict of patterns, keyed by position
-patternIndex = {}
 # # Dict of tracks, keyed by name
 # trackIndex = {}
 
@@ -34,15 +29,13 @@ filterMaxFreq = 22000
 # Amount of swing to apply to patterns
 # Starts getting crazy above 1, reasonably groovy at like .25.  Default to none.
 swingAmount = 0;
+
 # swingUp is an iterator that gets toggled with each note, to alternate the swing direction
 # i.e., it swings up and then down, or back and then forth.  You get it.
 swingUp = False
 
 # Default channel volume and pan
 channelDefaults = {'volume': -12.0, 'pan': 0}
-
-# channels begins as an empty dictionary, later to hold AudioSegments
-# channels = {}
 
 current_offset_ms = 0  # Start at 0 ms
 
@@ -94,11 +87,11 @@ def trim(sound, silence_threshold=-50.0, chunk_size=10):
     trimmed_sound = sound[start_trim:duration-end_trim]
     return trimmed_sound
 
-def newChannel(name = ''):
+def newChannel(bpm:int, name = ''):
     global songPatterns
 
     # Length of the track is equal to number of bars times beats-per-bar times beat length times number of patterns
-    trackLength = songBars * barLen()
+    trackLength = songBars * barLen(bpm)
 
     track = AudioSegment.silent(trackLength)
     if name:
@@ -109,19 +102,19 @@ def newChannel(name = ''):
     return 
 
 # Length of a bar in milliseconds
-def barLen():
+def barLen(bpm:int):
     return (60/bpm) * 1000 * beatDiv
 
 # Length of a beat in milliseconds
-def beatLen():
+def beatLen(bpm:int):
     return (60/bpm) * 1000
 
 # Length of a tick in milliseconds
-def tickLen():
+def tickLen(bpm:int):
     return (60/bpm) * 1000 / tickDiv
 
 # Add an instance of a sound at a location determined by bpm-based placement
-def addNote(trackName,sound,bar,beat,tick,options = {}):
+def addNote(trackName,sound,bar,beat,tick,bpm,options = {}):
     global swingUp
     global channels
     if channels[trackName]:
@@ -136,9 +129,9 @@ def addNote(trackName,sound,bar,beat,tick,options = {}):
             tick -= swingAmount
         swingUp = not swingUp
     loc = 0
-    loc += tickLen() * (tick - 1)
-    loc += beatLen() * (beat - 1)
-    loc += barLen() * (bar - 1)
+    loc += tickLen(bpm) * (tick - 1)
+    loc += beatLen(bpm) * (beat - 1)
+    loc += barLen(bpm) * (bar - 1)
     loc = int(loc)
 
     # master = master.overlay(channels[trackName], position=current_offset_ms)
@@ -183,7 +176,7 @@ def split(wavFile,pieces):
             slices.append(sliceInfo)
     return slices
 
-def getStepSound(step, track):
+def getStepSound(step, track, bpm:int):
     trackWav = './audio/' + track['sample']['filename']
     stepSound = AudioSegment.from_wav(trackWav) - 12
 
@@ -212,7 +205,7 @@ def getStepSound(step, track):
         stepSound = librosaToPydub((y_pitch, sr))
 
     duration = step['duration'] if 'duration' in step else 1
-    stepLen = beatLen() * (duration / beatDiv)
+    stepLen = beatLen(bpm) * (duration / beatDiv)
     
     if 'normalize' in track:
         if (track['normalize'] == True):
@@ -319,8 +312,8 @@ def getStepSound(step, track):
         if retrigCount > 0:
             print ("Retriggering step {} times per beat (duration: {} beats)".format(retrigCount, duration))
             retrigCount = int(step['retrigger'])
-            retrigLen = beatLen() / retrigCount
-            retrigSound = AudioSegment.silent(beatLen() * duration / beatDiv)
+            retrigLen = beatLen(bpm) / retrigCount
+            retrigSound = AudioSegment.silent(beatLen(bpm) * duration / beatDiv)
             retrigClip = AudioSegment.silent(retrigLen)
             retrigClip = retrigClip.overlay(stepSound, position=0)
 
@@ -351,7 +344,7 @@ def getStepSound(step, track):
 
     return stepSound
 
-def renderStep(track, trackSound, step, startingBar = 1):
+def renderStep(track, trackSound, step, bpm:int, startingBar = 1):
     trackName = track['name']
     loc = step['loc'].split('.')
     bar = int(loc[0]) + startingBar - 1
@@ -384,14 +377,31 @@ def renderStep(track, trackSound, step, startingBar = 1):
         sound = sound.pan(int(step['pan'])/100)
     
     # Add note
-    addNote(trackName,sound,bar,beat,tick)
+    addNote(trackName,sound,bar,beat,tick,bpm)
+
+def renderPatternPreview(data):
+    # Create a payload for renderJSON using only the data needed for the preview
+    # data object will contain beatDiv, tickDiv, swing, tracks and a single-item pattern entry
+
+    renderPattern = data['pattern']
+    renderPattern['position'] = 1
+
+    renderData = {
+        'swing': data['swing'],
+        'patterns': [renderPattern],
+        'patternSequence': [{'position': 1, 'bar': 1}],
+        'bpm': data['bpm'],
+        'tracks': data['tracks'],
+        'title': renderPattern['name']
+    }
+
+    return renderJSON(renderData)
 
 def renderJSON(data):
-    global channels, bpm, beatDiv, tickDiv, songBars, swingAmount, swingUp, channelDefaults, songPatterns, patternIndex, trackIndex, current_offset_ms
+    global channels, beatDiv, tickDiv, songBars, swingAmount, swingUp, channelDefaults, songPatterns, trackIndex, current_offset_ms
 
-    def jumpToBar(bar):
-        global current_offset_ms
-        current_offset_ms = (bar - 1) * barLen()
+    # Dict of patterns, keyed by position
+    patternIndex = {}
 
     # Reset all the globals
     trackIndex = {}
@@ -400,6 +410,11 @@ def renderJSON(data):
     current_offset_ms = 0
 
     bpm = int(data['bpm'])
+
+    def jumpToBar(bar):
+        global current_offset_ms
+        current_offset_ms = (bar - 1) * barLen(bpm)
+
     # beatDiv = int(data['beatDiv']), defaulting to 4 if beatDiv key is not present on data
     beatDiv = int(data['beatDiv']) if 'beatDiv' in data else beatDiv
     tickDiv = int(data['tickDiv']) if 'tickDiv' in data else tickDiv
@@ -426,7 +441,7 @@ def renderJSON(data):
     # title = data['title']
 
     # Create the master track
-    master = newChannel()
+    master = newChannel(bpm)
 
     # For each track in the json data, add a channel
     for track in data['tracks']:
@@ -442,7 +457,7 @@ def renderJSON(data):
         # print ("Adding track {}".format(trackName))
 
         # Add a channel
-        newChannel(trackName)
+        newChannel(bpm, trackName)
 
         # Add to track index
         trackIndex[trackName] = track
@@ -459,10 +474,8 @@ def renderJSON(data):
                 continue
 
             for step in steps:
-                stepSound = getStepSound(step, track)
-                renderStep(track, stepSound, step, patternEntry['bar'])
-
-        patternLength = int(pattern['bars']) if 'bars' in pattern else 2
+                stepSound = getStepSound(step, track, bpm)
+                renderStep(track, stepSound, step, bpm, patternEntry['bar'])
 
     for trackName, track in channels.items():
         master = master.overlay(track, position=0, gain_during_overlay=-6)
@@ -480,7 +493,7 @@ def renderJSON(data):
 
     # get date string formatted like 20231231235959
     # datestring = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-    # renderFilename = "{}".format(title)
+    # renderFilename = "{}".format('preview')
 
     # out_f = open("{}.mp3".format(renderFilename), 'wb')
     # out_f.write(mp3_data)

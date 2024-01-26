@@ -1,9 +1,8 @@
 import io
 from renderer.groove import renderJSON
 from ..models import Filter, Song, Pattern, Sample, Step, Track
-from ..serializers import SongSerializer, PatternSerializer
+from ..serializers import SongSerializer
 from rest_framework.permissions import AllowAny
-from django.contrib.auth import authenticate
 
 from rest_framework import status, viewsets
 from rest_framework.response import Response
@@ -272,10 +271,6 @@ class SongView(APIView):
 
         # return response
         return Response({'id': pk}, status=status.HTTP_200_OK)
-
-class PatternViewSet(viewsets.ModelViewSet):
-    queryset = Pattern.objects.all()
-    serializer_class = PatternSerializer
 
 class RenderView(APIView):
     permission_classes = (AllowAny,)

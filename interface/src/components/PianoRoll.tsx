@@ -1,4 +1,4 @@
-import { Box, Checkbox, Dialog, DialogContent, DialogTitle, FormControl, Grid, NativeSelect, Typography } from "@mui/material";
+import { Box, Button, Checkbox, Dialog, DialogContent, DialogTitle, FormControl, Grid, NativeSelect, Select, Typography } from "@mui/material";
 import { useDispatch } from "react-redux";
 import { Step, Track, setPatternTrackSteps } from "../redux/songSlice";
 import { StepSettings } from "../StepSequencer";
@@ -12,6 +12,9 @@ import PitchScroller from "./PitchScroller";
 import BeatMarkers from "./PianoBeatMarkers";
 import BarScroller from "./BarScroller";
 import TickCell from "./TickCell";
+import { PlayArrowTwoTone, StopCircleTwoTone } from "@mui/icons-material";
+import useAudioPreview from "../hooks/useAudioPreview";
+import { RenderPayload } from "../hooks/useSong";
 
 const VerticalLine = ({ display }:{ display?: any }) => (
   <Box display={display || "inline-block"} height={24} bgcolor="secondary.light" width={"1px"} mx={2} pt={0}>
@@ -36,15 +39,94 @@ const PianoRoll = ({ track, stepSettings, onClose }:PianoRollProps) => {
     removeStep, updateStep, addStep, moveStep, sizeStep, splitStep,
     selected, setSelected, dragging, setDragging, dragStart, setDragStart,
     erasing, setErasing, setDrawing, sizing, setSizing,
-    patternName, bars
+    patternName, bars, activePattern, activeSong
   }
     = usePianoRoll({ track, stepSettings, onClose });
 
   const [focus, setFocus] = useState<'velocity' | 'pan' | false>(false);
   
   const [mode, setMode] = useState<'select' | 'draw' | 'erase' | 'slice'>('select');
+  
+  const [previewMode, setPreviewMode] = useState<'solo' | 'pattern'>('solo');
 
   const { DialogActionButtons } = useDialogUI();
+
+  const preparePianoPreviewPayload = () => {
+    if (!activePattern || !activeSong || !steps || !steps.length || !track) {
+      return;
+    }
+
+    const patternPosition = activePattern.position;
+
+    const {activePattern: ap, ...song} = activeSong;
+
+    const tracks = (previewMode === 'solo') ? [track] : song.tracks; 
+
+    let renderPattern:RenderPayload['patterns'][0] | undefined;
+
+    if (previewMode === 'solo') {
+      renderPattern = {
+        ...activePattern,
+        steps: {
+          [track.name]: steps.filter(s => s.on).map(st => {
+            const loc = `${st.loc.bar}.${st.loc.beat}.${st.loc.tick}`;
+
+            const { track: trk, 
+              on,
+              ...step 
+            } = st;
+            return {...step, loc};
+          })
+        }
+      };
+    } else {
+
+      let patternSteps:RenderPayload['patterns'][0]['steps'] = {};
+
+      tracks.forEach(trk => {
+        patternSteps[trk.name] = [];
+      });
+
+      activePattern.steps.filter(s => s.track.position !== track.position).forEach(st => {
+        const loc = `${st.loc.bar}.${st.loc.beat}.${st.loc.tick}`;
+
+        const { track: trk, on, ...step } = st;
+
+        patternSteps[trk.name].push({...step, loc});
+      });
+
+      steps.forEach(st => {
+        const loc = `${st.loc.bar}.${st.loc.beat}.${st.loc.tick}`;
+
+        const { track: trk, on, ...step } = st;
+
+        patternSteps[trk.name].push({...step, loc});
+      });
+
+      renderPattern = {
+        ...activePattern,
+        steps: patternSteps
+      };
+    }
+
+    const payload:RenderPayload = {
+      ...song,
+      author: song.author || '',
+      tracks,
+      patterns: [renderPattern],
+      patternSequence: [{
+        position: patternPosition,
+        bar: 1,
+        length: activePattern.bars,
+        songTrack: 1
+      }]
+    };
+
+    console.log('payload', payload)
+    return payload;
+  };
+
+  const { stopPreview, StopPlayButton } = useAudioPreview([activeSong.activePattern, steps, previewMode], '/pattern/piano/', preparePianoPreviewPayload);
 
   if (!track) {
     console.log('no track', track);
@@ -344,7 +426,7 @@ const PianoRoll = ({ track, stepSettings, onClose }:PianoRollProps) => {
         <BarScroller {...{ barStart, setBarStart, barRange, bars }} />
       </DialogTitle>
 
-      <DialogContent sx={{ overflow: 'hidden' }}>
+      <DialogContent sx={{ overflow: 'hidden', position: 'relative' }}>
         <Box width="100%" mb={0} borderRight={1} borderColor="#333" height={`calc(${pitchRange + 1} * ${keyHeight}px)`} position="relative" sx={{ overflow: 'hidden' }}>
           <PitchScroller {...{ pitchStart, setPitchStart, pitchRange, keyHeight, notes }} />
 
@@ -379,14 +461,50 @@ const PianoRoll = ({ track, stepSettings, onClose }:PianoRollProps) => {
             dispatch(setPatternTrackSteps({ track, steps, isPiano: true }));
             setSelected(undefined);
             setMode('select');
+            stopPreview();
             onClose();
           }}
           onCancel={() => {
             setSelected(undefined);
             setMode('select');
+            stopPreview();
             onClose();
           }}
         />
+
+        <Box height="32px" width="18rem" left={"1.5rem"} bottom="1.25rem" position="absolute">
+          <Grid container spacing={0}>
+            <Grid item xs={4} pt={1}>
+              <Typography variant="caption" color="black" position="relative" top={-8} pl={0} pr={1}>Preview Mode: </Typography>
+            </Grid>
+
+            <Grid item xs={4}>
+              <FormControl>
+                <Select
+                  native
+                  defaultValue={previewMode}
+                  inputProps={{
+                    style: {backgroundColor: 'white', paddingLeft: 8, paddingTop: 1, paddingBottom: 1, height: 22, fontSize: '.8rem'},
+                    name: 'previewMode',
+                    id: 'previewMode-native',
+                  }}
+                  onChange={(e) => {
+                    setPreviewMode(e.target.value as any);
+                  }}
+                >
+                  <option value={'solo'}>Solo</option>
+                  <option value={'pattern'}>Pattern</option>
+                </Select>
+              </FormControl>
+            </Grid>
+              
+            <Grid item xs={3}>
+              <Box position="relative" top={-12}>
+                <StopPlayButton />
+              </Box>
+            </Grid>
+          </Grid>
+        </Box>
       </DialogContent>
     </Dialog>    
   );

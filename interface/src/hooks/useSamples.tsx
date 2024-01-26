@@ -3,6 +3,7 @@ import { SampleData } from "../redux/songSlice";
 import useApi from "./useApi";
 import { arraysEqual } from "../StepSequencer";
 import { Grid, Typography, Button, Divider } from "@mui/material";
+import { HeadphonesTwoTone as PlayIcon } from "@mui/icons-material";
 
 const useSamples = () => {
 
@@ -27,6 +28,14 @@ const useSamples = () => {
     });
   };
 
+  const playSample = (sample:SampleData) => {
+    if (sample.filename) {
+      const url = `${process.env.REACT_APP_API_URL}/static/${sample.filename}`.replace('/api/static', '/static');
+      const audio = new Audio(url);
+      audio.play();
+    }
+  };
+
   const SampleBrowser = ({ openCallback }:{ openCallback: (sample:SampleData) => void }) => (
     <Grid container spacing={0}>
       <Grid item xs={12} sx={{ height: '314px' }}>
@@ -39,11 +48,16 @@ const useSamples = () => {
                 <Grid container spacing={0}>
                   <Grid item xs={3}>
                     <Typography fontWeight={600} color="white" variant="body2" component="p">{sample.display || sample.name || sample.filename}</Typography>
-                    <Button onClick={() => {
+                    <Button variant="contained" onClick={() => {
                       openCallback(sample);
                     }}>
                       Open
                     </Button>
+
+                    <Button>
+                      <PlayIcon sx={{ color: 'gold' }} onClick={() => playSample(sample) } />
+                    </Button>
+
                   </Grid>
                   <Grid item xs={9}>
                     { sample.waveform ? <img src={`${sample.waveform}`} alt={sample.name} style={{ height: '3rem', width: '100%' }} /> : null }

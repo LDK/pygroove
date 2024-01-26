@@ -1,15 +1,11 @@
-import io
-from renderer.groove import renderJSON
-from ..models import Filter, Patch, Pattern, Sample, Step, Track
-from ..serializers import PatchSerializer, PatternSerializer, PatchSerializer
+from ..models import Patch, Sample
+from ..serializers import PatchSerializer, PatchSerializer
 from rest_framework.permissions import AllowAny
-from django.contrib.auth import authenticate
 
 from rest_framework import status, viewsets
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 
-from django.http import FileResponse
 from rest_framework.views import APIView
 
 class PatchViewSet(viewsets.ModelViewSet):
@@ -97,10 +93,6 @@ class PatchView(APIView):
 
         # return response
         return Response({'id': pk}, status=status.HTTP_200_OK)
-
-class PatternViewSet(viewsets.ModelViewSet):
-    queryset = Pattern.objects.all()
-    serializer_class = PatternSerializer
 
 class CreatePatchView(APIView):
     def post(self, request):

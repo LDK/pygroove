@@ -3,10 +3,8 @@ import { FolderTwoTone as BrowseIcon, HeadphonesTwoTone as PlayIcon } from "@mui
 import { Track } from "../redux/songSlice";
 import useControls from "./useControls";
 import { ChangeEvent, useEffect, useMemo, useState } from "react";
-import { reverse } from "dns";
 import Range from "../components/Range";
 import StartEndRange from "../components/StartEndRange";
-import { set } from "react-hook-form";
 import useApi from "./useApi";
 
 type FilterInfo = {

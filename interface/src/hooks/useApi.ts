@@ -35,8 +35,6 @@ const useApi = () => {
   const apiCall = useCallback(async ({ uri, method, payload, config, onSuccess, onError, sendAuth = true }:ApiCallProps) => {
     let callFunction: typeof axios.post | typeof axios.get;
 
-    console.log('sendAuth', sendAuth, user?.token);
-
     if (sendAuth && !user?.token) {
       // console.error(`Token is required for ${method.toUpperCase()} ${uri}`);
       return;

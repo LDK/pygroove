@@ -3,6 +3,39 @@ import { useSelector, useDispatch } from "react-redux";
 import { getActiveSong, Song, setSongId, Filter, PatternEntry, Step, Track } from "../redux/songSlice";
 import { getActiveUser, setUserSongs } from "../redux/userSlice";
 import useApi from "./useApi";
+import useAudioPreview from "./useAudioPreview";
+
+export type RenderPayload = {
+  title: string;
+  bpm: number;
+  id?: number;
+  author: string;
+  patternSequence: PatternEntry[];
+  tracks: Track[];
+  swing?: number;
+  patterns: {
+    id?: number;
+    position: number;
+    name: string;
+    bars: number;
+    steps: {
+     [trackName:string]: {
+      loc: string;
+      pitch: string;
+      velocity: number;
+      filters?: Filter[];
+      pan?: number;
+      reverse?: boolean;
+      retrigger?: number;
+      duration?: number;
+     }[]; 
+    };
+  }[];
+};
+
+export type PatternPreviewPayload = Omit<RenderPayload, 'patternSequence' | 'patterns' | 'id' | 'title' | 'author'> & {
+  pattern: RenderPayload['patterns'][0]
+};
 
 const useSong = () => {
   const user = useSelector(getActiveUser);
@@ -10,35 +43,6 @@ const useSong = () => {
   const { apiCall, apiGet } = useApi();
   const dispatch = useDispatch();
 
-  interface RenderPayload {
-    title: string;
-    bpm: number;
-    id?: number;
-    author: string;
-    patternSequence: PatternEntry[];
-    tracks: Track[];
-    swing?: number;
-    patterns: {
-      id?: number;
-      position: number;
-      name: string;
-      bars: number;
-      steps: {
-       [trackName:string]: {
-        loc: string;
-        pitch: string;
-        velocity: number;
-        filters?: Filter[];
-        pan?: number;
-        reverse?: boolean;
-        retrigger?: number;
-        duration?: number;
-       }[]; 
-      };
-    }[];
-  };
-  
-  
   const getUserSongs = async () => {
     await apiGet({
       uri: '/user/songs',
@@ -142,7 +146,7 @@ const useSong = () => {
       uri: `/song/`,
       method: 'post',
       payload: {...songData} as Song,
-      onSuccess: (res:AxiosResponse) => {
+      onSuccess: () => {
         getUserSongs();
       },
       onError: (error:any) => {
@@ -162,7 +166,7 @@ const useSong = () => {
     };
   
     // Iterate through the patterns and build the renderPayload.patterns array
-    patterns.forEach((pattern, i) => {
+    patterns.forEach((pattern) => {
       const { id, position, name, bars, steps } = pattern;
   
       const renderPattern:RenderPayload['patterns'][0] = {
@@ -200,6 +204,53 @@ const useSong = () => {
     return renderPayload;
   };
 
+  const preparePatternPreviewPayload = () => {
+    // Take the songState and mutate it into PatternPreviewPayload format
+    // Only include steps that are on
+  
+    const { bpm, tracks, swing, activePattern } = activeSong;
+  
+    if (!activePattern) return;
+
+    const { name: title, bars, steps, position } = activePattern;
+  
+    const renderPattern:RenderPayload['patterns'][0] = {
+      position, name: title, bars, steps: {},
+    };
+
+    // Iterate through the steps and build the renderPattern.steps object
+    steps.forEach((step:Step) => {
+      // Each step will contain a reference to a track
+      // We need to key the pattern.steps array by track name and include the step's loc, pitch, and velocity
+      const { loc, pitch, velocity, filters, pan, reverse, retrigger, duration } = step;
+
+      if (!step.on) return;
+
+      if (!renderPattern.steps[step.track.name]) {
+        renderPattern.steps[step.track.name] = [];
+      }
+
+      renderPattern.steps[step.track.name].push({
+        loc: `${loc.bar}.${loc.beat}.${loc.tick}`,
+        pitch,
+        velocity,
+        filters,
+        reverse,
+        retrigger,
+        duration,
+        pan,
+      });
+    });
+
+    const renderPayload:PatternPreviewPayload = {
+      bpm, swing, tracks, pattern: {...activePattern, ...renderPattern}
+    };
+
+    return renderPayload;
+  };
+
+  const { previewLoading, previewPlaying, setPreviewLoading, handleRenderPreview } = useAudioPreview([activeSong.activePattern], '/pattern/preview/', preparePatternPreviewPayload);
+
   const handleRender = async (filename?:string) => {
     // if (!user?.token) {
     //   return;
@@ -216,6 +267,7 @@ const useSong = () => {
       onSuccess: (res:AxiosResponse) => {
         // Create a URL for the blob
         const url = window.URL.createObjectURL(new Blob([res.data], { type: 'audio/mpeg' }));
+        console.log('render url', url);
         const link = document.createElement('a');
         link.href = url;
         link.setAttribute('download', filename || `${activeSong.title}.mp3`);
@@ -230,7 +282,7 @@ const useSong = () => {
     });
   };
   
-  return { handleSave, handleDuplicate, handleRender, getUserSongs };
+  return { handleSave, handleDuplicate, handleRender, getUserSongs, patternPlaying: previewPlaying, patternAudioLoading: previewLoading, handlePatternPreview: handleRenderPreview, setPatternAudioLoading: setPreviewLoading };
 };
 
 export default useSong;
