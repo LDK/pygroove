@@ -175,7 +175,6 @@ class SampleAudioView(APIView):
 
     def get(self, request, pk=None):
         sample = Sample.objects.get(pk=pk)
-        serializer = SampleSerializer(sample)
         fLoc = pjoin("./audio", sample.filename)
 
         reverse:bool = (request.GET.get('rv', False) in ['true', 'True', True])
@@ -229,11 +228,6 @@ class SampleAudioView(APIView):
             'fadeOut': fadeOut,
             
         }).audio()
-
-        # Create a FileResponse with MP3 data
-        # response = FileResponse(io.BytesIO(processed), as_attachment=False)
-        # response['Content-Type'] = 'audio/mpeg'
-
 
         if processed:
             try:
