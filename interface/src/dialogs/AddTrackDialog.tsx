@@ -20,11 +20,10 @@ const AddTrackDialog = ({ open, handleClose }: { open: boolean, handleClose: () 
   }, [open]);
 
   const { DialogActionButtons } = useDialogUI();
-  const activeSong = useSelector(getActiveSong);
   const dispatch = useDispatch();
 
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+    <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
       <DialogTitle>Add Track</DialogTitle>
 
       <DialogContent sx={{ mb: 4}}>
