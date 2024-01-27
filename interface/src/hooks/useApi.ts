@@ -8,7 +8,7 @@
   - Automatically handles success responses
 */
 
-import { AxiosError, AxiosRequestConfig, AxiosResponse } from "axios";
+import { AxiosBasicCredentials, AxiosError, AxiosRequestConfig, AxiosResponse } from "axios";
 import useUser from "./useUser";
 import axios from "../axiosWithIntercept";
 import { useCallback, useEffect, useState } from "react";
@@ -44,8 +44,9 @@ const useApi = () => {
 
     if (!sendAuth) {
       const { headers, ...rest } = config || {};
-      useConfig = rest;
+      useConfig = {...rest, withCredentials: false, auth: undefined, headers: { ...headers, Authorization: undefined } };
       console.log('useConfig', useConfig);
+      console.log('config', config);
     } else {
       console.log('useConfig', useConfig);
     }

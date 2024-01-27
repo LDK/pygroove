@@ -65,6 +65,7 @@ const useAudioPreview = (changeDeps:any[], uri:string, preparePayload: () => Ren
           method: 'post',
           uri: uri,
           payload,
+          sendAuth: false,
           config: { responseType: 'blob' }, // Set responseType to 'blob'
           onSuccess: (res) => {
             setPreviewLoading(false);
