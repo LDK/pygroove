@@ -2,7 +2,7 @@ import { Dispatch, SetStateAction } from "react";
 import { Box, Button, Grid, Menu, MenuItem, Typography } from "@mui/material";
 import { MoreHorizTwoTone, PianoTwoTone } from "@mui/icons-material";
 import { useEffect, useState } from "react";
-import { Step, Track, getActivePattern, getActiveSong, getTrackSteps, toggleTrack } from "./redux/songSlice";
+import { Step, Track, getActivePattern, getActiveSong, getTrackSteps, setPatternTrackSteps, toggleTrack } from "./redux/songSlice";
 import { useDispatch, useSelector } from "react-redux";
 import useSteps, { getLoc, getOverallStep, getTicks } from "./hooks/useSteps";
 import TrackEditDialog from "./dialogs/TrackEditDialog";
@@ -80,7 +80,11 @@ const StepSequencer = () => {
   
     const handleRemoveClick = () => {
       setRemoveTrackOpen(true);
-      // handleMenuClose();
+      handleMenuClose();
+    };
+
+    const handleClearClick = () => {
+      dispatch(setPatternTrackSteps({ track, steps: [] }));
     };
 
     const StepMarkers = () => {
@@ -266,6 +270,7 @@ const StepSequencer = () => {
                   anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
                 >
                   <MenuItem onClick={handleRemoveClick}>Remove Track</MenuItem>
+                  <MenuItem onClick={handleClearClick}>Clear</MenuItem>
                   {/* <MenuItem onClick={handleDuplicate}>Duplicate Track</MenuItem> */}
                   {/* <MenuItem onClick={handleMoveTo}>Fill Each...</MenuItem> */}
                 </Menu>
