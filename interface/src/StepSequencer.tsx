@@ -355,7 +355,7 @@ const StepSequencer = () => {
   
         <Grid item xs={9}>
           { Boolean(activePattern.pianoIndex && activePattern.pianoIndex[`${track.position}`]) ? <PianoDisplay /> : <StepMarkers /> }
-          <FillStepsDialog track={track} open={fillStepsOpen} handleClose={() => { setFillStepsOpen(false); }} stepSettings={stepSettings} />
+          { Boolean(fillStepsOpen) ? <FillStepsDialog track={track} open={fillStepsOpen} handleClose={() => { setFillStepsOpen(false); }} stepSettings={stepSettings} /> : null}
           <RemoveTrackDialog track={track} open={removeTrackOpen} handleClose={() => { setRemoveTrackOpen(false); }} />
         </Grid>
       </Grid>
