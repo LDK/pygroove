@@ -73,6 +73,7 @@ const useSteps = ({ barDiv, beatDiv, beatStep, defaultPitch, defaultVelocity }:U
   // beatStep: How many ticks we display per beat (equidistant)
 
   const [editingStep, setEditingStep] = useState<Step | null>(null);
+  const [editingFillStep, setEditingFillStep] = useState<Step | null>(null);
   const [editingTrack, setEditingTrack] = useState<Track | undefined>(undefined);
 
   const { DialogActionButtons } = useDialogUI();
@@ -87,7 +88,7 @@ const useSteps = ({ barDiv, beatDiv, beatStep, defaultPitch, defaultVelocity }:U
     return { bar, beat, tick };
   };
 
-  const StepEditDialog = ({ step }:{ step:Step | null }) => {
+  const StepEditDialog = ({ step, fill, callback }:{ step:Step | null, fill?: boolean, callback?: (step:Step) => void }) => {
     const dispatch = useDispatch();
 
     // Defaults to step.pitch reduced to only numeric characters through regex
@@ -102,14 +103,16 @@ const useSteps = ({ barDiv, beatDiv, beatStep, defaultPitch, defaultVelocity }:U
 
     const [on, setOn] = useState(step?.on || false);
   
-    const track = useSelector((state:RootState) => findTrackByPosition(state.song, editingStep?.track?.position || 0));
+    const workingStep = editingStep || editingFillStep;
+
+    const track = useSelector((state:RootState) => findTrackByPosition(state.song, workingStep?.track?.position || 0));
 
     let trackFilters:Filter[] = [];
 
     if (track) {
       trackFilters = track.filters || [];
     } else {
-      trackFilters = editingStep?.track?.filters || [];
+      trackFilters = workingStep?.track?.filters || [];
     }
   
     const [filter1On, setFilter1On] = useState(trackFilters.length ? trackFilters[0].on : false);
@@ -131,10 +134,11 @@ const useSteps = ({ barDiv, beatDiv, beatStep, defaultPitch, defaultVelocity }:U
 
     const handleClose = () => {
       setEditingStep(null);
+      setEditingFillStep(null);
     }
 
     const handleConfirm = () => {
-      if (editingStep) {
+      if (workingStep) {
         let filters:(Filter[] | undefined) = undefined;
 
         if (track?.filters?.length) {
@@ -210,14 +214,19 @@ const useSteps = ({ barDiv, beatDiv, beatStep, defaultPitch, defaultVelocity }:U
         }
 
         const newStep:Step = {
-          ...editingStep,
+          ...workingStep,
           on: on,
           velocity,
           pan,
           filters,
           pitch: `${note}${octave}`,
         };
-        dispatch(setStep(newStep));
+
+        if (fill && callback) {
+          callback(newStep);
+        } else {
+          dispatch(setStep(newStep));
+        }
         handleClose();
       }
     };
@@ -232,7 +241,7 @@ const useSteps = ({ barDiv, beatDiv, beatStep, defaultPitch, defaultVelocity }:U
 
     if (!step) return null;
     if (!activePattern) return null;
-    if (!editingStep) return null;
+    if (!workingStep) return null;
 
     // const { track } = step;
 
@@ -463,6 +472,43 @@ const useSteps = ({ barDiv, beatDiv, beatStep, defaultPitch, defaultVelocity }:U
     );
   };
 
+  const FillMarker = ({ step, track, callback }:{ step:Step, track:Track, callback: (step:Step) => void }) => {
+    const [on, setOn] = useState(step.on);
+
+    const tick = parseInt(`${step.loc.tick}`);
+    const beat = parseInt(`${step.loc.beat}`);
+
+    const isDownbeat = beat % beatDiv === 1 && tick === 1;
+    const isBeat = tick === 1 && !isDownbeat;
+    const bgColor = isDownbeat ? 'secondary.main' : isBeat ? 'info.main' : 'info.light';
+    
+    return (
+      <Box position="relative" overflow={"hidden"} mx="1px" display="inline-block" width={`calc(100% / 8 - 4px)`} height="52px" sx={{ border: '1px solid #ccc' }} bgcolor={bgColor}>
+        <Box zIndex={2} sx={{ cursor: 'crosshair' }}
+          position="absolute" top="0" left="0" width="100%" textAlign={"center"} pt={0} m={0} className="indicator"
+          onClick={() => {
+            callback({...step, on: !on});
+            setOn(!on);
+          }}
+        >
+          <Box bgcolor={on ? 
+            "warning.main" :
+            'info.main'
+          } sx={{ height: '17px', width: '17px', maxWidth: '60%', mx: 'auto', mt: 1, border: '1px solid rgba(255,255,255,.5)' }}></Box>
+        </Box>
+        <Box position="absolute" bottom="0" left="0" width="100%" textAlign={"center"} pb={1} pt={0} m={0}>
+          <MoreHorizTwoTone
+          onClick={() => {
+            setEditingFillStep(step);
+          }}
+            sx={{ color:'white', p:0, m:0, maxWidth: '100%', position: 'relative', top: '.75rem', cursor: "context-menu" }} 
+          />
+        </Box>
+      </Box>
+    );
+  };
+
+
   const getPatternStepMarkers = (pattern:Pattern, track:Track) => {
     let stepIndex:{
       [key:number]:Step;
@@ -530,7 +576,7 @@ const useSteps = ({ barDiv, beatDiv, beatStep, defaultPitch, defaultVelocity }:U
     return steps;
   }
 
-  return { getLoc, getOverallStep, StepMarker, StepEditDialog, editingStep, getPatternStepMarkers, editingTrack, setEditingTrack };
+  return { getLoc, getOverallStep, StepMarker, StepEditDialog, editingStep, editingFillStep, getPatternStepMarkers, editingTrack, setEditingTrack, FillMarker };
 }
 
 export default useSteps;
