@@ -43,8 +43,10 @@ const FillStepsDialog = ({ open, handleClose, stepSettings, track }: { open: boo
       const loc = getLoc(i + 1, ticks, barDiv, beatStep);
       let newStep:Step;
 
-      if (steps.find(step => step.loc.bar === loc.bar && step.loc.beat === loc.beat && step.loc.tick === loc.tick)) {
-        newStep = steps.find(step => step.loc.bar === loc.bar && step.loc.beat === loc.beat && step.loc.tick === loc.tick) as Step;
+      console.log('loc', loc, i);
+
+      if (steps.find(step => step?.loc.bar === loc.bar && step?.loc.beat === loc.beat && step?.loc.tick === loc.tick)) {
+        newStep = steps.find(step => step?.loc.bar === loc.bar && step?.loc.beat === loc.beat && step?.loc.tick === loc.tick) as Step;
         stepIndex.set(i, newStep);
       } else {
         newStep = {
