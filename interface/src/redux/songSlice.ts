@@ -191,6 +191,35 @@ const songSlice = createSlice({
     selectPattern: (state, action: PayloadAction<number>) => {
       state.selectedPatternPosition = action.payload;
     },
+    pasteStepSequencer: (state, action: PayloadAction<{steps: Step[], track: Track, combine?:boolean, isPiano?:boolean}>) => {
+      if (!state.activePattern) return;
+
+      const newSteps = action.payload.steps.map((step) => {
+        return {
+          ...step,
+          track: action.payload.track,
+        };
+      });
+
+      const otherSteps = state.activePattern.steps.filter((step) => {
+        return step.track.position !== action.payload.track.position;
+      });
+
+      const pattern = state.patterns[patternIndex(state, state.activePattern)];
+
+      const newPattern = 
+        Boolean(action.payload.combine) ? 
+        { ...pattern, steps: [...pattern.steps, ...newSteps, ...otherSteps] } : 
+        { ...pattern, steps: [...newSteps, ...otherSteps] };
+  
+      // rebuild piano index
+      let newIndex = {...newPattern.pianoIndex};
+      newIndex[action.payload.track.position] = action.payload.isPiano || false;
+      newPattern.pianoIndex = newIndex;
+
+      state.patterns.splice(patternIndex(state, state.activePattern), 1, newPattern);
+      state.activePattern = newPattern;
+    },
     setPatternTrackSteps: (state, action: PayloadAction<{track: Track, steps: Step[], isPiano?:boolean}>) => {
       const { track, steps } = action.payload;
 
@@ -212,6 +241,10 @@ const songSlice = createSlice({
       if (action.payload.isPiano) {
         let newIndex = {...newPattern.pianoIndex};
         newIndex[track.position] = true;
+        newPattern.pianoIndex = newIndex;
+      } else if (action.payload.isPiano === false) {
+        let newIndex = {...newPattern.pianoIndex};
+        delete newIndex[track.position];
         newPattern.pianoIndex = newIndex;
       }
 
@@ -530,6 +563,7 @@ export const {
   toggleTrack,
   selectPattern,
   setPatternTrackSteps,
+  pasteStepSequencer
 } = songSlice.actions;
 
 // getActiveSong selector function

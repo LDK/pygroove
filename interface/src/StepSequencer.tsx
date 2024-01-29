@@ -1,15 +1,16 @@
-import { Dispatch, SetStateAction } from "react";
 import { Box, Button, Grid, Menu, MenuItem, Typography } from "@mui/material";
-import { MoreHorizTwoTone, PianoTwoTone } from "@mui/icons-material";
+import { PianoTwoTone } from "@mui/icons-material";
 import { useEffect, useState } from "react";
-import { Step, Track, getActivePattern, getActiveSong, getTrackSteps, toggleTrack } from "./redux/songSlice";
+import { Step, Track, getActivePattern, getActiveSong, getTrackSteps, pasteStepSequencer, setPatternTrackSteps, toggleTrack } from "./redux/songSlice";
 import { useDispatch, useSelector } from "react-redux";
-import useSteps, { getLoc, getOverallStep, getTicks } from "./hooks/useSteps";
+import useSteps, { getOverallStep, getTicks } from "./hooks/useSteps";
 import TrackEditDialog from "./dialogs/TrackEditDialog";
 import useControls from "./hooks/useControls";
 import PianoRoll from "./components/PianoRoll";
 import { TextLink } from "./components/PatternManagement";
 import RemoveTrackDialog from "./dialogs/RemoveTrackDialog";
+import { copyStepSequencer, getStepSequencerClipboard } from "./redux/clipboardSlice";
+import FillStepsDialog from "./dialogs/FillStepsDialog";
 
 export type StepSettings = {
   barDiv: number;
@@ -49,6 +50,7 @@ const StepSequencer = () => {
   const SequencerTrack = ({ track }:{ track:Track }) => {
     const [ on, setOn ] = useState(!track.disabled);
     const [removeTrackOpen, setRemoveTrackOpen] = useState(false);
+    const [fillStepsOpen, setFillStepsOpen] = useState(false);
     const [patternSteps, setPatternSteps] = useState<Step[]>(activePattern ? getTrackSteps(activePattern, track) : []);
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
@@ -65,6 +67,8 @@ const StepSequencer = () => {
       }
     }, [track, patternSteps]);
   
+    const clipboard = useSelector(getStepSequencerClipboard);
+
     if (!activePattern) return null;
 
     const handleActionsClick = (event?: React.MouseEvent) => {
@@ -80,8 +84,30 @@ const StepSequencer = () => {
   
     const handleRemoveClick = () => {
       setRemoveTrackOpen(true);
-      // handleMenuClose();
+      handleMenuClose();
     };
+
+    const handleFillClick = () => {
+      setFillStepsOpen(true);
+      handleMenuClose();
+    }
+
+    const handleClearClick = () => {
+      dispatch(setPatternTrackSteps({ track, steps: [], isPiano: false }));
+    };
+
+    const handleCopyClick = () => {
+      dispatch(copyStepSequencer({ steps: patternSteps, isPiano: activePattern.pianoIndex && activePattern.pianoIndex[`${track.position}`] }));
+    };
+
+    const handleCutClick = () => {
+      dispatch(copyStepSequencer({ steps: patternSteps, isPiano: activePattern.pianoIndex && activePattern.pianoIndex[`${track.position}`] }));
+      dispatch(setPatternTrackSteps({ track, steps: [], isPiano: false }));
+    };
+
+    const handlePasteClick = () => {
+      dispatch(pasteStepSequencer({ track, ...clipboard }));
+    }
 
     const StepMarkers = () => {
       const steps = getPatternStepMarkers(activePattern, track);
@@ -172,7 +198,7 @@ const StepSequencer = () => {
         return { pitch, overall, duration: step.duration };
       })
 
-      const { lowest, highest, range } = getNoteRange(pitches);
+      const { highest, range } = getNoteRange(pitches);
       const rowHeightPct = 100 / (Math.max(4, range + 1));
       const beatWidthPct = 100 / (bars * beatDiv * beatStep);
 
@@ -266,8 +292,12 @@ const StepSequencer = () => {
                   anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
                 >
                   <MenuItem onClick={handleRemoveClick}>Remove Track</MenuItem>
+                  <MenuItem onClick={handleClearClick} disabled={!patternSteps.length}>Clear</MenuItem>
+                  <MenuItem onClick={handleCopyClick} disabled={!patternSteps.length}>Copy</MenuItem>
+                  <MenuItem onClick={handleCutClick} disabled={!patternSteps.length}>Cut</MenuItem>
+                  <MenuItem onClick={handlePasteClick} disabled={!clipboard.steps.length}>Paste</MenuItem>
+                  <MenuItem onClick={handleFillClick}>Fill...</MenuItem>
                   {/* <MenuItem onClick={handleDuplicate}>Duplicate Track</MenuItem> */}
-                  {/* <MenuItem onClick={handleMoveTo}>Fill Each...</MenuItem> */}
                 </Menu>
 
               </Box>
@@ -325,6 +355,7 @@ const StepSequencer = () => {
   
         <Grid item xs={9}>
           { Boolean(activePattern.pianoIndex && activePattern.pianoIndex[`${track.position}`]) ? <PianoDisplay /> : <StepMarkers /> }
+          <FillStepsDialog track={track} open={fillStepsOpen} handleClose={() => { setFillStepsOpen(false); }} stepSettings={stepSettings} />
           <RemoveTrackDialog track={track} open={removeTrackOpen} handleClose={() => { setRemoveTrackOpen(false); }} />
         </Grid>
       </Grid>

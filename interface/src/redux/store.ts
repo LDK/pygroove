@@ -5,6 +5,7 @@ import userSlice from './userSlice';
 import songSlice from './songSlice';
 import { persistReducer, persistStore } from 'redux-persist';
 import storage from 'redux-persist/lib/storage'; // defaults to localStorage for web
+import clipboardSlice from './clipboardSlice';
 
 const persistConfig = {
   key: 'root',
@@ -15,6 +16,7 @@ const rootReducer = combineReducers({
   theme: themeSlice,
   user: userSlice,
   song: songSlice,
+  clipboard: clipboardSlice,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
