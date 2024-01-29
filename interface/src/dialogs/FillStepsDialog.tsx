@@ -239,11 +239,13 @@ const FillStepsDialog = ({ open, handleClose, stepSettings, track }: { open: boo
                 i++;
               }
             } else {
+              // Fill every
               let i = 0;
               let j = 0;
 
               while (i < bars * beatStep * barDiv) {
-                const on = (i >= patternOffset && j % patternLength ===  1);
+                const on = (i >= patternOffset && j % patternLength ===  0);
+
                 const newStep:Step = {
                   loc: getLoc(i + 1, ticks, barDiv, beatStep),
                   pitch: defaultPitch,
@@ -256,10 +258,11 @@ const FillStepsDialog = ({ open, handleClose, stepSettings, track }: { open: boo
 
                 stepList.push(newStep);
 
-                i++;
                 if (i >= patternOffset) {
                   j++;
                 }
+
+                i++;
               }
             }
 
