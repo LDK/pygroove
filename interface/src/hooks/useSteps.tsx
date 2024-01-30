@@ -5,7 +5,6 @@ import { Loc, Step, Track, getActivePattern, toggleStep, Pattern, setStep, Filte
 import { ChangeEvent, useEffect, useMemo, useState } from "react";
 import useDialogUI from "../theme/useDialogUI";
 import PanSlider from "../components/PanSlider";
-import Knob from "../components/Knob";
 import { RootState } from "../redux/store";
 import Range from "../components/Range";
 
