@@ -10,11 +10,11 @@ import useApi from "./useApi";
 type FilterInfo = {
   filter1On: boolean;
   filter1Type: string;
-  filter1Q: number;
+  filter1Order: number;
   filter1Freq: number;
   filter2On: boolean;
   filter2Type: string;
-  filter2Q: number;
+  filter2Order: number;
   filter2Freq: number;
 };
 
@@ -48,8 +48,8 @@ const useTrackSettings = ({track, filters}:{track?: Track, filters: FilterInfo})
   }, [sample]);
 
   const {
-    filter1On, filter1Type, filter1Q, filter1Freq, 
-    filter2On, filter2Type, filter2Q, filter2Freq
+    filter1On, filter1Type, filter1Order, filter1Freq, 
+    filter2On, filter2Type, filter2Order, filter2Freq
   } = filters;
 
   const queryKeyMap = {
@@ -62,11 +62,11 @@ const useTrackSettings = ({track, filters}:{track?: Track, filters: FilterInfo})
     transpose: 'ts',
     filter1On: 'f1',
     filter1Freq: 'fq1',
-    filter1Q: 'q1',
+    filter1Order: 'or1',
     filter1Type: 'ft1',
     filter2On: 'f2',
     filter2Freq: 'fq2',
-    filter2Q: 'q2',
+    filter2Order: 'or2',
     filter2Type: 'ft2',
     sampleStart: 'sst',
     sampleEnd: 'sen',
@@ -77,8 +77,8 @@ const useTrackSettings = ({track, filters}:{track?: Track, filters: FilterInfo})
 
   const audioQueryString = `?${Object.entries({ 
     reverse, trim, normalize, pan, volume, pitchShift, transpose,
-    filter1On, filter1Type, filter1Q, filter1Freq,
-    filter2On, filter2Type, filter2Q, filter2Freq,
+    filter1On, filter1Type, filter1Order, filter1Freq,
+    filter2On, filter2Type, filter2Order, filter2Freq,
     fadeIn, fadeOut,
     sampleStart, sampleEnd, sampleId: sample?.id
   }).map(([key, val]) => `${queryKeyMap[key as keyof typeof queryKeyMap]}=${val}`).join('&')}`;

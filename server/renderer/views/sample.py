@@ -188,14 +188,14 @@ class SampleAudioView(APIView):
         filter1On:bool = (request.GET.get('f1', False) in ['true', 'True', True])
         filter1Type:str = request.GET.get('ft1', 'lowpass')
         fq1:float = float(request.GET.get('fq1', 0))
-        filter1Freq:float = float(fq1 * 22000)
-        filter1Q:float = float(request.GET.get('q1', 0))
+        filter1Freq:float = float(fq1)
+        filter1Order:int = int(request.GET.get('or1', 0))
 
         filter2On:bool = (request.GET.get('f2', False) in ['true', 'True', True])
         filter2Type:str = request.GET.get('ft2', 'lowpass')
         fq2:float = float(request.GET.get('fq2', 0))
-        filter2Freq:float = float(fq2 * 22000)
-        filter2Q:float = float(request.GET.get('q2', 0))
+        filter2Freq:float = float(fq2)
+        filter2Order:int = int(request.GET.get('or2', 0))
         
         sampleStart = request.GET.get('sst', 0)
         sampleEnd = request.GET.get('sen', 0)
@@ -216,11 +216,11 @@ class SampleAudioView(APIView):
             'filter1On': filter1On,
             'filter1Type': filter1Type,
             'filter1Freq': filter1Freq,
-            'filter1Q': filter1Q,
+            'filter1Order': filter1Order,
             'filter2On': filter2On,
             'filter2Type': filter2Type,
             'filter2Freq': filter2Freq,
-            'filter2Q': filter2Q,
+            'filter2Order': filter2Order,
             'startOffset': sampleStart,
             'endOffset': sampleEnd,
             'frames': frames,
@@ -295,14 +295,14 @@ class TrackSampleView(APIView):
         filter1On:bool = (request.GET.get('f1', False) in ['true', 'True', True])
         filter1Type:str = request.GET.get('ft1', 'lowpass')
         fq1:float = float(request.GET.get('fq1', 0))
-        filter1Freq:float = float(fq1 * 22000)
-        filter1Q:float = float(request.GET.get('q1', 0))
+        filter1Freq:float = float(fq1)
+        filter1Order:float = float(request.GET.get('or1', 0))
 
         filter2On:bool = (request.GET.get('f2', False) in ['true', 'True', True])
         filter2Type:str = request.GET.get('ft2', 'lowpass')
         fq2:float = float(request.GET.get('fq2', 0))
-        filter2Freq:float = float(fq2 * 22000)
-        filter2Q:float = float(request.GET.get('q2', 0))
+        filter2Freq:float = float(fq2)
+        filter2Order:float = float(request.GET.get('or2', 0))
 
         sampleStart = request.GET.get('sst', 0)
         sampleEnd = request.GET.get('sen', 0)
@@ -328,11 +328,11 @@ class TrackSampleView(APIView):
             'filter1On': filter1On,
             'filter1Type': filter1Type,
             'filter1Freq': filter1Freq,
-            'filter1Q': filter1Q,
+            'filter1Order': filter1Order,
             'filter2On': filter2On,
             'filter2Type': filter2Type,
             'filter2Freq': filter2Freq,
-            'filter2Q': filter2Q,
+            'filter2Order': filter2Order,
             'startOffset': sampleStart,
             'endOffset': sampleEnd,
             'frames': frames,

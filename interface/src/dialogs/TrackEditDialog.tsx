@@ -26,9 +26,9 @@ const TrackEditDialog = ({ track, setEditingTrack }:{ track?:Track, setEditingTr
 
   const { 
     filter1On, setFilter1On, filter1Type, setFilter1Type,
-    filter1Q, setFilter1Q, filter1Freq, setFilter1Freq,
+    filter1Order, setFilter1Order, filter1Freq, setFilter1Freq,
     filter2On, setFilter2On, filter2Type, setFilter2Type,
-    filter2Q, setFilter2Q, filter2Freq, setFilter2Freq,
+    filter2Order, setFilter2Order, filter2Freq, setFilter2Freq,
     TrackFilters
   } = useFilters({ track, changeCallback: (filters) => { console.log('FILTORZ', filters); }});
 
@@ -49,8 +49,8 @@ const TrackEditDialog = ({ track, setEditingTrack }:{ track?:Track, setEditingTr
     fadeIn, setFadeIn, fadeOut, setFadeOut,
     TrackSettings
   } = useTrackSettings({ track, filters: {
-    filter1On, filter1Type, filter1Q, filter1Freq,
-    filter2On, filter2Type, filter2Q, filter2Freq,
+    filter1On, filter1Type, filter1Order, filter1Freq,
+    filter2On, filter2Type, filter2Order, filter2Freq,
   } });
 
   const { SampleBrowser, fetchSamples } = useSamples();
@@ -78,17 +78,17 @@ const TrackEditDialog = ({ track, setEditingTrack }:{ track?:Track, setEditingTr
 
     // Filter controls
     setFilter1Type(track?.filters?.length ? track.filters[0].filter_type : 'lp');
-    setFilter1Q(track?.filters?.length ? track.filters[0].q : 0);
+    setFilter1Order(track?.filters?.length ? track.filters[0].order : 0);
     setFilter1Freq(track?.filters?.length ? track.filters[0].frequency : .80);
     setFilter1On(track?.filters?.length ? track.filters[0].on : false);
 
     setFilter2Type((track?.filters?.length && track.filters.length > 1) ? track.filters[1].filter_type : 'lp');
-    setFilter2Q((track?.filters?.length && track.filters.length > 1) ? track.filters[1].q : 0);
+    setFilter2Order((track?.filters?.length && track.filters.length > 1) ? track.filters[1].order : 0);
     setFilter2Freq((track?.filters?.length && track.filters.length > 1) ? track.filters[1].frequency : 100);
     setFilter2On((track?.filters?.length && track.filters.length > 1) ? track.filters[1].on : false);
 
     setTab(SETTINGS);
-  }, [track, setVolume, setPan, setDisabled, setRootNote, setRootOctave, setPitchShift, setTranspose, setSample, setReverse, setTrim, setNormalize, setFilter1Type, setFilter1Q, setFilter1Freq, setFilter1On, setFilter2Type, setFilter2Q, setFilter2Freq, setFilter2On, setPlayMode, setSampleStart, setSampleEnd, setFadeIn, setFadeOut, setTrackName]);
+  }, [track, setVolume, setPan, setDisabled, setRootNote, setRootOctave, setPitchShift, setTranspose, setSample, setReverse, setTrim, setNormalize, setFilter1Type, setFilter1Order, setFilter1Freq, setFilter1On, setFilter2Type, setFilter2Order, setFilter2Freq, setFilter2On, setPlayMode, setSampleStart, setSampleEnd, setFadeIn, setFadeOut, setTrackName]);
   
   const handleClose = () => {
     setEditingTrack(undefined);
@@ -119,7 +119,7 @@ const TrackEditDialog = ({ track, setEditingTrack }:{ track?:Track, setEditingTr
     newTrack.filters.push({
       on: filter1On,
       filter_type: filter1Type,
-      q: filter1Q,
+      order: filter1Order,
       frequency: filter1Freq,
       position: 1
     });
@@ -127,7 +127,7 @@ const TrackEditDialog = ({ track, setEditingTrack }:{ track?:Track, setEditingTr
     newTrack.filters.push({
       on: filter2On,
       filter_type: filter2Type,
-      q: filter2Q,
+      order: filter2Order,
       frequency: filter2Freq,
       position: 2
     });
