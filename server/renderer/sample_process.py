@@ -15,7 +15,6 @@ import librosa
 
 from renderer.groove import librosaToPydub
 from renderer.groove import chop
-from renderer.custom_effects import resonant_high_pass_filter, resonant_low_pass_filter
 
 class SampleProcess(object):
     def __init__(self, filename: str, options: dict = None):
@@ -58,18 +57,17 @@ class SampleProcess(object):
                 audio_file = audio_file + options['volume']
 
             if options['filter1On']:
+                print(options)
                 if options['filter1Type'] == 'lp':
-                    audio_file = audio_file.resonant_low_pass_filter(cutoff_freq=options['filter1Freq'], order=5, q=options['filter1Q'])
+                    audio_file = audio_file.low_pass_filter(cutoff_freq=options['filter1Freq'], order=options['filter1Order'])
                 if options['filter1Type'] == 'hp':
-                    audio_file = audio_file.resonant_high_pass_filter(cutoff_freq=options['filter1Freq'], order=5, q=options['filter1Q'])
+                    audio_file = audio_file.high_pass_filter(cutoff_freq=options['filter1Freq'], order=options['filter1Order'])
             
             if options['filter2On']:
                 if options['filter2Type'] == 'lp':
-                    audio_file = audio_file.resonant_low_pass_filter(cutoff_freq=options['filter2Freq'], order=5, q=options['filter2Q'])
+                    audio_file = audio_file.low_pass_filter(cutoff_freq=options['filter2Freq'], order=options['filter2Order'])
                 if options['filter2Type'] == 'hp':
-                    audio_file = audio_file.resonant_high_pass_filter(cutoff_freq=options['filter2Freq'], order=5, q=options['filter2Q'])
-
-            processedDuration = audio_file.duration_seconds * audio_file.frame_rate
+                    audio_file = audio_file.high_pass_filter(cutoff_freq=options['filter2Freq'], order=options['filter2Order'])
 
             if 'startOffset' in options or 'endOffset' in options:
                 startOffset = int(options['startOffset'] if options['startOffset'] else 0)

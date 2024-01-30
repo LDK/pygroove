@@ -84,4 +84,4 @@ class Filter(models.Model):
     on = models.BooleanField(default=False)
     filter_type = models.CharField(max_length=8, default='lp')
     frequency = models.FloatField(default=2500)
-    q = models.FloatField(default=.5)
+    order = models.PositiveSmallIntegerField(default=1)

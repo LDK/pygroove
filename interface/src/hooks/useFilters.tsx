@@ -1,7 +1,8 @@
 import { Box, Checkbox, Grid, Select, Typography } from "@mui/material";
-import { useEffect, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 import { Track } from "../redux/songSlice";
 import Knob from "../components/Knob";
+import Range from "../components/Range";
 
 interface useFiltersProps {
   track?: Track;
@@ -12,23 +13,32 @@ const useFilters = ({ track, changeCallback }: useFiltersProps) => {
   // Filter controls
   const [filter1On, setFilter1On] = useState(track?.filters?.length ? track.filters[0].on : false);
   const [filter1Type, setFilter1Type] = useState(track?.filters?.length ? track.filters[0].filter_type : 'lp');
-  const [filter1Q, setFilter1Q] = useState(track?.filters?.length ? track.filters[0].q : 0);
+  const [filter1Order, setFilter1Order] = useState<number>(track?.filters?.length ? (track.filters[0].order || 1) : 1);
   const [filter1Freq, setFilter1Freq] = useState<number>(track?.filters?.length ? track.filters[0].frequency : 0);
 
   const [filter2On, setFilter2On] = useState((track?.filters?.length && track.filters.length > 1) ? track.filters[1].on : false);
   const [filter2Type, setFilter2Type] = useState((track?.filters?.length && track.filters.length > 1) ? track.filters[1].filter_type : 'lp');
-  const [filter2Q, setFilter2Q] = useState((track?.filters?.length && track.filters.length > 1) ? track.filters[1].q : 0);
+  const [filter2Order, setFilter2Order] = useState((track?.filters?.length && track.filters.length > 1) ? (track.filters[1].order || 1) : 1);
   const [filter2Freq, setFilter2Freq] = useState((track?.filters?.length && track.filters.length > 1) ? track.filters[1].frequency : 0);
 
   useEffect(() => {
+    if (!filter1Order) {
+      setFilter1Order(1);
+    }
+    if (!filter2Order) {
+      setFilter2Order(1);
+    }
+  }, [filter1Order, filter2Order]);
+  
+  useEffect(() => {
     if (changeCallback) {
       changeCallback({
-        filter1On, filter1Type, filter1Q, filter1Freq,
-        filter2On, filter2Type, filter2Q, filter2Freq,
+        filter1On, filter1Type, filter1Order, filter1Freq,
+        filter2On, filter2Type, filter2Order, filter2Freq,
       });
     }
-  }, [filter1On, filter1Type, filter1Q, filter1Freq,
-    filter2On, filter2Type, filter2Q, filter2Freq]);
+  }, [filter1On, filter1Type, filter1Order, filter1Freq,
+    filter2On, filter2Type, filter2Order, filter2Freq]);
 
   const TrackFilters = () => { 
     const [changed, setChanged] = useState(false);
@@ -37,8 +47,8 @@ const useFilters = ({ track, changeCallback }: useFiltersProps) => {
       if (changed) {
         if (changeCallback) {
           changeCallback({
-            filter1On, filter1Type, filter1Q, filter1Freq,
-            filter2On, filter2Type, filter2Q, filter2Freq,
+            filter1On, filter1Type, filter1Order, filter1Freq,
+            filter2On, filter2Type, filter2Order, filter2Freq,
           });
         }
   
@@ -89,7 +99,7 @@ const useFilters = ({ track, changeCallback }: useFiltersProps) => {
                     id: 'filterType',
                   }}
                 >
-                  {['lp', 'hp', 'bp'].map((type) => {
+                  {['lp', 'hp'/*, 'bp'*/].map((type) => {
                     return (
                       <option key={type} value={type}>{type.toUpperCase()}</option>
                     );
@@ -97,12 +107,14 @@ const useFilters = ({ track, changeCallback }: useFiltersProps) => {
                 </Select>
               </Grid>
 
-              <Grid item xs={4}>
+              <Grid item xs={4} sx={{ pr: 2 }}>
                 <Typography variant="caption" component="p" mt={0} mb={2}>
                   Cutoff Freq.
                 </Typography>
 
-                <Knob initValue={filterIdx === 1 ? filter1Freq : filter2Freq} onBlur={(val:number) => {
+                <Range min={1} max={22000} step={1} defaultValue={filterIdx === 1 ? filter1Freq : filter2Freq} onChange={(e:ChangeEvent<HTMLInputElement>) => {
+                  const val = parseInt(e.target.value);
+
                   if (filterIdx === 1) {
                     setFilter1Freq(val);
                   } else {
@@ -110,30 +122,34 @@ const useFilters = ({ track, changeCallback }: useFiltersProps) => {
                   }
 
                   setChanged(true);
+
                 }} />
 
                 <Typography variant="caption">
-                  {Math.round((filterIdx === 1 ? filter1Freq : filter2Freq) * 22000)} Hz
+                  {Math.round((filterIdx === 1 ? filter1Freq : filter2Freq))} Hz
                 </Typography>
               </Grid>
 
-              <Grid item xs={4}>
+              <Grid item xs={4} sx={{ pr: 2 }}>
                 <Typography variant="caption" component="p" mt={0} mb={2}>
-                  Resonance
+                  Order
                 </Typography>
 
-                <Knob initValue={filterIdx === 1 ? filter1Q : filter2Q} onBlur={(val:number) => {
+                <Range min={1} max={6} step={1} defaultValue={filterIdx === 1 ? filter1Order : filter2Order} onChange={(e:ChangeEvent<HTMLInputElement>) => {
+                  const val = parseInt(e.target.value);
+
                   if (filterIdx === 1) {
-                    setFilter1Q(val);
+                    setFilter1Order(val);
                   } else {
-                    setFilter2Q(val);
+                    setFilter2Order(val);
                   }
 
                   setChanged(true);
+
                 }} />
 
                 <Typography variant="caption">
-                  {Math.round((filterIdx === 1 ? filter1Q : filter2Q) * 1000) / 10}%
+                  {Math.round((filterIdx === 1 ? filter1Order : filter2Order))}
                 </Typography>
               </Grid>
             </Grid>
@@ -147,11 +163,11 @@ const useFilters = ({ track, changeCallback }: useFiltersProps) => {
     TrackFilters,
     filter1On, setFilter1On,
     filter1Type, setFilter1Type,
-    filter1Q, setFilter1Q,
+    filter1Order, setFilter1Order,
     filter1Freq, setFilter1Freq,
     filter2On, setFilter2On,
     filter2Type, setFilter2Type,
-    filter2Q, setFilter2Q,
+    filter2Order, setFilter2Order,
     filter2Freq, setFilter2Freq,
   };
 }

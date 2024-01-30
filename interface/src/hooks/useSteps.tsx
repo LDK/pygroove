@@ -117,12 +117,12 @@ const useSteps = ({ barDiv, beatDiv, beatStep, defaultPitch, defaultVelocity }:U
   
     const [filter1On, setFilter1On] = useState(trackFilters.length ? trackFilters[0].on : false);
     const [filter1Type, setFilter1Type] = useState(trackFilters.length ? trackFilters[0].filter_type : 'lp');
-    const [filter1Q, setFilter1Q] = useState(trackFilters.length ? trackFilters[0].q : 0);
+    const [filter1Order, setFilter1Order] = useState(trackFilters.length ? trackFilters[0].order : 0);
     const [filter1Freq, setFilter1Freq] = useState<number>(trackFilters.length ? trackFilters[0].frequency : 0);
   
     const [filter2On, setFilter2On] = useState((trackFilters.length && trackFilters.length > 1) ? trackFilters[1].on : false);
     const [filter2Type, setFilter2Type] = useState((trackFilters.length && trackFilters.length > 1) ? trackFilters[1].filter_type : 'lp');
-    const [filter2Q, setFilter2Q] = useState((trackFilters.length && trackFilters.length > 1) ? trackFilters[1].q : 0);
+    const [filter2Order, setFilter2QOrder] = useState((trackFilters.length && trackFilters.length > 1) ? trackFilters[1].order : 0);
     const [filter2Freq, setFilter2Freq] = useState((trackFilters.length && trackFilters.length > 1) ? trackFilters[1].frequency : 0);
   
     const resetDefaults = () => {
@@ -158,8 +158,8 @@ const useSteps = ({ barDiv, beatDiv, beatStep, defaultPitch, defaultVelocity }:U
                   changed[idx] = filter.filter_type !== compareVal;
 
                 } else if (key === 'q') {
-                  let compareVal = idx === 0 ? filter1Q : filter2Q;
-                  changed[idx] = filter.q !== compareVal;
+                  let compareVal = idx === 0 ? filter1Order : filter2Order;
+                  changed[idx] = filter.order !== compareVal;
 
                 } else if (key === 'frequency') {
                   let compareVal = idx === 0 ? filter1Freq : filter2Freq;
@@ -181,7 +181,7 @@ const useSteps = ({ barDiv, beatDiv, beatStep, defaultPitch, defaultVelocity }:U
               filters.push({
                 on: filterPosition === 1 ? filter1On : filter2On,
                 filter_type: filterPosition === 1 ? filter1Type : filter2Type,
-                q: filterPosition === 1 ? filter1Q : filter2Q,
+                order: filterPosition === 1 ? filter1Order : filter2Order,
                 frequency: filterPosition === 1 ? filter1Freq : filter2Freq,
                 position: filterPosition,
               });              
@@ -195,7 +195,7 @@ const useSteps = ({ barDiv, beatDiv, beatStep, defaultPitch, defaultVelocity }:U
               filters.push({
                 on: filter1On,
                 filter_type: filter1Type,
-                q: filter1Q,
+                order: filter1Order,
                 frequency: filter1Freq,
                 position: 1,
               });
@@ -205,7 +205,7 @@ const useSteps = ({ barDiv, beatDiv, beatStep, defaultPitch, defaultVelocity }:U
               filters.push({
                 on: filter2On,
                 filter_type: filter2Type,
-                q: filter2Q,
+                order: filter2Order,
                 frequency: filter2Freq,
                 position: 2,
               });
@@ -387,7 +387,7 @@ const useSteps = ({ barDiv, beatDiv, beatStep, defaultPitch, defaultVelocity }:U
                                 id: 'filterType',
                               }}
                             >
-                              {['lp', 'hp', 'bp'].map((type) => {
+                              {['lp', 'hp'/*, 'bp'*/].map((type) => {
                                 return (
                                   <option key={type} value={type}>{type.toUpperCase()}</option>
                                 );
@@ -406,11 +406,11 @@ const useSteps = ({ barDiv, beatDiv, beatStep, defaultPitch, defaultVelocity }:U
                           </Grid>
 
                           <Grid item xs={4}>
-                            <Knob initValue={filter.position === 1 ? filter1Q : filter2Q} onBlur={(val:number) => {
+                            <Knob initValue={filter.position === 1 ? filter1Order : filter2Order} onBlur={(val:number) => {
                               if (filter.position === 1) {
-                                setFilter1Q(val);
+                                setFilter1Order(val);
                               } else {
-                                setFilter2Q(val);
+                                setFilter2QOrder(val);
                               }
                             }} />
                           </Grid>

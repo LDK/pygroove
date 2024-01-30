@@ -236,9 +236,10 @@ def getStepSound(step, track, bpm:int):
         for filter in step['filters']:
             if filter['on'] == True:
                 if filter['filter_type'] == 'hp':
-                    stepSound = stepSound.high_pass_filter(cutoff_freq=int(filter['frequency'] * filterMaxFreq), order=3)
+                    stepSound = stepSound.high_pass_filter(cutoff_freq=int(filter['frequency']), order=filter['order'] if 'order' in filter else 3)
                 if filter['filter_type'] == 'lp':
-                    stepSound = stepSound.resonant_low_pass_filter(cutoff_freq=int(filter['frequency'] * filterMaxFreq), order=5, q=filter['q'])
+                    # stepSound = stepSound.resonant_low_pass_filter(cutoff_freq=int(filter['frequency']), order=5, q=filter['q'])
+                    stepSound = stepSound.low_pass_filter(cutoff_freq=int(filter['frequency']), order=filter['order'] if 'order' in filter else 3)
                 # if filter['filter_type'] == 'bp':
                 #     trackSound = trackSound.band_pass_filter(low_cutoff_freq=int(filter['frequency']), high_cutoff_freq=int(filter['frequency2']), order=3)
     else:
@@ -246,9 +247,10 @@ def getStepSound(step, track, bpm:int):
             for filter in track['filters']:
                 if filter['on'] == True:
                     if filter['filter_type'] == 'hp':
-                        stepSound = stepSound.high_pass_filter(cutoff_freq=int(filter['frequency'] * filterMaxFreq), order=3)
+                        stepSound = stepSound.high_pass_filter(cutoff_freq=int(filter['frequency']), order=filter['order'] if 'order' in filter else 3)
                     if filter['filter_type'] == 'lp':
-                        stepSound = stepSound.resonant_low_pass_filter(cutoff_freq=int(filter['frequency'] * filterMaxFreq), order=5, q=filter['q'])
+                        # stepSound = stepSound.resonant_low_pass_filter(cutoff_freq=int(filter['frequency']), q=filter['q'], order=filter['order'] if 'order' in filter else 3)
+                        stepSound = stepSound.low_pass_filter(cutoff_freq=int(filter['frequency']), order=filter['order'] if 'order' in filter else 3)
                     # if filter['filter_type'] == 'bp':
                     #     trackSound = trackSound.band_pass_filter(low_cutoff_freq=int(filter['frequency']), high_cutoff_freq=int(filter['frequency2']), order=3)
 

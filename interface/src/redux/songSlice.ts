@@ -6,7 +6,7 @@ import { AppUser } from './userSlice';
 export type Filter = {
   filter_type: string;
   frequency: number;
-  q: number;
+  order: number;
   on: boolean;
   position: number;
 };
