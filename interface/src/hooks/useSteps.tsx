@@ -2,11 +2,11 @@ import { MoreHorizTwoTone } from "@mui/icons-material";
 import { Box, Checkbox, Dialog, DialogContent, Divider, Grid, Select, Typography } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { Loc, Step, Track, getActivePattern, toggleStep, Pattern, setStep, Filter, findTrackByPosition } from "../redux/songSlice";
-import { useEffect, useMemo, useState } from "react";
+import { ChangeEvent, useEffect, useMemo, useState } from "react";
 import useDialogUI from "../theme/useDialogUI";
 import PanSlider from "../components/PanSlider";
-import Knob from "../components/Knob";
 import { RootState } from "../redux/store";
+import Range from "../components/Range";
 
 export interface UseStepsProps {
   barDiv: number;
@@ -367,7 +367,7 @@ const useSteps = ({ barDiv, beatDiv, beatStep, defaultPitch, defaultVelocity }:U
                         </Box>
 
                         <Grid container spacing={0}>
-                          <Grid item xs={4}>
+                          <Grid item xs={4} pr={1}>
                             <Typography variant="caption" component="p" mt={0} mb={2}>
                               Filter Type
                             </Typography>
@@ -395,24 +395,44 @@ const useSteps = ({ barDiv, beatDiv, beatStep, defaultPitch, defaultVelocity }:U
                             </Select>
                           </Grid>
 
-                          <Grid item xs={4}>
-                            <Knob initValue={filter.position === 1 ? filter1Freq : filter2Freq} onBlur={(val:number) => {
-                              if (filter.position === 1) {
-                                setFilter1Freq(val);
-                              } else {
-                                setFilter2Freq(val);
-                              }
-                            }} />
+                          <Grid item xs={4} px={1}>
+                          <Typography variant="caption" component="p" mt={0} mb={2}>
+                            Cutoff Freq.
+                          </Typography>
+
+                            <Range min={1} max={22000} step={1} defaultValue={filter.position === 1 ? filter1Freq : filter2Freq} onChange={(e:ChangeEvent<HTMLInputElement>) => {
+                                const val = parseInt(e.target.value);
+
+                                if (filter.position === 1) {
+                                  setFilter1Freq(val);
+                                } else {
+                                  setFilter2Freq(val);
+                                }
+                              }} 
+                            />
+
                           </Grid>
 
-                          <Grid item xs={4}>
-                            <Knob initValue={filter.position === 1 ? filter1Order : filter2Order} onBlur={(val:number) => {
-                              if (filter.position === 1) {
-                                setFilter1Order(val);
-                              } else {
-                                setFilter2QOrder(val);
-                              }
-                            }} />
+                          <Grid item xs={4} px={1}>
+                            <Typography variant="caption" component="p" mt={0} mb={2}>
+                              Order
+                            </Typography>
+
+                            <Range
+                              min={0}
+                              max={6}
+                              step={1}
+                              defaultValue={filter.position === 1 ? filter1Order : filter2Order}
+                              onChange={(e:ChangeEvent<HTMLInputElement>) => {
+                                const val = parseInt(e.target.value);
+
+                                if (filter.position === 1) {
+                                  setFilter1Order(val);
+                                } else {
+                                  setFilter2QOrder(val);
+                                }
+                              }}
+                            />
                           </Grid>
                         </Grid>
                       </Grid>

@@ -1,7 +1,6 @@
 import { Box, Checkbox, Grid, Select, Typography } from "@mui/material";
 import { ChangeEvent, useEffect, useState } from "react";
 import { Track } from "../redux/songSlice";
-import Knob from "../components/Knob";
 import Range from "../components/Range";
 
 interface useFiltersProps {
