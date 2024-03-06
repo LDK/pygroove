@@ -1,6 +1,6 @@
 asgiref==3.7.2
 certifi==2023.7.22
-distlib==distlib-0.3.8
+distlib==0.3.8
 Django==5.0
 django-cors-headers==4.3.1
 djangorestframework==3.14.0
