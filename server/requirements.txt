@@ -1,7 +1,7 @@
 asgiref==3.7.2
 # certifi @ file:///private/tmp/python-certifi-20231008-5412-1rk63p1/certifi-2023.7.22
 # distlib @ file:///private/tmp/python-distlib-20231212-4774-clg0vf/distlib-0.3.8
-Django==5.0
+Django==5.0.2
 django-cors-headers==4.3.1
 djangorestframework==3.14.0
 djangorestframework-simplejwt==5.3.1
