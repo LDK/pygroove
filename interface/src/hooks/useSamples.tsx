@@ -30,7 +30,7 @@ const useSamples = () => {
 
   const playSample = (sample:SampleData) => {
     if (sample.filename) {
-      const url = `${process.env.REACT_APP_API_URL}/static/${sample.filename}`.replace('/api/static', '/static');
+      const url = `${process.env.REACT_APP_API_URL}/static/audio/${sample.filename}`.replace('/api/static', '/static');
       const audio = new Audio(url);
       audio.play();
     }
