@@ -14,9 +14,12 @@ const useSamples = () => {
 
   const fetchSamples = async () => {
     setSamplesLoading(true);
+    console.log('here w go');
     apiGet({
       uri: '/samples',
+      sendAuth: false,
       onSuccess: (res) => {
+        console.log('Got samples:', res.data);
         if (!arraysEqual(res.data, samples)) {
           setSamples(res.data);
         }
